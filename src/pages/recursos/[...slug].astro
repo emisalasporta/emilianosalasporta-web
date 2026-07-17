@@ -1,0 +1,107 @@
+---
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { TIPOS_RECURSOS } from '../../consts';
+import { formatFecha, isoFecha } from '../../lib/utils';
+
+export async function getStaticPaths() {
+  const recursos = await getCollection('recursos', ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true
+  );
+  return recursos.map((recurso) => ({
+    params: { slug: recurso.id },
+    props: { recurso },
+  }));
+}
+
+const { recurso } = Astro.props;
+const { title, description, date, tipo, archivo, tags } = recurso.data;
+const { Content } = await render(recurso);
+
+/* Igual que en /herramientas: leemos el archivo real en build, así el peso que
+   mostramos es el que se baja de verdad y el hash sirve de cache-buster (Astro
+   no versiona lo que vive en public/).
+   El `archivo` es opcional y lo carga Emiliano desde el panel, así que puede no
+   estar o apuntar a una ruta que ya no existe: si no lo encontramos, mostramos
+   la ficha sin botón en vez de romper el build entero. */
+let descarga = null;
+if (archivo) {
+  const ruta = `public${archivo}`;
+  if (existsSync(ruta)) {
+    const bytes = readFileSync(ruta);
+    /* Piso de 1 KB: un archivo chico redondeaba a "0 KB", que se lee como que
+       está roto. Ningún archivo pesa cero. */
+    const kb = Math.max(1, Math.round(bytes.byteLength / 1024));
+    descarga = {
+      href: `${archivo}?v=${createHash('sha256').update(bytes).digest('hex').slice(0, 8)}`,
+      peso: kb >= 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`,
+      nombre: archivo.split('/').pop(),
+      ext: (archivo.split('.').pop() || '').toUpperCase(),
+    };
+  } else {
+    console.warn(
+      `[recursos] "${title}" apunta a ${archivo} y ese archivo no está en public/. ` +
+        `La ficha se publica sin botón de descarga.`
+    );
+  }
+}
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="section">
+    <div class="container">
+      <div class="post">
+        <p class="eyebrow">{TIPOS_RECURSOS[tipo]}</p>
+        <h1 class="post-title">{title}</h1>
+        <p class="lead post-desc">{description}</p>
+        <p class="muted post-byline">
+          <time datetime={isoFecha(date)}>{formatFecha(date)}</time>
+        </p>
+
+        {descarga && (
+          <div class="descarga">
+            <a class="btn btn-primary" href={descarga.href} download={descarga.nombre}>
+              Descargar ({descarga.ext}, {descarga.peso})
+            </a>
+            <p class="muted descarga-nota">Es tuyo: bajalo y usalo cuando quieras.</p>
+          </div>
+        )}
+
+        <hr class="post-rule" />
+
+        <div class="prose post-body">
+          <Content />
+        </div>
+
+        {tags.length > 0 && (
+          <div class="post-tags">
+            {tags.map((t) => <a href={`/tags/${t}`} class="tag">#{t}</a>)}
+          </div>
+        )}
+
+        <div class="post-back">
+          <a href="/recursos" class="btn btn-ghost">← Volver a recursos</a>
+        </div>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  /* Mismo molde que un post del blog (ver BlogPost.astro): encabezado, regla y
+     .prose. Lo único propio de acá es el botón de descarga. */
+  .post { max-width: var(--content-narrow); margin-inline: auto; }
+  .post-title { margin-top: 0.5rem; }
+  .post-desc { margin-top: 1rem; }
+  .post-byline { font-family: var(--font-mono); font-size: 0.85rem; margin-top: 1.2rem; }
+  .post-rule { margin-block: 2rem; }
+  .post-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2.5rem; }
+  .post-back { margin-top: 2rem; }
+
+  /* El botón va arriba, antes del texto: el que llega a esta página ya sabe lo
+     que quiere. Las notas son para el que necesita leer antes de bajar. */
+  .descarga { margin-top: 1.75rem; }
+  .descarga-nota { font-size: 0.88rem; margin-top: 0.6rem; }
+</style>

@@ -1,0 +1,210 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import fotoEmiliano from '../assets/foto-emiliano.jpg';
+
+/* Esta página sigue el mismo molde que un post del blog (ver BlogPost.astro):
+   encabezado, una regla, y `.prose` para el texto. Mismo ancho de lectura,
+   mismos tamaños de título, misma regla. La única diferencia es la foto.
+   Si algún día hay que tocar algo acá, mirá primero cómo lo resuelve el blog.
+
+   La foto la procesa Astro en build (astro:assets): sale en webp y con
+   width/height puestos para que no salte el layout. El original de 3,4 MB no se
+   sirve nunca. El `width={640}` es un TECHO: sin él, Astro deja además la foto
+   entera de 2208px (605 KB) como src de respaldo, que nadie mira pero se
+   publica igual. */
+---
+
+<BaseLayout
+  title="Sobre mí"
+  description="Me llamo Emiliano Salas Porta. Corredor amateur y entrenador de deportes de resistencia, especialista en trail running y ultradistancia. Esta es mi historia y por qué armé este espacio."
+>
+  <section class="section">
+    <div class="container">
+
+      <header class="intro">
+        <div class="intro-texto">
+          <p class="eyebrow">Sobre mí</p>
+          <h1 class="intro-titulo">Me llamo Emiliano</h1>
+          <p class="lead">
+            Corredor amateur. Soy entrenador de deportes de resistencia, especialista en trail
+            running y ultradistancia. Llevo muchos años entrenando corredores de todos los
+            niveles: desde personas que nunca habían hecho actividad en su vida hasta atletas de
+            talla mundial.
+          </p>
+          <p class="intro-remate">
+            Siempre me motivó entender cómo funcionan las cosas. Y correr me obsesionó.
+          </p>
+        </div>
+
+        <figure class="intro-foto">
+          <Image
+            src={fotoEmiliano}
+            alt="Emiliano Salas Porta"
+            width={640}
+            widths={[288, 480, 640]}
+            sizes="(max-width: 48rem) min(18rem, 80vw), 20rem"
+            loading="eager"
+            quality={82}
+          />
+        </figure>
+      </header>
+
+      <hr class="sobre-rule" />
+
+      <div class="prose sobre-prosa">
+        <h2>Una breve historia</h2>
+
+        <p>
+          Nací en Catamarca, Argentina. Toda mi vida fui curioso y demasiado disperso: puedo
+          enfocarme muchísimo en algo y, cuando lo resuelvo, me aburre y ya estoy en otra cosa.
+        </p>
+
+        <p>
+          Tomé muchas decisiones equivocadas en mi juventud. Vivía boyando, buscando una
+          identidad.
+        </p>
+
+        <p>
+          Después de un momento difícil, no me reconocía en el espejo. No me gustaba en lo que me
+          estaba convirtiendo. No encontraba propósito.
+        </p>
+
+        <p>Un día me puse unas zapatillas, me até los cordones y salí a caminar.</p>
+
+        <p class="respiro">Se empieza de abajo.</p>
+
+        <p>
+          Las caminatas se hicieron trotes. Y cuando menos me di cuenta, me invitaron a una
+          carrera. Ahí estaba yo, con mi primer dorsal.
+        </p>
+
+        <p>
+          Ese fue el comienzo del mayor cambio de mi vida. Empecé a entender que tenía en mi poder
+          una herramienta increíble: mi cuerpo con vida.
+        </p>
+
+        <p>
+          Entrené más y más. Me apasioné estudiando, aprendiendo, queriendo saber todo lo que se
+          podía sobre esto. Conocí a mi pareja y llegó un hijo a nuestras vidas. Después empezamos
+          a entrenar a otras personas que también buscaban un cambio.
+        </p>
+
+        <p>
+          Y me di cuenta de que tenía talento para ayudar a otros a encontrar lo que yo encontré.
+        </p>
+
+        <h2>Lo que hago ahora</h2>
+
+        <p>
+          Hoy los desafíos continúan. Ocupo el rol de Director Provincial de Rendimiento Deportivo
+          en mi provincia, y eso me obligó a dejar un poco de lado mi pasión por correr.
+        </p>
+
+        <p>
+          Todo lo que hago parte de un principio: todas las personas son importantes, y todas
+          tienen un talento para algo.
+        </p>
+
+        <p>
+          Para mí el talento no es un don raro que traen unos pocos. Es una facilidad que ya traés
+          puesta: algo que te sale natural, sin forzarlo, que te sale aunque sea un poco por encima
+          de la media, y que además disfrutás. Las tres cosas juntas. Ser muy bueno en algo que no
+          disfrutás no es talento: es un oficio.
+        </p>
+
+        <p>
+          Y creo que cualquiera que descubra su talento, lo trabaje y lo ponga al servicio de
+          otros, puede hacer de este mundo un lugar mejor.
+        </p>
+
+        <h2>¿Por qué empecé con esta web?</h2>
+
+        <p>Porque el mayor propósito de esta vida es servir a otras personas.</p>
+
+        <p>
+          Si ayudo a que alguien se ponga unas zapatillas, se ate los cordones y salga a correr,
+          esa persona tiene el potencial de influir en una o en millones más. Siempre hay alguien
+          mirándonos. Alguien que sufre mucho puede cambiar su vida si encuentra inspiración y el
+          canal adecuado.
+        </p>
+
+        <p class="cierre">Cada persona es importante.</p>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* ---------- Presentación: el texto con la foto al lado ---------- */
+  /* La foto es lo único que esta página tiene de más que un post del blog.
+     Va a la derecha, colgada del encabezado, sin caja ni marco propio: si le
+     pusiéramos un panel, sería el único de todo el sitio. */
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: clamp(2rem, 1rem + 3vw, 3.5rem);
+    align-items: center;
+  }
+  /* Misma medida que la prosa de abajo: así el texto del encabezado y el de la
+     historia comparten el borde izquierdo Y el derecho. Es lo que hace que se
+     lea como un documento y no como dos piezas pegadas. */
+  .intro-texto { max-width: var(--content-narrow); }
+  .intro-titulo { margin-top: 0.5rem; }
+  .intro-texto .lead { margin-top: 1rem; }
+  /* El remate va aparte: es el latido del párrafo, no un renglón más. Se separa
+     por color, no por tamaño: no necesita gritar. */
+  .intro-remate { margin-top: 1.1rem; color: var(--text); }
+
+  .intro-foto { margin: 0; }
+  .intro-foto :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    /* La foto es de oficina: camisa blanca sobre pared blanca. Sobre un fondo
+       casi negro entraba como un fogonazo y le robaba el ojo al texto. Es un
+       ajuste de luz, no un retoque: la cara queda como es. */
+    filter: saturate(0.85) brightness(0.9) contrast(1.06);
+  }
+
+  /* ---------- La regla ---------- */
+  /* El mismo hr que separa el encabezado del cuerpo en cada post del blog
+     (.post-rule). Acá hace las dos cosas: es la línea que marca el corte, y de
+     paso mata el hueco de 138px que quedaba entre el encabezado y la historia. */
+  .sobre-rule { margin-block: clamp(2rem, 1.5rem + 1.5vw, 3rem); }
+
+  /* ---------- La historia ---------- */
+  /* Usa .prose de global.css, igual que el blog: 44rem de ancho, los h2 en su
+     tamaño real (35px, no los 21px que tenía antes) y los márgenes ya resueltos.
+     Acá abajo solo va lo que esta página tiene de propio. */
+
+  /* Las dos frases que aguantan solas. Sin adornos: solo aire y un punto.
+     Van en --primary y en la tipografía de los títulos para que se lean como
+     una pausa, pero por debajo de un h2: no son secciones, son respiros. */
+  .respiro,
+  .cierre {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--primary);
+    /* Le ganan al `> * + *` de .prose: una pausa necesita más aire que un
+       párrafo o no se lee como pausa. */
+    margin-block: 2.25rem;
+  }
+  .cierre { margin-bottom: 0; }
+
+  @media (max-width: 48rem) {
+    .intro {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+    /* La cara va primero: se lee mejor a quién estás escuchando. */
+    .intro-foto {
+      order: -1;
+      width: min(18rem, 80vw);
+    }
+  }
+</style>

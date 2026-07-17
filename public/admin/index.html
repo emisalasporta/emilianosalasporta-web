@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <title>Panel de contenido — Emiliano Salas Porta</title>
+    <style>
+      /* Pantalla de carga mientras baja el panel (Sveltia CMS).
+         Cuando el panel arranca, reemplaza todo esto. */
+      html, body { margin: 0; height: 100%; background: #0a0b10; }
+      #cargando {
+        position: fixed; inset: 0; z-index: 1;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 1.1rem; text-align: center; padding: 1.5rem;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #e7ecf3;
+      }
+      #cargando img { width: 56px; height: 56px; }
+      #cargando .spinner {
+        width: 26px; height: 26px; border-radius: 50%;
+        border: 3px solid #262a38; border-top-color: #2fb8ff;
+        animation: giro 0.8s linear infinite;
+      }
+      @keyframes giro { to { transform: rotate(360deg); } }
+      #cargando p { margin: 0; color: #8a93a6; font-size: 0.95rem; }
+      #cargando .err {
+        display: none; color: #ff2e9a; max-width: 32rem; line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Panel de administración (Sveltia CMS). Edita los archivos del sitio con formularios. -->
+    <div id="cargando">
+      <img src="/logo.png" alt="" />
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Abriendo tu panel de contenido…</p>
+      <p class="err" id="err">
+        No se pudo abrir el panel. Fijate de tener internet y volvé a entrar
+        (apretá <b>F5</b> para recargar). Si sigue sin andar, avisame.
+      </p>
+    </div>
+
+    <script>
+      // Escondemos la pantalla de carga en cuanto Sveltia monta su interfaz
+      // (agrega su propio elemento al body). Si a los 10 s no cargó nada,
+      // mostramos un aviso claro en castellano.
+      (function () {
+        var loader = document.getElementById('cargando');
+        var err = document.getElementById('err');
+        var listo = false;
+        function esconder() {
+          if (listo || !loader) return;
+          listo = true;
+          loader.style.display = 'none';
+        }
+        var obs = new MutationObserver(function (muts) {
+          for (var i = 0; i < muts.length; i++) {
+            var nodos = muts[i].addedNodes;
+            for (var j = 0; j < nodos.length; j++) {
+              var n = nodos[j];
+              if (n.nodeType === 1 && n.id !== 'cargando' && n.tagName !== 'SCRIPT') {
+                esconder();
+                obs.disconnect();
+                return;
+              }
+            }
+          }
+        });
+        obs.observe(document.body, { childList: true });
+        setTimeout(function () {
+          if (!listo && err) err.style.display = 'block';
+        }, 10000);
+      })();
+    </script>
+    <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
+  </body>
+</html>

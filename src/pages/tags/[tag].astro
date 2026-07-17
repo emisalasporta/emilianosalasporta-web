@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      posts: posts
+        .filter((p) => p.data.tags.includes(tag))
+        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+    },
+  }));
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout title={`Etiqueta: #${tag}`} description={`Entradas etiquetadas con #${tag}.`}>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Etiqueta</p>
+      <h1>#{tag}</h1>
+
+      <div class="grid tag-grid">
+        {posts.map((p) => <PostCard post={p} />)}
+      </div>
+
+      <p class="tag-back"><a href="/blog" class="btn btn-ghost">← Todo el blog</a></p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .tag-grid { margin-top: 1.75rem; }
+  .tag-back { margin-top: 2.5rem; }
+</style>

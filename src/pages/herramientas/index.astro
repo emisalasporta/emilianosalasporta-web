@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { HERRAMIENTAS, CATEGORIAS_HERRAMIENTAS } from '../../tools/registry';
+---
+
+<BaseLayout
+  title="Herramientas"
+  description="Calculadoras de ritmo y pronóstico de tiempos para trail y ruta. Gratis, en el navegador, y descargables para usar sin internet."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Herramientas</p>
+      <h1>Calculadoras</h1>
+      <p class="lead tools-lead">
+        Las mismas cuentas que hago para armar un plan, abiertas para que las uses vos.
+        Funcionan en el navegador, no piden datos y te podés bajar el archivo para usarlas sin internet.
+      </p>
+
+      <div class="grid tools-grid">
+        {HERRAMIENTAS.map((h) => (
+          <a href={`/herramientas/${h.slug}`} class="card card-link tool-card">
+            <span class="pill">{CATEGORIAS_HERRAMIENTAS[h.category]}</span>
+            <h2 class="tool-card-title">{h.title}</h2>
+            <p class="muted tool-card-desc">{h.summary}</p>
+            <span class="tool-card-cta" aria-hidden="true">Abrir la calculadora →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .tools-lead { max-width: 42rem; margin-top: 0.5rem; }
+  .tools-grid { margin-top: 2.25rem; }
+
+  .tool-card { display: flex; flex-direction: column; align-items: flex-start; }
+  .tool-card-title { font-size: 1.2rem; margin: 0.9rem 0 0.4rem; }
+  .tool-card-desc { font-size: 0.95rem; flex: 1; }
+  .tool-card-cta {
+    margin-top: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+</style>

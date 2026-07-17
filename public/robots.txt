@@ -1,0 +1,15 @@
+# Web de Emiliano Salas Porta
+# Todo el sitio es público y se puede indexar, salvo dos cosas:
+
+User-agent: *
+Allow: /
+
+# El panel de contenido no tiene nada que hacer en Google.
+Disallow: /admin/
+
+# Los archivos crudos de las calculadoras: funcionan solos, pero la página que
+# vale es /herramientas/<nombre>, que las explica y las deja descargar.
+# Sin esto compiten entre sí por el mismo lugar en el buscador.
+Disallow: /tools/
+
+Sitemap: https://emilianosalasporta.cloud/sitemap-index.xml

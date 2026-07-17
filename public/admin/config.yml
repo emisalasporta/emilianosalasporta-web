@@ -1,0 +1,83 @@
+# ============================================================
+# Panel de administración (Sveltia CMS) — Emiliano Salas Porta
+# Edita los mismos archivos Markdown del sitio.
+# NO hace falta tocar esto salvo que sepas lo que hacés.
+# ============================================================
+
+# Backend para editar ONLINE (desde cualquier lado, incluso el celular).
+# Se completa cuando publiquemos la web y conectemos GitHub.
+backend:
+  name: github
+  repo: usuario/repositorio
+  branch: main
+
+# Para editar DESDE TU COMPU no se usa este backend:
+# entrá con Chrome o Edge a /admin/ y tocá "Work with Local Repository".
+
+# Dónde se guardan las imágenes y archivos que subas desde el panel.
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+# Sin panel de vista previa (usamos la web real para verlo).
+editor:
+  preview: false
+
+collections:
+  # ---------- BLOG ----------
+  - name: "blog"
+    label: "Blog"
+    label_singular: "Entrada"
+    description: "Notas y artículos del blog."
+    folder: "src/content/blog"
+    create: true
+    extension: "md"
+    format: "yaml-frontmatter"
+    slug: "{{slug}}"
+    sortable_fields: ["date", "title"]
+    fields:
+      - { name: "title", label: "Título", widget: "string" }
+      - { name: "description", label: "Bajada (resumen corto)", widget: "text" }
+      - { name: "date", label: "Fecha", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - name: "category"
+        label: "Categoría"
+        widget: "select"
+        options:
+          - { label: "Entrenamiento", value: "entrenamiento" }
+          - { label: "Nutrición", value: "nutricion" }
+          - { label: "Carreras", value: "carreras" }
+          - { label: "Mentalidad", value: "mentalidad" }
+          - { label: "Equipamiento", value: "equipamiento" }
+      - { name: "tags", label: "Etiquetas", widget: "list", required: false }
+      - { name: "cover", label: "Imagen de portada (opcional)", widget: "image", required: false }
+      - { name: "updated", label: "Fecha de actualización (opcional)", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", required: false }
+      - { name: "draft", label: "Borrador (no se publica)", widget: "boolean", default: false, required: false }
+      - { name: "body", label: "Contenido", widget: "markdown" }
+
+  # ---------- RECURSOS ----------
+  - name: "recursos"
+    label: "Recursos"
+    label_singular: "Recurso"
+    description: "Materiales descargables (PDF, planillas, guías)."
+    folder: "src/content/recursos"
+    create: true
+    extension: "md"
+    format: "yaml-frontmatter"
+    slug: "{{slug}}"
+    sortable_fields: ["date", "title"]
+    fields:
+      - { name: "title", label: "Título", widget: "string" }
+      - { name: "description", label: "Descripción", widget: "text" }
+      - { name: "date", label: "Fecha", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - name: "tipo"
+        label: "Tipo"
+        widget: "select"
+        default: "pdf"
+        options:
+          - { label: "PDF", value: "pdf" }
+          - { label: "Planilla", value: "planilla" }
+          - { label: "Guía", value: "guia" }
+          - { label: "Video", value: "video" }
+      - { name: "archivo", label: "Archivo (PDF / planilla)", widget: "file", required: false }
+      - { name: "tags", label: "Etiquetas", widget: "list", required: false }
+      - { name: "draft", label: "Borrador (no se publica)", widget: "boolean", default: false, required: false }
+      - { name: "body", label: "Notas (opcional)", widget: "markdown", required: false }

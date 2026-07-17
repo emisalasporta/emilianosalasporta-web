@@ -1,0 +1,38 @@
+# Lo que NO se manda al servidor cuando se construye la web.
+# Cuanto menos viaje, más rápido el deploy.
+
+# Las dependencias se instalan limpias en el servidor con `npm ci`.
+# Mandar las de acá sería lento y encima pueden ser de otro sistema operativo.
+node_modules/
+
+# El sitio se construye allá, no acá.
+dist/
+.astro/
+
+# Historial de git: el servidor no lo necesita para construir.
+.git/
+.gitignore
+
+# Cosas de la compu de Emiliano
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Los ayudantes de escritorio: solo sirven en Windows, en el servidor no pintan.
+*.bat
+*.url
+COMO-CARGAR-CONTENIDO.txt
+AGENTS.md
+CLAUDE.md
+README.md
+
+# Los originales pesados: la web usa las versiones de public/ y src/assets/.
+# (foto-emiliano.jpg de la raíz y logo.png de la raíz son los archivos fuente)
+/foto-emiliano.jpg
+/logo.png
+
+# Variables de entorno, por las dudas
+.env
+.env.*

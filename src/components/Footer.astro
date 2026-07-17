@@ -1,0 +1,67 @@
+---
+const year = new Date().getFullYear();
+const links = [
+  { href: '/blog', label: 'Blog' },
+  { href: '/herramientas', label: 'Herramientas' },
+  { href: '/recursos', label: 'Recursos' },
+  { href: '/sobre-mi', label: 'Sobre mí' },
+];
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <div class="footer-brand-top">
+        <img src="/logo.png" alt="" class="footer-logo" width="30" height="30" />
+        <span class="footer-name">emiliano salas porta</span>
+      </div>
+      <p class="muted footer-tag">Entrenador de deportes de resistencia · Trail y ultradistancia.</p>
+    </div>
+
+    <nav class="footer-nav" aria-label="Enlaces del pie">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+  </div>
+
+  <div class="container footer-bottom">
+    <span class="muted">© {year} Emiliano Salas Porta</span>
+    <span class="muted footer-made">Hecho con dedicación para la comunidad del trail.</span>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding-block: 2.5rem 1.5rem;
+  }
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  .footer-brand-top { display: flex; align-items: center; gap: 0.55rem; }
+  .footer-logo { width: 30px; height: 30px; flex-shrink: 0; }
+  .footer-name {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+  .footer-tag { font-size: 0.9rem; max-width: 22rem; margin-top: 0.5rem; }
+  .footer-nav { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; align-items: flex-start; }
+  .footer-nav a { color: var(--muted); font-size: 0.95rem; }
+  .footer-nav a:hover { color: var(--accent); }
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .footer-made { font-family: var(--font-mono); font-size: 0.78rem; }
+</style>

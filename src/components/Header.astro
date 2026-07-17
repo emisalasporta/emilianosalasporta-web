@@ -1,0 +1,164 @@
+---
+const links = [
+  { href: '/', label: 'Inicio' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/herramientas', label: 'Herramientas' },
+  { href: '/recursos', label: 'Recursos' },
+  { href: '/sobre-mi', label: 'Sobre mí' },
+];
+
+const path = Astro.url.pathname;
+const isActive = (href) =>
+  href === '/' ? path === '/' : path === href || path.startsWith(href + '/');
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="/" class="brand" aria-label="Emiliano Salas Porta — Inicio">
+      <img src="/logo.png" alt="" class="brand-mark" width="38" height="38" />
+      <span class="brand-text">
+        <span class="brand-name"><b>emiliano</b> <span class="brand-last">salas porta</span></span>
+        <span class="brand-sub">Running · Trail · Ultra</span>
+      </span>
+    </a>
+
+    <div class="header-actions">
+      <nav class="site-nav" aria-label="Navegación principal">
+        <ul>
+          {links.map((l) => (
+            <li>
+              <a
+                href={l.href}
+                class:list={['nav-link', { active: isActive(l.href) }]}
+                aria-current={isActive(l.href) ? 'page' : undefined}
+              >
+                {l.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <button class="nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="site-nav">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 64px;
+  }
+  .brand { display: flex; align-items: center; gap: 0.6rem; }
+  .brand:hover { text-decoration: none; }
+  .brand-mark { flex-shrink: 0; width: 38px; height: 38px; }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+  .brand-name {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: 1.06rem;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .brand-name b { font-weight: 700; }
+  /* Fino a propósito: cuanto más liviano el apellido, más pega el "emiliano". */
+  .brand-last { font-weight: 300; }
+  .brand-sub {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: justify;
+    text-align-last: justify;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+  .site-nav ul { display: flex; align-items: center; gap: 0.25rem; list-style: none; }
+  .nav-link {
+    display: inline-block;
+    padding: 0.45rem 0.7rem;
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+  .nav-link.active { color: var(--text); }
+  .nav-link.active::after {
+    content: '';
+    display: block;
+    height: 2px;
+    margin-top: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .nav-toggle:hover { background: var(--surface-2); }
+
+  @media (max-width: 760px) {
+    .brand-name { font-size: 1rem; }
+    .nav-toggle { display: inline-flex; }
+    .site-nav {
+      position: absolute;
+      left: 0; right: 0;
+      top: 100%;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 0.5rem 1.25rem 1rem;
+      display: none;
+    }
+    .site-header.open .site-nav { display: block; }
+    .site-nav ul { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+    .nav-link { padding: 0.65rem 0.5rem; }
+    .nav-link.active::after { display: none; }
+    .nav-link.active { color: var(--accent); }
+  }
+</style>
+
+<script>
+  const header = document.querySelector('.site-header');
+  const toggle = document.querySelector('.nav-toggle');
+  if (header && toggle) {
+    toggle.addEventListener('click', () => {
+      const open = header.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    // Cierra el menú al tocar un enlace (en mobile).
+    header.querySelectorAll('.site-nav a').forEach((a) => {
+      a.addEventListener('click', () => {
+        header.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+</script>

@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+import { CATEGORIAS } from '../../consts';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return Object.keys(CATEGORIAS).map((slug) => ({
+    params: { categoria: slug },
+    props: {
+      posts: posts
+        .filter((p) => p.data.category === slug)
+        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+    },
+  }));
+}
+
+const { categoria } = Astro.params;
+const { posts } = Astro.props;
+const label = CATEGORIAS[categoria as keyof typeof CATEGORIAS];
+---
+
+<BaseLayout title={`Categoría: ${label}`} description={`Entradas de la categoría ${label}.`}>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Categoría</p>
+      <h1>{label}</h1>
+
+      {posts.length === 0 ? (
+        <p class="muted cat-empty">Todavía no hay entradas en esta categoría.</p>
+      ) : (
+        <div class="grid cat-grid">
+          {posts.map((p) => <PostCard post={p} />)}
+        </div>
+      )}
+
+      <p class="cat-back"><a href="/blog" class="btn btn-ghost">← Todo el blog</a></p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .cat-grid { margin-top: 1.75rem; }
+  .cat-empty { margin-top: 1.5rem; }
+  .cat-back { margin-top: 2.5rem; }
+</style>

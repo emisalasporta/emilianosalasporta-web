@@ -1,0 +1,17 @@
+---
+/* Isotipo: una cordillera con la cumbre más alta "nevada" en color de acento.
+   El cuerpo usa currentColor (se adapta al texto) y la cumbre usa el acento. */
+const { size = 28, class: className } = Astro.props;
+---
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 34 32"
+  fill="none"
+  aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path d="M2 28 L12 12 L17.5 19 L24 9 L32 28 Z" fill="currentColor" />
+  <path d="M24 9 L27.1 14 L20.9 14 Z" fill="var(--accent)" />
+</svg>

@@ -1,0 +1,17 @@
+# Saltos de línea normalizados a LF dentro del repo (así el deploy en Linux no
+# ve cambios fantasma). En tu Windows los archivos quedan como están.
+* text=auto eol=lf
+
+# Binarios: que git no los toque nunca.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+# Los ayudantes de Windows sí necesitan CRLF para funcionar bien.
+*.bat text eol=crlf
+*.url text eol=crlf

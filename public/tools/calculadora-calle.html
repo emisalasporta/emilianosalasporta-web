@@ -1,0 +1,2333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<!--
+  ============================================================
+  CALCULADORA DE RUTA
+  © 2026 Emiliano Salas Porta — emilianosalasporta.cloud
+
+  Autor: Emiliano Salas Porta, entrenador de trail y ultradistancia.
+
+  Usala libremente para entrenar: corré, planificá tus carreras,
+  compartila con quien quieras y guardate el archivo para tenerlo
+  a mano sin internet. Eso es exactamente para lo que existe.
+
+  El código y el modelo de cálculo son de su autoría. No los
+  copies, republiques ni los integres en un producto propio sin
+  su permiso.
+
+  La calculadora es una herramienta de estimación, no una
+  promesa de rendimiento ni consejo médico.
+  ============================================================
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Este archivo se sirve suelto y también se descarga. La página que vale para
+     el buscador es /herramientas/<nombre>, que lo explica y lo ofrece: sin esto,
+     los dos compiten por el mismo lugar en Google. -->
+<meta name="robots" content="noindex, follow">
+<title>Calculadora de Ruta — Emiliano Salas Porta</title>
+<meta name="description" content="Pronóstico de tiempos para carreras de calle: 5K, 10K, 21K, 42K y ultradistancia. Una herramienta de Emiliano Salas Porta.">
+<style>
+/* ============================================================
+   TIPOGRAFÍAS — archivos locales, cero pedidos de red.
+   Van declaradas acá adentro a propósito: la calculadora se monta
+   dentro de un <iframe> y un iframe NO hereda las @font-face del
+   documento padre. Sin esto, todo caía a la fuente del sistema.
+   Las rutas son relativas (../fonts/) para que también funcionen
+   abriendo el archivo con doble clic, sin servidor y sin WiFi.
+   ============================================================ */
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-400-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-600-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:700;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-700-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter Variable';font-style:normal;font-weight:100 900;font-display:swap;
+  src:url('../fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face{
+  font-family:'JetBrains Mono Variable';font-style:normal;font-weight:100 800;font-display:swap;
+  src:url('../fonts/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+/* ============================================================
+   CALCULADORA DE RUTA — identidad "SYSTEM // TRAIL"
+   Paleta cyberpunk (espejo de src/styles/global.css):
+   fondo #0a0b10 · superficie #12141c · superficie-2 #181b26
+   texto #e7ecf3 · tenue #8a93a6 · acento neón #2fb8ff
+   contrapunto magenta #ff2e9a · sobre-acento #062229
+
+   Los nombres de variables y de clases se conservan tal cual:
+   el motor de cálculo depende de ellos. Solo cambian los valores.
+   ============================================================ */
+:root{
+  --bg-1:#0a0b10;
+  --bg-2:#12141c;
+  --bg-3:#181b26;
+  --bg-card:#12141c;
+  --border:#262a38;
+  --border-2:#333a4a;
+  --txt-1:#e7ecf3;
+  --txt-2:#c3ccda;
+  --txt-3:#8a93a6;
+  --txt-4:#6b7386;
+
+  /* Acento de marca (ocupa el lugar del rojo viejo). NO es color de zona. */
+  --red:#2fb8ff;
+  --red-2:#7cd4ff;
+  /* Azul hondo del degradé de barras. Aclarado de #1a86c4 a #2196d8 para
+     que el ritmo escrito encima (--on-accent) llegue a 5.06:1 y cumpla AA. */
+  --red-3:#2196d8;
+  --on-accent:#062229;
+  --accent-2:#ff2e9a;
+
+  /* Colores SEMÁNTICOS de estado (ok / atención / info). Cada uno tiene
+     tono Y luminancia propios, así se distinguen entre sí, del acento de
+     marca, y también para quien no separa bien verde de rojo. */
+  --green:#2fe39b;   /* ok      — menta, la más clara */
+  --yellow:#ff9d3d;  /* atención— ámbar, más oscuro que el verde */
+  --blue:#a58bff;    /* info    — violeta, no compite con el acento cian */
+
+  /* Tipografía: archivos locales declarados arriba en @font-face.
+     Los nombres coinciden con los de src/styles/global.css. */
+  --font-head:'Chakra Petch',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-body:'Inter Variable','Segoe UI',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono Variable',ui-monospace,'Cascadia Code','Consolas',monospace;
+
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 8px 28px rgba(0,0,0,.45);
+  --shadow-red:0 0 18px rgba(47,184,255,.35);
+  --trans:180ms cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-body);
+  background:radial-gradient(1200px 800px at 10% -10%,var(--bg-3) 0%,var(--bg-1) 55%) fixed,var(--bg-1);
+  color:var(--txt-1);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 22px 64px}
+
+/* ========== ENCABEZADO DE LA HERRAMIENTA ========== */
+.tool-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;
+  margin:8px 0 30px;padding-bottom:20px;
+  border-bottom:1px solid var(--border);
+}
+.tool-head h1{
+  font-family:var(--font-head);
+  font-size:clamp(26px,4vw,38px);font-weight:700;
+  letter-spacing:.01em;line-height:1.12;margin-bottom:8px;
+}
+.tool-head p{color:var(--txt-3);max-width:60ch;font-size:15px}
+.tool-head-actions{display:flex;gap:10px;align-items:center}
+.tool-head-actions .btn-ghost{font-size:13px}
+
+/* ========== TABS ========== */
+.tabs{
+  display:flex;gap:4px;padding:6px;margin-bottom:22px;
+  background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:1;min-width:140px;padding:13px 14px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  background:transparent;border:none;color:var(--txt-3);
+  font-family:inherit;font-size:13px;font-weight:600;letter-spacing:.3px;
+  cursor:pointer;border-radius:var(--radius-sm);
+  transition:all var(--trans);white-space:nowrap;
+  font-family:var(--font-head);
+}
+.tab svg{width:17px;height:17px}
+.tab:hover{background:rgba(255,255,255,.04);color:var(--txt-2)}
+.tab.active{background:var(--red);color:var(--on-accent);box-shadow:var(--shadow-red)}
+.tab .badge{font-size:10px;background:rgba(6,34,41,.18);padding:2px 6px;border-radius:10px}
+
+/* ========== PANELS ========== */
+.panel{display:none;animation:fadein .3s ease}
+.panel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{
+  background:var(--bg-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:18px;
+}
+.card h2{
+  font-family:var(--font-head);
+  font-size:17px;font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:10px;
+}
+.card h2 svg{width:19px;height:19px;color:var(--red)}
+.card-sub{color:var(--txt-3);font-size:13px;margin-bottom:18px}
+
+/* ========== GRID ========== */
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:880px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+@media(max-width:680px){.wrap{padding:18px 14px 48px}.card{padding:18px}}
+
+/* ========== FIELDS ========== */
+.field{
+  background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:13px 14px;transition:all var(--trans);position:relative;
+}
+.field.disabled{opacity:.6}
+.field.disabled > input,
+.field.disabled > select,
+.field.disabled .field-label{pointer-events:none}
+.field.disabled .field-label .tt{pointer-events:auto}
+.field.disabled > .field-head .toggle{pointer-events:auto}
+.field-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;
+}
+.field-label{font-size:12px;font-weight:600;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--txt-3);display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+.field-label .info{
+  width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,.08);
+  color:var(--txt-3);display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;cursor:help;flex-shrink:0;
+}
+.field-label .info:hover{background:var(--red);color:var(--on-accent)}
+.field input[type=text],.field input[type=number],.field input[type=time],.field select{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--txt-1);font-family:inherit;font-size:15px;font-weight:600;
+  padding:4px 0;
+}
+/* Datos numéricos en mono: aire de HUD */
+.field input[type=number],.field input[type=time]{
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;
+}
+.field:focus-within{border-color:var(--border-2)}
+.field select{cursor:pointer}
+.field select option{background:var(--bg-3);color:var(--txt-1)}
+.field .unit{font-size:12px;color:var(--txt-4);font-weight:500;margin-left:4px}
+
+/* Toggle switch */
+.toggle{
+  position:relative;width:34px;height:18px;background:var(--bg-1);
+  border-radius:20px;cursor:pointer;transition:all var(--trans);
+  border:1px solid var(--border-2);flex-shrink:0;
+}
+.toggle::after{
+  content:"";position:absolute;top:2px;left:2px;
+  width:12px;height:12px;border-radius:50%;background:var(--txt-3);
+  transition:all var(--trans);
+}
+.toggle.on{background:var(--red);border-color:var(--red)}
+.toggle.on::after{left:18px;background:var(--on-accent)}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 18px;background:var(--red);
+  color:var(--on-accent);border:none;border-radius:var(--radius-sm);
+  font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;cursor:pointer;transition:all var(--trans);
+  box-shadow:var(--shadow-red);
+}
+.btn:hover{transform:translateY(-1px);background:var(--red-2);box-shadow:0 0 24px rgba(47,184,255,.45)}
+.btn:active{transform:translateY(0)}
+.btn svg{width:15px;height:15px}
+.btn-ghost{
+  background:transparent;border:1px solid var(--border-2);color:var(--txt-2);box-shadow:none;
+}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.10);transform:none;box-shadow:none}
+.btn-sm{padding:7px 12px;font-size:11px;letter-spacing:.3px}
+.mode-opt.active{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.10)}
+
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.row.between{justify-content:space-between}
+
+/* ========== SEGMENTS TABLE ========== */
+.seg-table{
+  width:100%;border-collapse:separate;border-spacing:0;
+  font-size:13px;overflow:hidden;
+}
+.seg-table-wrap{
+  overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg-3);
+}
+.seg-table th,.seg-table td{
+  padding:10px 8px;text-align:center;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.seg-table th{
+  background:var(--bg-1);font-weight:600;color:var(--txt-3);
+  font-size:11px;letter-spacing:.3px;text-transform:uppercase;
+  position:sticky;top:0;z-index:1;
+}
+.seg-table td:first-child{text-align:left;font-weight:600}
+.seg-table tr:last-child td{border-bottom:none}
+.seg-table input,.seg-table select{
+  width:100%;background:var(--bg-1);border:1px solid var(--border);
+  border-radius:6px;padding:6px 8px;color:var(--txt-1);font-family:inherit;
+  font-size:13px;outline:none;
+}
+.seg-table input[type=number]{font-family:var(--font-mono)}
+.seg-table input:focus,.seg-table select:focus{border-color:var(--red)}
+.seg-table input[type=number]{text-align:right}
+.seg-table .seg-name{min-width:120px}
+.seg-num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.seg-row-del{
+  background:transparent;border:none;color:var(--txt-4);cursor:pointer;
+  font-size:16px;line-height:1;padding:4px 8px;border-radius:6px;transition:all var(--trans);
+}
+.seg-row-del:hover{color:var(--accent-2);background:rgba(255,46,154,.10)}
+
+/* ========== RESULT ========== */
+.result-hero{
+  background:linear-gradient(135deg,rgba(47,184,255,.10),rgba(0,0,0,0) 60%),var(--bg-2);
+  border:1px solid var(--border-2);
+  border-radius:var(--radius);padding:32px 28px;margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.result-hero::before{
+  content:"";position:absolute;top:-60px;right:-60px;width:240px;height:240px;
+  background:radial-gradient(circle,var(--red) 0%,transparent 70%);
+  opacity:.14;filter:blur(4px);pointer-events:none;
+}
+.result-hero .r-label{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--txt-3);margin-bottom:8px;position:relative}
+.result-hero .r-time{
+  font-family:var(--font-mono);
+  font-size:clamp(42px,7vw,72px);font-weight:700;letter-spacing:-.02em;line-height:1;
+  position:relative;font-variant-numeric:tabular-nums;
+  color:var(--red);text-shadow:0 0 28px rgba(47,184,255,.35);
+}
+.result-hero .r-sub{margin-top:8px;font-size:14px;color:var(--txt-2);position:relative}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
+.kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px}
+.kpi .k-v{font-family:var(--font-mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .k-s{font-size:12px;color:var(--txt-3);margin-top:2px}
+.kpi .k-v small{font-size:13px;color:var(--txt-3);font-weight:500;margin-left:4px}
+
+.muted{color:var(--txt-3)}
+.divider{height:1px;background:var(--border);margin:14px 0}
+
+/* Bars */
+.bar-list{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 80px;gap:12px;align-items:center;font-size:13px}
+.bar-row .bar-name{color:var(--txt-2);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.bar-row .bar-bg{height:26px;background:var(--bg-3);border-radius:6px;overflow:hidden;position:relative}
+.bar-row .bar-fill{
+  height:100%;background:linear-gradient(90deg,var(--red-3),var(--red));
+  border-radius:6px;display:flex;align-items:center;padding:0 8px;
+  color:var(--on-accent);font-family:var(--font-mono);font-size:11px;font-weight:600;min-width:max-content;
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.bar-row .bar-val{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--txt-2);font-weight:600}
+@media(max-width:600px){.bar-row{grid-template-columns:1fr;gap:4px}.bar-row .bar-val{text-align:left}}
+
+/* Zonas */
+.zone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.zone-card{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.zone-card .z-n{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;color:var(--txt-4);letter-spacing:.4px;margin-bottom:4px}
+.zone-card .z-t{font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--txt-1);margin-bottom:2px;font-variant-numeric:tabular-nums}
+.zone-card .z-p{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums}
+.zone-card .z-d{font-size:11px;color:var(--txt-3);margin-top:4px}
+
+/* Strategy */
+.strat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:720px){.strat-grid{grid-template-columns:1fr}}
+.strat-card{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:14px}
+.strat-card.rec{border-color:var(--red);background:rgba(47,184,255,.06)}
+.strat-card .s-n{font-family:var(--font-mono);font-size:12px;text-transform:uppercase;color:var(--txt-4);letter-spacing:.4px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.strat-card .s-n .tag{font-family:var(--font-mono);font-size:10px;color:var(--red);font-weight:700;border:1px solid var(--red);padding:1px 6px;border-radius:10px}
+.strat-card .s-h{font-size:14px;font-weight:600;margin-bottom:8px}
+.strat-card .s-row{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:13px;padding:3px 0;color:var(--txt-2);font-variant-numeric:tabular-nums}
+.strat-card .s-row b{color:var(--txt-1)}
+
+/* Notice — estados semánticos, claramente distintos entre sí:
+   neutro (borde gris) · info (cian) · ok (verde menta) · warn (ámbar) */
+.notice{
+  border-left:3px solid var(--border-2);background:var(--bg-3);
+  padding:12px 14px;border-radius:6px;font-size:13px;color:var(--txt-2);margin-bottom:14px;
+}
+.notice b{color:var(--txt-1)}
+.notice.warn{border-color:var(--yellow);background:rgba(255,157,61,.07)}
+.notice.ok{border-color:var(--green);background:rgba(47,227,155,.07)}
+.notice.info{border-color:var(--blue);background:rgba(165,139,255,.07)}
+
+/* Footer / tips */
+.footnote{
+  font-size:12px;color:var(--txt-4);margin-top:24px;text-align:center;
+  padding-top:18px;border-top:1px solid var(--border);
+}
+
+/* ========== MARCA ==========
+   El logo va embebido como data URI y se declara UNA SOLA VEZ acá.
+   Todo lo que lo necesite (la firma al pie, el encabezado de la hoja
+   impresa) reusa esta clase y solo le cambia el tamaño. */
+.marca-logo{
+  background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABPESURBVHhe7VsLcBT3faZpkiaepEmaR9PESaftuG3SGLCTNB5nnNSdOvE0dTpt4kzcNHUyTozu9m7few89kE3s2MbGNjjYBtsI9AC93+iBQEgIvZBO0klCIAE2JjHGBp2EJJB0t/v7Or/dExwLGAfwIxl/M9/8V7e/3dv/t9//93+dFi16D+/hPbwTyH4JH8rej089MEqfz47StdnD+Kyxjz7qjvujQDbwvvAgLQ5G6ReBAWudErHa1D56UeulcbWHZvRemtEimNT76ajWT1F9kEqUQVqujtBtwgh90n2/Pxgo0fhNwSitUvtpr9wLBPYD4VEgsBfQo4DaDyh9gBpxjrUBQBt24oIHAX0vIPfRa8oglRkjdFfwED7m/o53JYxB3KkNoIUrFB4D9EFA2gOI3YDcDSjMPYDSC6g9gMplLyBzzB7Av8AeQB5wBAmNAtogHTH20gp5hP7K/Z3vCgQG6LvBKHWE9gEGv709gNwFSF1ORUNDQNYokDkKpO8FAv2A3kOW3kOm0QsEo0B4JOmSEccVUo8jHlMZBEKHbCGOa8MUvnsnPuR+hncESgf9hdZn5QSHgNCwU2mlE9C6gfAQkLnfrmhc76GI2kvr9H5T0Prpe+mD9LVA//w/BSL0Jc4RRm/8FrXPvEuJ4D4lQrVahI7y/dL57fedFYKdlX6QmxL1a3vpW+7neVshddO3tAEa44dU+Y13OBXP2gdkRoH0AdqtD5h+dYD+3n3tpSD14+Naf+J7ej826v3WZOYBwOh3mpLUDYRGAGOYLHXYzHJf+7ZA7qZf6H0UN6KA1O689fQhIJ2tPEBVRj/d6r7mcqEO0ReCQ7TCGKDj6WNO/mAR1D4g4xBgDFqlq47Qh93XvWWQuimDLc9vXdwNqPzWR4FwP3r1fvqOO/5qwdhHnzMGaX1gCGCyCJxrWITAMLWGBvEJ9zVXHXI7ZYU5yXUC4i5A7wVCUcCIWA/dWYwPuuPfCiiD9O/BQTrCTY97FqadF4ap45G3ckDlbyOBs7nS4VQ+2MekaWUP/cAd+1Yj2Sx2ZR1wHMjJN4NFiFJjNvB+d/wVQ26nf9V6ye7HpYXKR+i4v51udse+XcjeiQ8Fo1STddAZX3CTyHyRcwOtc8deEdIG6DNKN72iRQBfK8D9dihCE2I7fd0d+3YjeyfeH4pSLfcS7AK5B+DjQJR+6Y69bEhtVMJJz98CqJ227RNyG/7NHfdO4d7eV64xotSdcQAIDwMPHAUCfVa1O+6yoHbS99nuUqtD7urEDtPnjnunERzGF4ODNBqMUncwip95rkaPcOcwPijvov1BHoo2O3282k5l7rh3C5SOqzwWkNtwb7gfkJsBox0wOq2YsfvU59xxf5S4txcfkJqtA4FOQN7Bw1pAaTM1d9wfLZQW+q8gT0m3O29f2WUdvvulqz8Dyz5EvswjVm3Wb60Xssfoy+7z7xiUnVQb4rl7E5AZAbTdZLhjrhTBMVp33zgQfAVYfhzIeMkaNw7S19xxlwO6PucmWrJxBS3JvZ8W537Dff4NoWynz8s76JTWDOg7AaPFmpF7ru5ChDZiPZj5KqDsBcQhQB4CwoeB9BfpWOjQ7z97TAUted7ADfnAjUUOb8iDufh53R13UWg76KchbvuNQJjn9q1U7o65EqjDpIZ/61ReGgS0fUkhokDoZSB80DqYvY8uK9liSc5SLN0ELMkBFq93yMdLN4Ju2LjYHX9BKDsoJ9QBSPVARhcQaKW73TGXC32I/s94EZC48jx15vW/ITrJq0jaCCDxUtoRXgazItlj9Ofu6y8F++1/tehs5Rd4YxFo8QuXTuK8iqs00RBbX2kEtCZKGC10nTvucqANJO7Q9/EiBiD1AZkvAxn7KeIfo2tD+82f8jiehVD6gcwjQHAfNWUPD/9eM0xaukG6oABfZQFy/O7482C3/3qaURoAYwegNtHY1Zhdyb10izZCsypbncfrL9qV35/9Ej67EBMcIokrHuBmkRQoOGwVnXunNwYW6Z+lJRvmsTT3bOWX5oKW5Mzh+oK/dcefh1ATfV1vApStQKgV0Juoyh1zIah76ObQiFUcGKUqdSjxH6nn9EFarI3QOFucV3x5lTe8j46ERnHeA6UPU/bylwGNl80jjgjGsPW0O+5C0IfoB3fF6A5adP+ttCR3HDcWgmktzY3R0o0/dMdfEFoj3RFsBpQaIKPNFuBJd4wb3m66XYnSfJBnYaNsXV69NX/O57T99DfqoPU7rryvCzD28Vul49oIfcV9nwUEh2g1V1yOAFIESD/Mewb0gDsuFdogvhoYpTl9lGZ/SPTPtCj8aVpS+BO6YfP/0vXrr3XHXxTadronnWd9VUkBGingjkmFr4tukfvoFLdpXztB4OSZXOcXeqyHfN3WiDoE+HjBNGqv2kwFonST+z5uGFErL3TYaS4yrz3wPD9qXvBZjL10XWAfHQ2OsluA9EOA/zA96457U9AbyJ+xE1ArgQye+zeR1x2zAHl3/GtyD03wzo93lwVfJ+DvSh63A+qgs9nhbSP7beqDFBd66LZzbgL8SdYoiXo/fTP1Y07GepRq7crwkng/wA4TByktNc6I0OfUEToQ4PWAHhYYCO0nUkbox3zv1Ng3BbWepIxmQKsAMncCgW3kcccw/Lvoy3K3dUzpAbw7LXs1xtdmzfl3WVO8Rie0WBBaTHhaTFsUZQDwd9OP3PdReign8yiLY53SBuicERuv9AYGqS3MFe8CxD5A502TYbqLzxvH6aPiIEW0g4BvDzsEYBcoA/Tj1Psw1q3DB9yfXRB6PQmZ2wGtHMhqBgINJLtj/Lvp7+QOepnX4rxNZnLLiyakzvg3uMtUOuiw0QP4dlgQ25zNDG8HLXPfR9pDj+v7gbQOsvt/NUqvSRH6UmpMqPvkJ41+K6rvg928uDlIPWSKA5S1rNdqUfYD3m7Az81kjPPGuQ5haAMUXv47a0wboHvc586DvpX+J7wNUMoAdoJRRytSzy/roM9LbTSmdQFCownZ3hOgad/u+C0LMVILfUnpoFdD/bxHAPh2nd92xS7K5vGAZzchbZcJT6tp9/9SD70o9uKLqbH+LrpW77cO8eapdzfBx3sCI4A4AHg6AV8PYBwA/L0UTr2OIfZQQBsD0n9rrxJdukfTKuPfCtQ5DshoAgJ1lLNwzr9r6tNSKw3q/KUNJuRWQN1N82KLq10vWrRIaKUbM6I0pLbR/e5zYhtJXFnvLoJ3ZwKeJNOaE/aOsb+bhu7txadSrzH66DolYr2qDgDCboK3neBpB4ROp1tVIvRoajzD10PLOAELXc5us9Z96R5tkVhD16mVlDAqgXA9oNdYnfy5dxgfkXdYXTw19tUm7DUCtZUsf1PiP933OAu8z/2JrxU/U7oAXzPBuy0Ob1MCQlMCnqY4vNuZCXvHR+iy2u99BdekXit30I1qhCYMXp9sd/JC+gF2jbUhNY7h76UfsUO8nYBnV3KE2UOXXsrjpWalwno5UAMYVYBeRUfVVvqCtI0aA22AryYBqRFQWwBpm2knozcLaQf9t9xCJG4HhPo5eBvmbQqN8xAa4hBYkG1xeLbF7d8NeHdbdXcCf5p6D62TvqH3UUTdQ5YeoSltj7XGne2Fdvquv4/i/ObTWhwBOHfIfW9yIVeroKpwA6CWENRya16uTrykNQJipQl5K0+PAX+9+Qv3dUqNGVQbrF+5P2f4axO3K01WXGogCDWzEGpn4d06C6FuzqaXWT/nCNEQh6dh3t5687YkCt33ys7G+7IP05eDrlzBSGujm/zd1jTnibSdjgBCOzuGprQB+ow7/oJQK0lN50RYYkIutaBVA1JpHEoVIdQM+Gvi5/UMSun8g+nNzuBJqrN+k3rOtzX+TbnempHrCL7yUxAqTkGoOg2hehbemll4ak7Dw2XtLDxbZ+Gpc0rv1nl7t1lopbWp97sYxHb6ir/DOs4jzmU7LEeAnQCPU/wd1OqOvyiUCrperzDjailBLk5ALo5DKbMQ3g5I1fEMd7xUPBcObQWkolmIRbPgJCpWxDf5K+I3i5XzP5cr4xNqDeArmYFQOgNv2Qy85afgq5iFwKw8DS+zahbeKi5Pw1vtUKidh7Yb8LVYa779BpMysYW+7m+1fsc71WnbEli23UJaM+DhMQ0PyLoRcl9zUdxbjWuUksQJvQyQC+NQiy1ksCMqrPPG43JBXApWAPLmWfjzpuDPn4aYPwNOoiyaVgXIJXH4t0xDLJyBv+gUfCWnbCGE0lMQys6SReGSXbLgFG/FDITKWajNgLDN7PbuMO/irvhO4IPKEfqw1IilQpP1iG+bOSvthO0aT30cadsJaZxrdgJiO5lSlP7B/ewXhVKSyA1UAMrmOLRCE1mc9MqtJ9xxWv78PcESQM2dhbxhCtLGKYgbT0Lc5FDKm4GYP50U5iT8+VPwb56Gn4WwxZiBr3jGFsRXfMr+Wyiehrdk2i6FEufYWzIFT+k0pDpAbgI8NXMnha3zB4Ta+ZeFmjl7z0KojcNTeRqe6lksq4tjWRPBs935eY6/jba7n/2i0AriORlVgJI3BzU/juX1gFZmrXfHyXnzPwoWWNA2nob03CRk5vMnIb0w6XCDQ5G5cRJ+5qaT8OWehC9/Cr4Ch7YgW2bg2zJ9loX8mUPflikIRcxphyUz8FfGIdYQxGoTQvlpeEpn4Cmbgad8xhYhrcFCWqMFT5OzfS910vfdz39BaJsTq5ZX8xudh5o7h6waQC+18s+L2zB3R2Bj3NQ3zEJ+dsKmxOW6ScjrJyE971B8bsLmgiDihgn4cyZsMcRNUxBzpyHmTdl0ms40xAVRuGTHFCSFKFzgDHxF0/AWTcHLZfG07SKheAbekhl4auaTAhBUexufIjyxctfhPGilp/9a3RyHUQCoG+exvAoIltA27nJS4wK5idvCGxJzwefiUNZOQF47AeU3DuWnY5CfiUF6JnaOMNL6CUgsxvMTEF+YsIWwnZGTJDcbm+ySSfhzTzpcOGaBmEnX+DY7FLZMnXENiyaUzcJbb9kUtgEB/gVLO52zOHNR+Ivo03pBfCa7ElhRC4SKrLbsYnwkNUYpom+HK2gmPRfQnpyEtmYS6poJqKsdKqtjkNfEID81Dvk3zBjktSxKUoh1MUeM9bEzgkhJ2sIsMCmO4xbHMQtNyJ87BX/uZLIpsThJgViAWhNCHUGoAwLdgNhs1ac+/yWRXkg/WF5Be9JLKF+qwMdTzwVK4jcHy6yT4TJAL7BgrD0FfdUk9Mcnoa6KQV01DvXxGLTHY3apPhmDujoGZXWqGOOOIOyUp2OQno3ZoohnhHGc4jQhbjqOIP5k0znjGNs1SedsOAkpZwq+ijiErWSTh+lyK83wrDW1DlcEo8isW9EA6LkEI9+CkWdCXz0F7dEY1MfGz+OCEMrj41CePGELoayJOXyKyWKMQ7JFGYf09Pg5gojrxp1yfQzic0k+zzzrFNs5nGuK5+Gv4RGmBX8dEN7Dcw3zvOn3FUEvStweKrWs8BbA2GRCZwE2JaA9MQV1ZQzqo+NQklQfi0F7jIVhnnBoO8RxifoEc9xuMo4oLM64LQznFGntCZvi0ycg2UwK9Mw4xGeTQj2TzDGF8xCrLPgrTfirCen869QmK9f9/FcF2hbznqxKIFgAGBsTthC2GGtmoDwSg7Jy/AzVR2OOIPy3LcwJKLY7YtBWObTFOMNxu9nYonCzWX0C8prjkNYch7yGj8fP5BbbTWsnIW+Zh1RJEMsT8FdYCPEwvNFqub1u7M/cz37VoBeYIbuHyAeMnASMXBNGngX9mVmoKycgP3Qc0kOvQ374OORHTiRL5ut2qaw8cUYUdo1Ddsl4ikuSTuG/Vy24J/k3xz09BaUoAbmCIJVb8JdbCLXwRo7V66m9Cr8MuRQCm83w8gogfMYJCScvbEhAe3wK0oOvQ3zwGMRfvwaJ+VCSDzMXxElyJYuSFMZuPg7ZLbZrHj3uCLSS88oE1BdOQy5JQC6z7ImaXA6EWwGt3urknsz9rG8ZwkXmL9OLLDOzOEWEPBMBdsO6OSiPxiA98BrEX70K8cFXIf76mC0ClwvHsi1GCm1BTtii2G55+HUoDx+HumoC6rpTUApNKKUWlKI45GLTXrjNagG0OqvyJ3knfu99xCuGUUi3phdZY/dzXsjj5JhAgPNCHueGBPT1c1BXT0F+ePyMGP5fHYX4wFFbFOnBYw5ZkAW3PHgM8q9fh/II9x4noT53GjxA46m5zWITSpGJMO9cbSUYtdY5a5ZvO3i8kFFMz2SWAMvLgAB3k+wGZjI/sEM0FuOpaShPTEJ+bALyynFID3OOOAH5kXHInDSfmIT61BS0daehbZqHtiUBtdCEuoWZsB3Ak7Tl24BQtTWg1ST+xf087xjCpXRrerHVklUGMNkRgY3m2eaRm4CelyzZHWcYh8bMnYeWF4eR7zhIy09AK0hys4UQ37cBCFbQsUCVGbg756Wr/nOdq4L00sQd6YVWY3gz0X0VQEYREMxN5gkm9xwLoiRFSC25W7VdlA8Ei4DMKiCzGgiWWYcDFWaWWEV/6f7OdyWCZbQkXGitCG0x+0L5VoKbx3282VICpG9xehDuSpl8zAOsjGJgeTlwP1eaXVRovhYstcpCVbjT65qX/EEhXIp/DBXSTwKF1kqjIF5vFJjDRn7iiJYXf13LjZ/QcuPHjPzEIT3P7AtsThSESxEKl9FtQvnJP9x/m3sj8Pw8uxrXeArwCWETfTJYjI/56+itG729h/fwHi6E/wfA+Xq6+e5A5QAAAABJRU5ErkJggg==');
+  background-size:contain;background-repeat:no-repeat;background-position:center;
+  display:inline-block;flex-shrink:0;
+}
+
+/* Firma al pie. Discreta a propósito: online la calculadora va debajo
+   del header del sitio, que ya muestra el logo y el nombre. Acá alcanza
+   con dejar dicho de quién es. Descargada, es la única marca. */
+.firma{
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;flex-wrap:wrap;text-align:left;
+}
+.firma-logo{width:28px;height:28px;opacity:.75}
+.firma-txt{display:flex;flex-direction:column;line-height:1.3}
+.firma-nombre{
+  font-family:var(--font-head);font-size:13px;font-weight:300;
+  letter-spacing:.02em;color:var(--txt-3);text-transform:lowercase;
+}
+.firma-nombre b{font-weight:700;color:var(--txt-2)}
+.firma-sitio{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--txt-4)}
+.firma-meta{
+  font-family:var(--font-mono);font-size:11px;color:var(--txt-4);
+  padding-left:12px;border-left:1px solid var(--border);
+}
+@media(max-width:520px){
+  .firma-meta{padding-left:0;border-left:none;flex-basis:100%;text-align:center}
+}
+
+/* Encabezado de la hoja impresa. Invisible en pantalla: en pantalla la
+   marca ya está (arriba en la web, o al pie en la firma). */
+.hoja-head{display:none}
+
+/* Helpers */
+.hint{font-size:12px;color:var(--txt-4);line-height:1.5}
+.pill{
+  display:inline-flex;gap:5px;align-items:center;
+  font-family:var(--font-mono);
+  font-size:11px;padding:3px 8px;background:var(--bg-3);
+  border:1px solid var(--border);border-radius:20px;color:var(--txt-3);
+}
+.pill.red{background:rgba(47,184,255,.10);border-color:var(--red);color:var(--red)}
+.hidden{display:none !important}
+
+/* Tooltip */
+.tt{position:relative;display:inline-block;cursor:help}
+.tt-body{
+  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--bg-1);border:1px solid var(--border-2);
+  padding:10px 12px;border-radius:8px;font-size:12px;
+  line-height:1.45;color:var(--txt-2);min-width:220px;max-width:280px;
+  opacity:0;visibility:hidden;
+  transition:opacity var(--trans), visibility 0s linear var(--trans);
+  z-index:9999;text-align:left;font-weight:400;text-transform:none;letter-spacing:0;
+  box-shadow:var(--shadow);pointer-events:none;white-space:normal;
+}
+.tt:hover .tt-body,
+.tt:focus-within .tt-body{
+  opacity:1;visibility:visible;
+  transition:opacity var(--trans), visibility 0s linear 0s;
+}
+
+/* Segmentos actions */
+.seg-foot{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+/* Quick pills distancia */
+.dist-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.dist-pills button{
+  background:var(--bg-1);border:1px solid var(--border);color:var(--txt-3);
+  font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.3px;
+  padding:5px 10px;border-radius:14px;cursor:pointer;transition:all var(--trans);
+}
+.dist-pills button:hover{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.08)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--red)}
+
+/* ============================================================
+   IMPRESIÓN — la hoja del plan de carrera
+   En papel va SOLO el Resultado: el plan que el atleta se lleva
+   en la mano. Sin pestañas, sin botones, sin formularios.
+
+   El truco es que toda la interfaz está escrita con var(--...),
+   así que damos vuelta los tokens acá adentro y el diseño entero
+   se traduce a papel solo. Después apagamos a mano los degradés,
+   glows y rgba() que quedaron hardcodeados fuera de los tokens.
+   ============================================================ */
+@media print{
+  /* --- Fuera del papel: lo que no es el plan ---
+     'Cómo funciona el cálculo' explica la matemática: va en pantalla (transparencia),
+     pero en la hoja son ~427px que empujan el plan a una segunda página. Y el título
+     'Comparación y exportación' promete botones que en papel no existen; abajo queda
+     'Factores aplicados', que sí sirve de encabezado. */
+  .solo-pantalla{display:none!important}
+
+  @page{margin:14mm}
+
+  :root{
+    /* Superficies: todo a blanco. La tinta se ahorra sola. */
+    --bg-1:#ffffff;
+    --bg-2:#ffffff;
+    --bg-3:#ffffff;
+    --bg-card:#ffffff;
+    /* Bordes: grises suaves, que estructuren sin ensuciar. */
+    --border:#ccd0d8;
+    --border-2:#aab0bb;
+    /* Textos: tinta oscura, con la misma jerarquía que en pantalla. */
+    --txt-1:#0f1216;
+    --txt-2:#2b303a;
+    --txt-3:#555c68;
+    --txt-4:#6c737f;
+    /* Acento: el neón #2fb8ff sobre papel blanco es ilegible
+       (≈2.2:1). Bajamos a un azul de tinta que llega a 7.45:1 y
+       mantiene el gesto de marca. El texto encima va en blanco. */
+    --red:#0a5a86;
+    --red-2:#0a5a86;
+    --red-3:#0a5a86;
+    --on-accent:#ffffff;
+    --accent-2:#8a1b52;
+    /* Semánticos, oscurecidos para leerse sobre blanco. */
+    --green:#146b45;
+    --yellow:#8a4b06;
+    --blue:#3d2f8a;
+    /* En papel no hay sombras ni glows. */
+    --shadow:none;
+    --shadow-red:none;
+  }
+
+  /* ---- Neutralizado de lo que no pasa por tokens ---- */
+  *{
+    box-shadow:none !important;
+    text-shadow:none !important;
+    animation:none !important;
+    transition:none !important;
+  }
+  html,body{height:auto !important;min-height:0 !important}
+  body{
+    background:#ffffff !important;   /* mata el radial-gradient del fondo */
+    color:var(--txt-1);
+  }
+  .wrap{max-width:none;margin:0;padding:0 !important}
+
+  .result-hero{
+    background:#ffffff !important;   /* mata el linear-gradient */
+    border:1px solid var(--border-2);
+  }
+  .result-hero::before{display:none !important}   /* el glow radial de la esquina */
+  .strat-card.rec{background:#ffffff !important;border-color:var(--red)}
+  .notice.warn,.notice.ok,.notice.info,.notice{background:#ffffff !important}
+  .pill,.pill.red{background:#ffffff !important}
+  .field-label .info{background:#ffffff !important}
+
+  /* Las barras de pacing sí llevan tinta: es el dato, no decoración.
+     Sin esto el navegador no imprime el relleno y el ritmo escrito
+     encima (blanco) queda invisible. */
+  .bar-row .bar-fill{
+    background:var(--red) !important;
+    color:var(--on-accent) !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .bar-row .bar-bg{border:1px solid var(--border)}
+  .result-hero .r-time,
+  .zone-card .z-p,
+  .card h2 svg,
+  .strat-card .s-n .tag{
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  /* ---- Qué se ve: SOLO el plan ---- */
+  .tabs{display:none !important}
+  .panel{display:none !important}
+  .panel[data-panel="out"]{display:block !important}   /* aunque el usuario esté parado en otra pestaña */
+
+  /* Fuera lo que no sirve en papel: encabezado de pantalla, texto de
+     bienvenida, botones, controles y cualquier campo de carga. */
+  .tool-head,
+  .wrap > .notice.info,
+  .tool-head-actions,
+  #btn-print,
+  #btn-export-csv,
+  #btn-save,
+  #btn-reset,
+  #btn-add-ref,
+  #btn-add-seg,
+  #btn-clear-seg,
+  #btn-auto-split,
+  .seg-foot,
+  .dist-pills,
+  .toggle,
+  .btn,
+  .tt,
+  .panel[data-panel="out"] input,
+  .panel[data-panel="out"] select{
+    display:none !important;
+  }
+
+  /* ---- Marca de la hoja ---- */
+  .hoja-head{
+    display:flex !important;align-items:center;gap:10px;
+    padding-bottom:10px;margin-bottom:16px;
+    border-bottom:1px solid var(--border-2);
+  }
+  /* El logo de pantalla es neon (cian/rosa) sobre fondo oscuro: sobre
+     papel blanco queda un fantasma lavado (mejor pixel ~3.5:1). Acá va
+     la misma geometria pintada con la tinta de la hoja: los trazos en
+     --red #0a5a86 (7.45:1) y el punto en --accent-2 #8a1b52 (8.90:1).
+     Va embebido igual que el otro: el archivo tiene que andar sin red. */
+  .hoja-logo{
+    width:30px;height:30px;
+    background-image:url('data:image/png;base64,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') !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .hoja-marca{
+    font-family:var(--font-head);font-size:15px;font-weight:300;
+    text-transform:lowercase;letter-spacing:.02em;color:var(--txt-1);
+  }
+  .hoja-marca b{font-weight:700}
+  .hoja-sitio{
+    margin-left:auto;
+    font-family:var(--font-mono);font-size:10px;color:var(--txt-3);
+  }
+
+  /* Al pie ya no repetimos el logo ni el nombre: la hoja los tiene
+     arriba. Queda solo la versión y el sello de fecha. */
+  .firma-logo,.firma-txt{display:none !important}
+  .firma{
+    justify-content:flex-start;margin-top:14px;padding-top:10px;
+    border-top:1px solid var(--border);
+  }
+  .firma-meta{padding-left:0;border-left:none;color:var(--txt-4)}
+
+  /* ---- Prolijidad en papel ---- */
+  .card,
+  .result-hero,
+  .kpi,
+  .zone-card,
+  .strat-card,
+  .bar-row,
+  .notice{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .card{margin-bottom:12px;padding:14px}
+  .card h2{break-after:avoid;page-break-after:avoid}
+  /* Nada de hojas en blanco colgando al final. */
+  .panel[data-panel="out"] > .card:last-child{margin-bottom:0}
+  .firma{break-inside:avoid;page-break-inside:avoid;page-break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ENCABEZADO DE LA HOJA IMPRESA — solo aparece en el PDF/papel -->
+  <div class="hoja-head">
+    <span class="marca-logo hoja-logo" aria-hidden="true"></span>
+    <span class="hoja-marca"><b>emiliano</b> salas porta</span>
+    <span class="hoja-sitio">emilianosalasporta.cloud</span>
+  </div>
+
+  <!-- ENCABEZADO -->
+  <header class="tool-head">
+    <div>
+      <h1>Calculadora de Ruta</h1>
+      <p>Pronóstico de tiempo para carreras de calle, de 5K a ultradistancia.</p>
+    </div>
+    <div class="tool-head-actions">
+      <button class="btn btn-ghost btn-sm" id="btn-save" title="Guardar datos en este navegador">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset" title="Restaurar valores iniciales">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Reiniciar
+      </button>
+    </div>
+  </header>
+
+  <div class="notice info">
+    Pronóstico de tiempo para carreras de calle: 5K, 10K, 15K, 21K, 42K, ultradistancia o la distancia que te toque.
+    Si cargás una carrera previa, un test de <b>VAM</b> (velocidad aeróbica máxima) o cualquier ritmo sostenido,
+    calculamos tu <b>VDOT</b> (Daniels) y proyectamos tu objetivo ajustando por perfil, altitud, superficie y clima.
+    <b>Todos los parámetros más allá de la distancia son opcionales</b>: menos datos, menor precisión.
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="ref">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Tu referencia
+    </button>
+    <button class="tab" data-tab="race">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      Carrera objetivo
+    </button>
+    <button class="tab" data-tab="seg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Perfil / tramos <span class="badge" id="seg-count">0</span>
+    </button>
+    <button class="tab" data-tab="cond">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      Condiciones
+    </button>
+    <button class="tab" data-tab="out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 12 9 6 13 10 21 3"/><polyline points="14 3 21 3 21 10"/></svg>
+      Resultado
+    </button>
+  </div>
+
+  <!-- ========== PANEL: REFERENCIA ========== -->
+  <div class="panel active" data-panel="ref">
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        ¿Cómo calibramos tu calculadora?
+      </h2>
+      <p class="card-sub">Elegí el modo que mejor represente tu nivel actual. Podés combinar varias carreras para más precisión.</p>
+
+      <div class="row" style="gap:8px;margin-bottom:16px" id="ref-mode-switch">
+        <button class="btn btn-ghost btn-sm mode-opt active" data-mode="race">Carrera(s) previa(s)</button>
+        <button class="btn btn-ghost btn-sm mode-opt" data-mode="vam">Test de VAM (vVO₂máx)</button>
+        <button class="btn btn-ghost btn-sm mode-opt" data-mode="pace">Ritmo sostenido / test</button>
+      </div>
+
+      <!-- Modo CARRERA PREVIA -->
+      <div id="ref-mode-race">
+        <div class="notice info">
+          <b>Ideal:</b> una carrera reciente (últimos 2–3 meses) a la distancia más cercana posible a tu objetivo. Cada carrera se convierte a <b>VDOT</b> (Daniels &amp; Gilbert 1979) y promediamos ponderando por cercanía a la distancia objetivo.
+        </div>
+        <div id="ref-list"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-ghost btn-sm" id="btn-add-ref">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar otra carrera de referencia
+          </button>
+          <span class="hint">Si cargás más de una, le damos más peso a la distancia más parecida al objetivo.</span>
+        </div>
+      </div>
+
+      <!-- Modo VAM -->
+      <div id="ref-mode-vam" class="hidden">
+        <div class="notice info">
+          <b>VAM / vVO₂máx:</b> la velocidad más baja a la que alcanzás tu consumo máximo de oxígeno. Se suele medir con un test progresivo (tipo <i>VAMEVAL</i>, <i>Course-Navette</i>) o estimarse desde 1500–3000 m en pista all-out. Un corredor recreativo ronda <b>14–17 km/h</b>, uno entrenado <b>17–20 km/h</b>, sub-elite &gt;20 km/h.
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <div class="field-head">
+              <span class="field-label">VAM — velocidad
+                <span class="tt"><span class="info">?</span><span class="tt-body">Velocidad sostenida en tu test máximo de 5–8 min (o velocidad final en un test progresivo). Se traduce a tu <b>VDOT</b> y desde ahí calculamos cualquier distancia.</span></span>
+              </span>
+            </div>
+            <input type="number" id="v_speed" step="0.1" min="5" max="28" value="16.0"><span class="unit">km/h</span>
+          </div>
+          <div class="field">
+            <div class="field-head">
+              <span class="field-label">… o equivalente como ritmo
+                <span class="tt"><span class="info">?</span><span class="tt-body">Ritmo al que mantuviste la VAM (se actualiza automático). También podés editarlo directamente si conocés el ritmo y no la velocidad.</span></span>
+              </span>
+            </div>
+            <input type="text" id="v_pace" value="3:45" placeholder="min:seg /km"><span class="unit">min/km</span>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:10px">
+          Referencias clínicas comunes (Billat 1999): 1500 m ≈ 110 % VAM · 3000 m ≈ 100 % VAM · 5K ≈ 95 % · 10K ≈ 90 % · 21K ≈ 84 % · 42K ≈ 76 % · 100K ≈ 66 %.
+        </div>
+      </div>
+
+      <!-- Modo PACE -->
+      <div id="ref-mode-pace" class="hidden">
+        <div class="notice info">
+          Útil si hiciste un <b>rodaje sostenido</b> o un <b>test de campo</b> reciente (ej.: 10 km a ritmo controlado, media maratón de entrenamiento). Lo tratamos como una carrera previa.
+        </div>
+        <div class="grid grid-2">
+          <div class="field"><div class="field-head"><span class="field-label">Distancia del test</span></div><input type="number" id="p_dist" value="10" step="0.1" min="1"><span class="unit">km</span></div>
+          <div class="field"><div class="field-head"><span class="field-label">Tiempo</span></div><input type="text" id="p_time" value="00:45:00" placeholder="hh:mm:ss"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: CARRERA ========== -->
+  <div class="panel" data-panel="race">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Datos de la carrera objetivo
+      </h2>
+      <p class="card-sub">Sólo la distancia es obligatoria. El resto afina la estimación.</p>
+
+      <div class="grid grid-2">
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" value="Mi próxima carrera"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Fecha (opcional)</span></div><input type="text" id="r_date" placeholder="dd/mm/aaaa"></div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Distancia total
+            <span class="tt"><span class="info">?</span><span class="tt-body">Distancia oficial del circuito. No hay restricciones: 3K, 5K, 10K, 15K, 21.097K, 42.195K, 50K, 100K, 160K o lo que sea. Si la carrera declara "21K" pero el GPS promedia 21.3, cargá la oficial.</span></span>
+          </span></div>
+          <input type="number" id="r_dist" step="0.1" min="0.5" value="21.097"><span class="unit">km</span>
+          <div class="dist-pills">
+            <button data-dist="5">5K</button>
+            <button data-dist="10">10K</button>
+            <button data-dist="15">15K</button>
+            <button data-dist="21.097">21K</button>
+            <button data-dist="30">30K</button>
+            <button data-dist="42.195">42K</button>
+            <button data-dist="50">50K</button>
+            <button data-dist="100">100K</button>
+          </div>
+        </div>
+        <div class="field" data-optional="r_obj">
+          <div class="field-head">
+            <span class="field-label">Tiempo objetivo (comparar)
+              <span class="tt"><span class="info">?</span><span class="tt-body">Si tenés un tiempo en mente, lo comparamos con la estimación y te decimos si se ve realista.</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_obj"></span>
+          </div>
+          <input type="text" id="r_obj" value="01:45:00" placeholder="hh:mm:ss">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid grid-2" id="race-optional">
+        <div class="field" data-optional="r_dplus">
+          <div class="field-head">
+            <span class="field-label">Desnivel positivo (D+)
+              <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. En ruta urbana típica 20–80 m; en carreras como la Maratón de Montevideo ~150 m; media con un cerro puede tener 200+ m. Desnivel &lt; 20 m se puede ignorar (efecto &lt; 0.3 %).</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_dplus"></span>
+          </div>
+          <input type="number" id="r_dplus" step="5" min="0" value="150"><span class="unit">m</span>
+        </div>
+        <div class="field" data-optional="r_dneg">
+          <div class="field-head">
+            <span class="field-label">Desnivel negativo (D−)
+              <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de bajada. Si no lo cargás, asumimos circuito cerrado (D− = D+). Cargalo sólo si la carrera es punto-a-punto asimétrica (ej.: Boston tiene D− &gt; D+).</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_dneg"></span>
+          </div>
+          <input type="number" id="r_dneg" step="5" min="0" value="150"><span class="unit">m</span>
+        </div>
+        <div class="field" data-optional="r_alt">
+          <div class="field-head">
+            <span class="field-label">Altitud media del circuito
+              <span class="tt"><span class="info">?</span><span class="tt-body">Altitud promedio sobre el nivel del mar. Por debajo de 1200 m el efecto es despreciable. 1500 m: +2 %. 2300 m: +5 %. &gt;3000 m: +12 % o más (Fulco 1998). Si corrés en Buenos Aires o Montevideo, desactivalo.</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_alt"></span>
+          </div>
+          <input type="number" id="r_alt" step="50" min="0" value="100"><span class="unit">m s.n.m.</span>
+        </div>
+        <div class="field" data-optional="r_sup">
+          <div class="field-head">
+            <span class="field-label">Superficie dominante
+              <span class="tt"><span class="info">?</span><span class="tt-body">Asfalto (referencia). Hormigón es ligeramente más rígido. Adoquines cuestan ~3–4 %. Tartán (si hay tramos en pista) es ~1 % más rápido. Mixto asfalto/ripio penaliza según fracción.</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_sup"></span>
+          </div>
+          <select id="r_sup">
+            <option value="asfalto" selected>Asfalto (ref)</option>
+            <option value="hormigon">Hormigón / cemento</option>
+            <option value="tartan">Tartán / pista</option>
+            <option value="adoquin">Adoquines / pavés</option>
+            <option value="mixto">Mixto asfalto + ripio</option>
+            <option value="ripio">Ripio / camino</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="notice" style="margin-top:18px">
+        <b>Tip:</b> Si la carrera es plana (D+ &lt; 20 m, nivel del mar, asfalto), mantené todo apagado y la estimación sigue siendo precisa vía VDOT.
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: SEGMENTOS (perfil) ========== -->
+  <div class="panel" data-panel="seg">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Perfil por tramos (opcional)
+      </h2>
+      <p class="card-sub">Si la carrera tiene un tramo con una pendiente notable (puente, subida puntual), cargalo acá para que el pacing por km lo refleje.
+        <b>Si no, dejalo vacío</b> y usamos el perfil global de la carrera (D+/D−).</p>
+
+      <div class="row" style="margin-bottom:12px;gap:14px">
+        <label class="row" style="gap:8px;font-size:13px;cursor:pointer">
+          <span class="toggle" data-toggle="seg_enabled"></span>
+          <span>Usar tramos para la estimación</span>
+        </label>
+        <button class="btn btn-ghost btn-sm" id="btn-auto-split" title="Partir la carrera en tramos iguales">Autocompletar por km</button>
+      </div>
+
+      <div class="seg-table-wrap">
+        <table class="seg-table">
+          <thead>
+            <tr>
+              <th>Tramo</th>
+              <th>Dist (km)</th>
+              <th>D+ (m)</th>
+              <th>D− (m)</th>
+              <th>Alt media (m)</th>
+              <th>Superficie</th>
+              <th>Detención (min)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="seg-body"></tbody>
+        </table>
+      </div>
+
+      <div class="seg-foot">
+        <button class="btn btn-ghost btn-sm" id="btn-add-seg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar tramo
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-clear-seg">Limpiar todos</button>
+        <span class="hint" id="seg-sum"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: CONDICIONES ========== -->
+  <div class="panel" data-panel="cond">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Condiciones del día y corredor
+      </h2>
+      <p class="card-sub">Ajustes que afectan el ritmo. Activá sólo los que apliquen; los valores se componen (multiplican) entre sí.</p>
+
+      <div class="notice">
+        <b>Base científica</b> — temperatura/humedad: Ely 2007 &amp; Vihma 2010; viento frontal: Pugh 1971; altitud: Fulco 1998; drafting en grupo: Kyle 1979 &amp; Polidori 2020; economía por superficie: Kerdok 2002. El efecto de cada factor se puede revisar en <b>Resultado → Cómo funciona</b>.
+      </div>
+
+      <h3 style="font-size:13px;color:var(--txt-3);letter-spacing:.4px;text-transform:uppercase;margin:18px 0 10px">Clima</h3>
+      <div class="grid grid-2">
+        <div class="field" data-optional="c_temp">
+          <div class="field-head">
+            <span class="field-label">Temperatura prevista
+              <span class="tt"><span class="info">?</span><span class="tt-body">Óptimo para 10K/21K: <b>10–13 °C</b>. Para maratón: <b>5–10 °C</b>. Penaliza &gt;15 °C (~0.4 %/°C en 10K, ~0.6 %/°C en 42K). Calor extremo (&gt;28 °C) añade penalización acelerada por hipertermia. Frío &lt;5 °C también penaliza levemente (~0.2 %/°C).</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_temp"></span>
+          </div>
+          <input type="number" id="c_temp" step="1" min="-20" max="50" value="22"><span class="unit">°C a la hora de la largada</span>
+        </div>
+        <div class="field" data-optional="c_hum">
+          <div class="field-head">
+            <span class="field-label">Humedad relativa
+              <span class="tt"><span class="info">?</span><span class="tt-body">Sólo impacta con calor (&gt;18 °C). Cada 10 % sobre 60 % de humedad reduce la capacidad de evaporación; el efecto se amplifica con temperatura. En clima fresco y seco, ignoralo.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_hum"></span>
+          </div>
+          <input type="number" id="c_hum" step="5" min="0" max="100" value="70"><span class="unit">% HR</span>
+        </div>
+        <div class="field" data-optional="c_cielo">
+          <div class="field-head">
+            <span class="field-label">Cielo / precipitación
+              <span class="tt"><span class="info">?</span><span class="tt-body">Nublado fresco es lo ideal (−1 %). Lluvia leve +1–2 % (zapatilla empapada, resbalones leves). Lluvia intensa +3–4 %. Nieve +5 %. Tormenta eléctrica: pausa recomendada.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_cielo"></span>
+          </div>
+          <select id="c_cielo">
+            <option value="clear">Soleado a pleno</option>
+            <option value="part">Parcialmente nublado</option>
+            <option value="cloud" selected>Nublado</option>
+            <option value="light">Llovizna / lluvia leve</option>
+            <option value="rain">Lluvia persistente</option>
+            <option value="storm">Tormenta</option>
+            <option value="snow">Nieve / hielo</option>
+          </select>
+        </div>
+        <div class="field" data-optional="c_viento">
+          <div class="field-head">
+            <span class="field-label">Viento dominante
+              <span class="tt"><span class="info">?</span><span class="tt-body">En ruta abierta el viento pesa más que en trail con árboles. Viento frontal sostenido de 20–30 km/h: +2.5 %; 30–45 km/h: +5 %. En circuitos ida-vuelta el viento favorable sólo compensa ~70 % por la relación cuadrática de resistencia.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_viento"></span>
+          </div>
+          <select id="c_viento">
+            <option value="none">Sin viento / brisa (&lt;10 km/h)</option>
+            <option value="light">Leve variable (10–20 km/h)</option>
+            <option value="mod" selected>Moderado (20–35 km/h)</option>
+            <option value="strong">Fuerte (35–55 km/h)</option>
+            <option value="extreme">Extremo (&gt;55 km/h)</option>
+            <option value="favor">A favor constante (−1 %)</option>
+          </select>
+        </div>
+        <div class="field" data-optional="c_sol">
+          <div class="field-head">
+            <span class="field-label">Exposición al sol
+              <span class="tt"><span class="info">?</span><span class="tt-body">Sólo suma con calor (&gt;18 °C). Circuitos urbanos con sombra de edificios reducen el impacto solar. Recorridos expuestos (avenida costera al mediodía) elevan la temperatura corporal efectiva 3–5 °C.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_sol"></span>
+          </div>
+          <select id="c_sol">
+            <option value="0">Sombra / edificios cubren</option>
+            <option value="1" selected>Parcial</option>
+            <option value="2">Expuesto en su mayoría</option>
+            <option value="3">Totalmente expuesto (sin sombra)</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 style="font-size:13px;color:var(--txt-3);letter-spacing:.4px;text-transform:uppercase;margin:22px 0 10px">Corredor y estrategia</h3>
+      <div class="grid grid-2">
+        <div class="field" data-optional="c_exp">
+          <div class="field-head">
+            <span class="field-label">Experiencia en la distancia
+              <span class="tt"><span class="info">?</span><span class="tt-body">El pacing y la gestión energética se aprenden. Primer 42K suele costar +5–8 % sobre lo que predice un 21K (famoso "muro"). Primer 21K: +2–3 %. Debut en 10K: +1–2 %. Corredor veterano: sin ajuste.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_exp"></span>
+          </div>
+          <select id="c_exp">
+            <option value="debut">Debut / primera vez en esa distancia</option>
+            <option value="nuevo">Poca experiencia (1–2 carreras)</option>
+            <option value="experimentado" selected>Experimentado (≥3 carreras)</option>
+            <option value="veterano">Veterano (varias temporadas)</option>
+          </select>
+        </div>
+        <div class="field" data-optional="c_grupo">
+          <div class="field-head">
+            <span class="field-label">Pelotón / drafting
+              <span class="tt"><span class="info">?</span><span class="tt-body">Correr en grupo reduce la resistencia aerodinámica. En un grupo compacto de tu mismo ritmo ahorrás 1–2 %. Detrás de una liebre o un grupo grande hasta 2.5 %. A ritmos lentos (&lt;10 km/h) el efecto es mínimo.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_grupo"></span>
+          </div>
+          <select id="c_grupo">
+            <option value="solo" selected>Solo / sin grupo</option>
+            <option value="small">Grupo chico (2–4 corredores)</option>
+            <option value="medium">Grupo mediano (liebre / pacing)</option>
+            <option value="large">Pelotón grande constante</option>
+          </select>
+        </div>
+        <div class="field" data-optional="c_strategy">
+          <div class="field-head">
+            <span class="field-label">Estrategia de pacing
+              <span class="tt"><span class="info">?</span><span class="tt-body">Los mejores tiempos se logran con ritmo parejo o <b>negative split</b> (segunda mitad más rápida que la primera). Positive split (salir rápido) casi siempre penaliza el tiempo final. Esto afecta la proyección por km, no el total.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_strategy"></span>
+          </div>
+          <select id="c_strategy">
+            <option value="even" selected>Ritmo parejo (even)</option>
+            <option value="neg1">Negative split suave (−1 %)</option>
+            <option value="neg2">Negative split marcado (−2 %)</option>
+            <option value="pos1">Positive split suave (+1 %)</option>
+          </select>
+        </div>
+        <div class="field" data-optional="c_stops">
+          <div class="field-head">
+            <span class="field-label">Tiempo extra en puestos
+              <span class="tt"><span class="info">?</span><span class="tt-body">Tiempo total que planeás detenido (vaso, gel, baño). En 10K suele ser 0. En 21K: 0–60 s. En 42K: 60–180 s. En ultra: mucho más variable.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_stops"></span>
+          </div>
+          <input type="number" id="c_stops" min="0" step="10" value="0"><span class="unit">segundos totales</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: RESULTADO ========== -->
+  <div class="panel" data-panel="out">
+    <div id="out-errors"></div>
+
+    <div class="result-hero" id="r-hero">
+      <div class="r-label">Tiempo estimado · <span id="r-race-name">—</span></div>
+      <div class="r-time" id="r-time">--:--:--</div>
+      <div class="r-sub" id="r-sub">Completá los datos para ver el pronóstico</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="k-l">Distancia</div><div class="k-v" id="r-dist">—<small>km</small></div></div>
+      <div class="kpi"><div class="k-l">Ritmo promedio</div><div class="k-v" id="r-pace">—</div><div class="k-s">min/km</div></div>
+      <div class="kpi"><div class="k-l">Velocidad media</div><div class="k-v" id="r-speed">—<small>km/h</small></div></div>
+      <div class="kpi"><div class="k-l">VDOT estimado</div><div class="k-v" id="r-vdot">—</div><div class="k-s">Daniels</div></div>
+      <div class="kpi"><div class="k-l">VAM equivalente</div><div class="k-v" id="r-vam">—<small>km/h</small></div></div>
+      <div class="kpi"><div class="k-l">% VAM objetivo</div><div class="k-v" id="r-pctvam">—<small>%</small></div></div>
+      <div class="kpi"><div class="k-l">Confianza</div><div class="k-v" id="r-conf">—</div><div class="k-s" id="r-conf-sub">—</div></div>
+    </div>
+
+    <div class="card" id="r-split-card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Pacing estimado por tramo
+      </h2>
+      <div class="card-sub" id="r-split-sub">Tiempo proyectado en cada tramo, acumulado desde la largada.</div>
+      <div id="r-splits"></div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Estrategia de pacing
+      </h2>
+      <div class="card-sub">Cómo se distribuiría tu tiempo total entre la primera y la segunda mitad según cada enfoque.</div>
+      <div class="strat-grid" id="r-strategy"></div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Zonas de entrenamiento
+      </h2>
+      <div class="card-sub">Derivadas del <b>VDOT</b> inferido. Útiles para que tu entrenador programe sesiones.</div>
+      <div class="zone-grid" id="r-zones"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="solo-pantalla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Comparación y exportación
+      </h2>
+      <div id="r-compare"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" id="btn-export-csv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar plan (CSV)
+        </button>
+        <button class="btn btn-ghost" id="btn-print">Imprimir</button>
+      </div>
+    </div>
+
+    <div class="card solo-pantalla">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Cómo funciona el cálculo
+      </h2>
+      <p class="card-sub">Transparencia total. Las ecuaciones que hay debajo.</p>
+      <div class="hint" style="line-height:1.7;font-size:13px;color:var(--txt-2)">
+        <p><b style="color:var(--txt-1)">1 · Motor principal — VDOT (Daniels &amp; Gilbert, 1979):</b><br>
+          Desde tu carrera o test calculamos VDOT (tu <i>running fitness index</i>):<br>
+          <code style="color:var(--red)">%VO₂ = 0.8 + 0.1894·e<sup>−0.012778·t</sup> + 0.2989·e<sup>−0.1932·t</sup></code><br>
+          <code style="color:var(--red)">VO₂ = −4.60 + 0.182258·v + 0.000104·v²</code> &nbsp; (v en m/min, t en min)<br>
+          <code style="color:var(--red)">VDOT = VO₂ / %VO₂</code><br>
+          Para predecir la carrera objetivo invertimos las fórmulas (búsqueda binaria) manteniendo tu VDOT.</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">2 · Exponente de Riegel adaptativo (crosscheck):</b><br>
+          <code style="color:var(--red)">T₂ = T₁ × (D₂/D₁)<sup>c</sup></code> donde <code>c = 1.06</code> hasta 42K, crece progresivamente hasta ~1.09 en 100K (Peronnet &amp; Thibault). Mostramos la diferencia con VDOT como control.</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">3 · Pendiente — Minetti et al. (2002):</b><br>
+          Costo energético de correr según gradiente <code>i</code>:<br>
+          <code style="color:var(--red)">C(i) = 155.4·i⁵ − 30.4·i⁴ − 43.3·i³ + 46.3·i² + 19.5·i + 3.6</code> &nbsp; (J/kg/m)<br>
+          Usamos el ratio <code>C(i)/C(0)</code> como factor de tiempo. Mínimo cerca de −10 % de pendiente, crece rápido sobre +8 %.</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">4 · Altitud — Fulco (1998) + correcciones:</b><br>
+          Factor creciente sobre 1200 m: +2 % a 1500, +5 % a 2300, +8 % a 2800, +12 % a 3300. Si la referencia fue en altura, se descuenta (para que tu ritmo a nivel del mar quede bien calibrado).</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">5 · Clima — composición multiplicativa:</b> Temperatura (óptimo dependiente de la duración de la carrera: 12 °C para 5K, 7 °C para 42K — Ely 2007), humedad con calor (Vihma 2010), cielo/precipitación, viento frontal (Pugh 1971: resistencia ~ v²), radiación solar.</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">6 · Drafting / pelotón — Kyle (1979), Polidori (2020):</b><br>
+          Ahorro aerodinámico: grupo chico 0.5 %, grupo mediano 1.2 %, pelotón grande 2 %. Escala con la velocidad (a &lt;10 km/h el efecto es despreciable).</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">7 · Superficie — Kerdok (2002) y adaptaciones:</b> asfalto 1.000 (ref), hormigón 1.010, tartán 0.990, adoquines 1.035, ripio/mixto 1.020–1.040.</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">8 · Experiencia en la distancia:</b> debut 42K +6 %, debut 21K +2.5 %, debut 10K +1 %. Se desvanece con cada repetición de la distancia.</p>
+        <p style="margin-top:10px"><b style="color:var(--txt-1)">9 · Promedio de referencias:</b> cuando cargás varias carreras previas, cada VDOT se pondera por cercanía de la distancia de la ref a la objetivo (evita que un 5K distorsione una predicción de 42K).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIRMA — el motor escribe el sello en #foot-stamp, ese id no se toca. -->
+  <div class="footnote firma">
+    <span class="marca-logo firma-logo" aria-hidden="true"></span>
+    <span class="firma-txt">
+      <span class="firma-nombre"><b>emiliano</b> salas porta</span>
+      <span class="firma-sitio">emilianosalasporta.cloud</span>
+    </span>
+    <span class="firma-meta">Calculadora de Ruta v1.0 · <span id="foot-stamp"></span></span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CALCULADORA DE RUTA — Motor + UI
+   Ciencia del deporte aplicada a pronóstico de tiempos de calle.
+   ============================================================ */
+"use strict";
+
+// ============================================================
+// TABLAS / CONSTANTES CIENTÍFICAS
+// ============================================================
+
+// Ritmo a Riegel. Exponente adaptativo según distancia:
+// - 0.8-5 km: 1.05
+// - 5-42 km: 1.06
+// - 42-100 km: crece hasta ~1.09
+// - 100 km+: hasta 1.12
+function riegelExponent(distKm){
+  if(distKm <= 5)  return 1.05;
+  if(distKm <= 42) return 1.06;
+  // crece entre 42 y 160 km suavemente
+  const extra = Math.min(1, Math.log(distKm/42) / Math.log(160/42));
+  return 1.06 + 0.05 * extra;
+}
+
+// Minetti et al. (2002) — costo energético de correr según gradiente.
+// i: gradiente (0.05 = 5%). Devuelve J/(kg·m).
+function minettiCost(grade){
+  const i = Math.max(-0.35, Math.min(0.35, grade));
+  const C = 155.4*Math.pow(i,5) - 30.4*Math.pow(i,4) - 43.3*Math.pow(i,3) + 46.3*i*i + 19.5*i + 3.6;
+  return Math.max(2.0, C);
+}
+const COST_FLAT = 3.6; // J/(kg·m) en llano
+function slopeFactor(grade){ return minettiCost(grade) / COST_FLAT; }
+
+// Tabla %VAM por distancia (Billat 1999 + Daniels). Interpolación log-lineal.
+const VAM_PCT_TABLE = [
+  [1.5, 110], [3, 100], [5, 95], [10, 90], [15, 87],
+  [21.097, 84], [30, 79], [42.195, 76], [50, 73], [100, 66], [160, 60], [250, 55]
+];
+function pctVAM(distKm){
+  if(distKm <= VAM_PCT_TABLE[0][0]) return VAM_PCT_TABLE[0][1];
+  if(distKm >= VAM_PCT_TABLE[VAM_PCT_TABLE.length-1][0]) return VAM_PCT_TABLE[VAM_PCT_TABLE.length-1][1];
+  for(let i=1;i<VAM_PCT_TABLE.length;i++){
+    const [d0,p0]=VAM_PCT_TABLE[i-1], [d1,p1]=VAM_PCT_TABLE[i];
+    if(distKm <= d1){
+      const t = (Math.log(distKm) - Math.log(d0)) / (Math.log(d1) - Math.log(d0));
+      return p0 + (p1 - p0) * t;
+    }
+  }
+  return 75;
+}
+
+// Altitud — Fulco 1998 y ajustes. (altitud_m, factor_tiempo)
+const T_ALTITUD = [
+  [1200, 1.00], [1500, 1.02], [1800, 1.03], [2300, 1.05],
+  [2800, 1.08], [3300, 1.12], [3800, 1.15], [4500, 1.20],
+];
+function altFactor(alt){
+  if(!alt || alt <= 0) return 1;
+  // Interpolación lineal
+  if(alt <= T_ALTITUD[0][0]) return 1;
+  for(let i=1;i<T_ALTITUD.length;i++){
+    const [a0,f0]=T_ALTITUD[i-1], [a1,f1]=T_ALTITUD[i];
+    if(alt <= a1){
+      const t = (alt-a0)/(a1-a0);
+      return f0 + (f1-f0)*t;
+    }
+  }
+  return T_ALTITUD[T_ALTITUD.length-1][1];
+}
+
+// Superficies en ruta (Kerdok 2002 + adaptaciones prácticas).
+const T_SUPERFICIE = {
+  "asfalto":1.00, "hormigon":1.01, "tartan":0.99,
+  "adoquin":1.035, "mixto":1.02, "ripio":1.04,
+};
+
+// Óptimo térmico depende de la duración de la carrera (Ely 2007).
+// Para una carrera de N segundos, óptimo en °C:
+function tempOptimal(raceSec){
+  // 5K (~1200 s) → 12 °C ; 21K (~5400 s) → 9 °C ; 42K (~11000 s) → 7 °C ; ultras → 5 °C
+  if(raceSec <= 1200) return 12;
+  if(raceSec >= 14400) return 5;
+  // Interpolación lineal en log
+  const t = Math.log(raceSec/1200) / Math.log(14400/1200);
+  return 12 - 7*t;
+}
+
+// Sensibilidad térmica (%/°C sobre óptimo) también depende de duración:
+// corredores más largos son más sensibles.
+function tempSensitivity(raceSec){
+  if(raceSec <= 1200) return 0.003;   // 0.3%/°C en 5K
+  if(raceSec >= 14400) return 0.006;  // 0.6%/°C en ultra
+  const t = Math.log(raceSec/1200) / Math.log(14400/1200);
+  return 0.003 + 0.003*t;
+}
+
+// ============================================================
+// DANIELS VDOT — cálculo directo e inverso
+// ============================================================
+// Daniels & Gilbert (1979) fórmulas canónicas.
+function percentVO2(timeMin){
+  return 0.8
+    + 0.1894393 * Math.exp(-0.012778 * timeMin)
+    + 0.2989558 * Math.exp(-0.1932605 * timeMin);
+}
+function vo2Demand(v_mpm){
+  // v en m/min
+  return -4.60 + 0.182258 * v_mpm + 0.000104 * v_mpm * v_mpm;
+}
+// Calcula VDOT desde distancia (km) y tiempo (seg).
+function vdotFromPerf(distKm, timeSec){
+  if(distKm <= 0 || timeSec <= 0) return null;
+  const timeMin = timeSec / 60;
+  const v = (distKm * 1000) / timeMin;
+  const pct = percentVO2(timeMin);
+  const vo2 = vo2Demand(v);
+  if(pct <= 0) return null;
+  return vo2 / pct;
+}
+// Dado un VDOT y una distancia, buscar tiempo. Búsqueda binaria sobre velocidad.
+function timeFromVdot(vdot, distKm){
+  if(!(vdot > 0) || !(distKm > 0)) return null;
+  // Rango de velocidades plausibles: 3 km/h a 30 km/h
+  let lo = 50, hi = 500; // m/min → 3 a 30 km/h
+  for(let i=0;i<80;i++){
+    const v = (lo+hi)/2;
+    const timeMin = (distKm*1000) / v;
+    const pct = percentVO2(timeMin);
+    const vo2 = vo2Demand(v);
+    const vdotPred = vo2 / pct;
+    if(vdotPred > vdot) hi = v; else lo = v;
+  }
+  const v = (lo+hi)/2;
+  return (distKm*1000)/v * 60; // en seg
+}
+// VAM estimada desde VDOT (Daniels vVO2max table, aprox lineal).
+function vamFromVdot(vdot){
+  // VAM (km/h) ≈ 0.2934 * VDOT + 2.18 (regresión sobre tabla Daniels)
+  return Math.max(6, 0.2934 * vdot + 2.18);
+}
+function vdotFromVam(vam){
+  return Math.max(15, (vam - 2.18) / 0.2934);
+}
+
+// Ritmos de entrenamiento clásicos por zona (Daniels):
+// E (easy): 59-74% VDOT velocidad
+// M (marathon): 75-84% VDOT
+// T (threshold): 83-88% VDOT
+// I (interval): 95-100% VDOT (vVO2max)
+// R (repetition): 105-110% VDOT
+function vdotPaceSec(vdot, pctVdot){
+  // pctVdot = 0.75 para 75%. Usa Daniels' relationships.
+  // VO2 objetivo = pctVdot * VDOT
+  // Resolver v: vo2 = -4.60 + 0.182258*v + 0.000104*v²
+  const vo2Target = pctVdot * vdot;
+  // Ecuación cuadrática: 0.000104*v² + 0.182258*v + (-4.60 - vo2Target) = 0
+  const a = 0.000104, b = 0.182258, c = -4.60 - vo2Target;
+  const disc = b*b - 4*a*c;
+  if(disc < 0) return null;
+  const v = (-b + Math.sqrt(disc)) / (2*a); // m/min
+  if(v <= 0) return null;
+  return 1000/v * 60; // seg/km
+}
+
+// ============================================================
+// HELPERS GENERALES
+// ============================================================
+const $=id=>document.getElementById(id);
+const $$=sel=>document.querySelectorAll(sel);
+
+function parseTime(s){
+  if(!s) return 0;
+  s=String(s).trim();
+  const parts=s.split(":").map(Number);
+  if(parts.some(isNaN)) return 0;
+  if(parts.length===3) return parts[0]*3600+parts[1]*60+parts[2];
+  if(parts.length===2) return parts[0]*60+parts[1];
+  if(parts.length===1) return parts[0]*60;
+  return 0;
+}
+function fmtTime(sec){
+  if(!isFinite(sec)||sec<0) sec=0;
+  sec=Math.round(sec);
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+function fmtPace(secPerKm){
+  if(!isFinite(secPerKm)||secPerKm<=0) return "—";
+  const m=Math.floor(secPerKm/60), s=Math.round(secPerKm%60);
+  return m+":"+String(s).padStart(2,"0");
+}
+function fmtPaceShort(secPerKm){ return fmtPace(secPerKm); }
+function speedFromPace(secPerKm){ return 3600/secPerKm; }
+function paceFromSpeed(kmh){ return 3600/kmh; }
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  refMode:"race",
+  refs:[],
+  vam:{speed:16.0},
+  pace:{dist:10, time:"00:45:00"},
+  race:{
+    name:"Mi próxima carrera", date:"",
+    dist:21.097,
+    opts:{dplus:false, dneg:false, alt:false, sup:false, obj:false},
+    dplus:150, dneg:150, alt:100, sup:"asfalto", obj:"01:45:00",
+  },
+  segEnabled:false,
+  segments:[],
+  cond:{
+    opts:{temp:false, hum:false, cielo:false, viento:false, sol:false,
+          exp:false, grupo:false, strategy:false, stops:false},
+    temp:22, hum:70, cielo:"cloud", viento:"mod", sol:1,
+    exp:"experimentado", grupo:"solo", strategy:"even", stops:0,
+  },
+};
+
+function emptyRef(){
+  return {
+    name:"Carrera previa", dist:10, time:"00:45:00",
+    opts:{dplus:false, alt:false},
+    dplus:30, alt:50,
+  };
+}
+function emptySeg(){
+  return {name:"Tramo", dist:0, dplus:0, dneg:0, alt:null, sup:"", stop:0};
+}
+
+// ============================================================
+// TABS
+// ============================================================
+$$(".tab").forEach(t=>t.addEventListener("click",()=>{
+  $$(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  const id=t.dataset.tab;
+  $$(".panel").forEach(p=>p.classList.toggle("active", p.dataset.panel===id));
+  if(id==="out") recompute(true);
+}));
+
+// ============================================================
+// REFERENCIA: switch de modo
+// ============================================================
+$$("#ref-mode-switch .mode-opt").forEach(b=>b.addEventListener("click",()=>{
+  $$("#ref-mode-switch .mode-opt").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  state.refMode=b.dataset.mode;
+  $("ref-mode-race").classList.toggle("hidden", state.refMode!=="race");
+  $("ref-mode-vam").classList.toggle("hidden", state.refMode!=="vam");
+  $("ref-mode-pace").classList.toggle("hidden", state.refMode!=="pace");
+}));
+
+// ============================================================
+// REFERENCIA: carreras previas (render dinámico)
+// ============================================================
+function renderRefs(){
+  const wrap=$("ref-list"); wrap.innerHTML="";
+  state.refs.forEach((r,i)=>{
+    const el=document.createElement("div");
+    el.className="card";
+    el.style.padding="18px";
+    el.style.background="var(--bg-3)";
+    el.innerHTML=`
+      <div class="row between" style="margin-bottom:10px">
+        <span class="pill red">Referencia ${i+1}</span>
+        ${state.refs.length>1?`<button class="btn btn-ghost btn-sm" data-del="${i}">Eliminar</button>`:""}
+      </div>
+      <div class="grid grid-2">
+        <div class="field"><div class="field-head"><span class="field-label">Nombre</span></div><input type="text" data-k="name" data-i="${i}" value="${r.name.replace(/"/g,'&quot;')}"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time}" placeholder="hh:mm:ss"></div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Distancia</span></div>
+          <input type="number" data-k="dist" data-i="${i}" step="0.1" min="0.5" value="${r.dist}"><span class="unit">km</span>
+        </div>
+        <div class="field ${r.opts.dplus?"":"disabled"}" data-opt="dplus" data-i="${i}">
+          <div class="field-head">
+            <span class="field-label">D+ de esa carrera
+              <span class="tt"><span class="info">?</span><span class="tt-body">Si tu referencia tenía pendientes notables, cargar el D+ <b>mejora la conversión</b>: descontamos ese efecto para tener tu ritmo real a llano.</span></span>
+            </span>
+            <span class="toggle ${r.opts.dplus?"on":""}" data-toptionref="dplus" data-i="${i}"></span>
+          </div>
+          <input type="number" data-k="dplus" data-i="${i}" step="5" min="0" value="${r.dplus}"><span class="unit">m</span>
+        </div>
+        <div class="field ${r.opts.alt?"":"disabled"}" data-opt="alt" data-i="${i}">
+          <div class="field-head">
+            <span class="field-label">Altitud media
+              <span class="tt"><span class="info">?</span><span class="tt-body">Si la referencia fue en altura (&gt;1200 m), descontamos ese efecto para que tu ritmo-base se ajuste a nivel del mar.</span></span>
+            </span>
+            <span class="toggle ${r.opts.alt?"on":""}" data-toptionref="alt" data-i="${i}"></span>
+          </div>
+          <input type="number" data-k="alt" data-i="${i}" step="50" min="0" value="${r.alt}"><span class="unit">m s.n.m.</span>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(el);
+  });
+  // events
+  wrap.querySelectorAll("input[data-k],select[data-k]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const i=+e.target.dataset.i, k=e.target.dataset.k;
+      let v=e.target.value;
+      if(["dist","dplus","alt"].includes(k)) v=parseFloat(v)||0;
+      state.refs[i][k]=v;
+    });
+  });
+  wrap.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+    state.refs.splice(+e.currentTarget.dataset.del,1); renderRefs();
+  }));
+  wrap.querySelectorAll("[data-toptionref]").forEach(t=>t.addEventListener("click",e=>{
+    const i=+e.currentTarget.dataset.i, k=e.currentTarget.dataset.toptionref;
+    state.refs[i].opts[k]=!state.refs[i].opts[k];
+    renderRefs();
+  }));
+}
+
+$("btn-add-ref").addEventListener("click",()=>{
+  if(state.refs.length===0) state.refs.push(emptyRef());
+  state.refs.push(emptyRef());
+  renderRefs();
+});
+
+// VAM mode — sincronizar velocidad <-> pace
+function syncVamFromSpeed(){
+  const v = +$("v_speed").value || 0;
+  state.vam.speed = v;
+  if(v > 0) $("v_pace").value = fmtPace(paceFromSpeed(v));
+}
+function syncVamFromPace(){
+  const p = parseTime($("v_pace").value);
+  if(p > 0){
+    const v = speedFromPace(p);
+    state.vam.speed = v;
+    $("v_speed").value = v.toFixed(2);
+  }
+}
+$("v_speed").addEventListener("input", syncVamFromSpeed);
+$("v_pace").addEventListener("input", syncVamFromPace);
+
+// Pace mode inputs
+$("p_dist").addEventListener("input",e=>state.pace.dist=+e.target.value||0);
+$("p_time").addEventListener("input",e=>state.pace.time=e.target.value);
+
+// ============================================================
+// CARRERA OBJETIVO
+// ============================================================
+$("r_name").addEventListener("input",e=>state.race.name=e.target.value);
+$("r_date").addEventListener("input",e=>state.race.date=e.target.value);
+$("r_dist").addEventListener("input",e=>state.race.dist=+e.target.value||0);
+$("r_dplus").addEventListener("input",e=>state.race.dplus=+e.target.value||0);
+$("r_dneg").addEventListener("input",e=>state.race.dneg=+e.target.value||0);
+$("r_alt").addEventListener("input",e=>state.race.alt=+e.target.value||0);
+$("r_sup").addEventListener("change",e=>state.race.sup=e.target.value);
+$("r_obj").addEventListener("input",e=>state.race.obj=e.target.value);
+// Pills de distancia rápida
+$$(".dist-pills button").forEach(b=>b.addEventListener("click",()=>{
+  const d = parseFloat(b.dataset.dist);
+  state.race.dist = d;
+  $("r_dist").value = d;
+  scheduleRecompute();
+}));
+
+// Toggles genéricos — [data-toggle]
+function bindTogglesOnce(root){
+  root.querySelectorAll("[data-toggle]:not([data-bound])").forEach(t=>{
+    t.dataset.bound="1";
+    t.addEventListener("click",()=>{
+      const key=t.dataset.toggle;
+      t.classList.toggle("on");
+      const field=t.closest("[data-optional]");
+      if(field) field.classList.toggle("disabled", !t.classList.contains("on"));
+      if(key.startsWith("r_")){
+        const k=key.slice(2); state.race.opts[k]=t.classList.contains("on");
+      } else if(key.startsWith("c_")){
+        const k=key.slice(2); state.cond.opts[k]=t.classList.contains("on");
+      } else if(key==="seg_enabled"){
+        state.segEnabled=t.classList.contains("on");
+      }
+    });
+  });
+}
+
+// ============================================================
+// CONDICIONES
+// ============================================================
+$("c_temp").addEventListener("input",e=>state.cond.temp=+e.target.value);
+$("c_hum").addEventListener("input",e=>state.cond.hum=+e.target.value);
+$("c_cielo").addEventListener("change",e=>state.cond.cielo=e.target.value);
+$("c_viento").addEventListener("change",e=>state.cond.viento=e.target.value);
+$("c_sol").addEventListener("change",e=>state.cond.sol=+e.target.value);
+$("c_exp").addEventListener("change",e=>state.cond.exp=e.target.value);
+$("c_grupo").addEventListener("change",e=>state.cond.grupo=e.target.value);
+$("c_strategy").addEventListener("change",e=>state.cond.strategy=e.target.value);
+$("c_stops").addEventListener("input",e=>state.cond.stops=+e.target.value||0);
+
+// ============================================================
+// SEGMENTOS / PERFIL
+// ============================================================
+function renderSegments(){
+  const tb=$("seg-body"); tb.innerHTML="";
+  state.segments.forEach((s,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${s.name.replace(/"/g,'&quot;')}"></td>
+      <td><input type="number" step="0.1" min="0" data-k="dist" data-i="${i}" value="${s.dist||""}"></td>
+      <td><input type="number" step="5" min="0" data-k="dplus" data-i="${i}" value="${s.dplus||""}"></td>
+      <td><input type="number" step="5" min="0" data-k="dneg" data-i="${i}" value="${s.dneg||""}"></td>
+      <td><input type="number" step="50" min="0" data-k="alt" data-i="${i}" value="${s.alt==null?"":s.alt}" placeholder="—"></td>
+      <td>
+        <select data-k="sup" data-i="${i}">
+          <option value="">—</option>
+          <option value="asfalto" ${s.sup=="asfalto"?"selected":""}>Asfalto</option>
+          <option value="hormigon" ${s.sup=="hormigon"?"selected":""}>Hormigón</option>
+          <option value="tartan" ${s.sup=="tartan"?"selected":""}>Tartán</option>
+          <option value="adoquin" ${s.sup=="adoquin"?"selected":""}>Adoquines</option>
+          <option value="mixto" ${s.sup=="mixto"?"selected":""}>Mixto</option>
+          <option value="ripio" ${s.sup=="ripio"?"selected":""}>Ripio</option>
+        </select>
+      </td>
+      <td><input type="number" step="0.1" min="0" data-k="stop" data-i="${i}" value="${s.stop||0}"></td>
+      <td><button class="seg-row-del" data-del="${i}" title="Eliminar">✕</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("input[data-k],select[data-k]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const i=+e.target.dataset.i, k=e.target.dataset.k;
+      let v=e.target.value;
+      if(["dist","dplus","dneg","stop"].includes(k)) v=parseFloat(v)||0;
+      if(k==="alt") v=v===""?null:(parseFloat(v)||0);
+      state.segments[i][k]=v;
+      updateSegSum();
+    });
+  });
+  tb.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+    state.segments.splice(+e.currentTarget.dataset.del,1); renderSegments(); updateSegSum();
+  }));
+  $("seg-count").textContent=state.segments.length;
+  updateSegSum();
+}
+function updateSegSum(){
+  const totD=state.segments.reduce((a,s)=>a+(+s.dist||0),0);
+  const totDP=state.segments.reduce((a,s)=>a+(+s.dplus||0),0);
+  $("seg-sum").innerHTML = state.segments.length
+    ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>`
+    : "";
+}
+$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); });
+$("btn-clear-seg").addEventListener("click",()=>{
+  if(!confirm("¿Eliminar todos los tramos?")) return;
+  state.segments=[]; renderSegments();
+});
+// Autocompletar en tramos de 5 km (o acorde a la distancia)
+$("btn-auto-split").addEventListener("click",()=>{
+  const d = state.race.dist;
+  if(!(d>0)){ alert("Cargá primero la distancia de la carrera."); return; }
+  let step;
+  if(d<=5) step=1;
+  else if(d<=15) step=2.5;
+  else if(d<=25) step=5;
+  else if(d<=45) step=5;
+  else step=10;
+  const segs=[];
+  let rem=d, idx=1;
+  while(rem>0.01){
+    const tramo=Math.min(step, rem);
+    segs.push({name:`Km ${((idx-1)*step).toFixed(1)}–${Math.min(idx*step,d).toFixed(1)}`,
+      dist:+tramo.toFixed(3), dplus:0, dneg:0, alt:null, sup:"", stop:0});
+    rem-=tramo; idx++;
+  }
+  // Distribuir D+/D- de la carrera proporcionalmente si están cargados
+  const totD = segs.reduce((a,s)=>a+s.dist,0);
+  if(state.race.opts.dplus && state.race.dplus>0){
+    segs.forEach(s=>{ s.dplus = Math.round(state.race.dplus * s.dist/totD); });
+  }
+  if(state.race.opts.dneg && state.race.dneg>0){
+    segs.forEach(s=>{ s.dneg = Math.round(state.race.dneg * s.dist/totD); });
+  } else if(state.race.opts.dplus){
+    segs.forEach(s=>{ s.dneg = s.dplus; });
+  }
+  state.segments = segs;
+  state.segEnabled = true;
+  const tog = document.querySelector('[data-toggle="seg_enabled"]');
+  if(tog) tog.classList.add("on");
+  renderSegments();
+  scheduleRecompute();
+});
+
+/* ============================================================
+   MOTOR DE CÁLCULO PRINCIPAL
+   ============================================================ */
+
+// Factor de perfil global (sin tramos): reparte la distancia entre subida y
+// bajada según D+/D- y aplica Minetti a cada parte. Devuelve un factor
+// multiplicativo sobre el tiempo base (llano).
+function globalSlopeFactor(distKm, dplusM, dnegM){
+  if(distKm <= 0) return 1;
+  const totElev = dplusM + dnegM;
+  if(totElev === 0) return 1;
+  const distM = distKm * 1000;
+  const fracAsc = dplusM / totElev;
+  const fracDsc = 1 - fracAsc;
+  const distAsc = distM * fracAsc;
+  const distDsc = distM * fracDsc;
+  const gradeAsc = distAsc > 0 ? dplusM/distAsc : 0;
+  const gradeDsc = distDsc > 0 ? -dnegM/distDsc : 0;
+  const fAsc = slopeFactor(gradeAsc);
+  const fDsc = slopeFactor(gradeDsc);
+  return (fAsc*distAsc + fDsc*distDsc) / distM;
+}
+
+// Ajusta una referencia (carrera previa) de ruta a un equivalente "llano a nivel del mar":
+// descuenta altitud, descuenta D+ (si se declaró) vía slopeFactor global.
+// Devuelve tiempo equivalente a nivel del mar en llano, misma distancia.
+function refToFlatSeaLevel(r){
+  const t = parseTime(r.time), d = +r.dist||0;
+  if(t<=0 || d<=0) return null;
+  let adjTime = t;
+  if(r.opts.dplus && r.dplus>0){
+    // asumimos circuito balanceado (D- = D+) salvo que se declare otra cosa
+    const fSlope = globalSlopeFactor(d, r.dplus, r.dplus);
+    if(fSlope > 0) adjTime /= fSlope;
+  }
+  if(r.opts.alt && r.alt > 0){
+    const fA = altFactor(r.alt);
+    if(fA > 0) adjTime /= fA;
+  }
+  return {time:adjTime, dist:d};
+}
+
+// Desde refs o VAM o pace, devuelve un VDOT calibrado + confianza.
+function referenceVdot(targetDistKm){
+  if(state.refMode === "vam"){
+    const vam = state.vam.speed;
+    if(!(vam > 0)) return null;
+    return {
+      vdot: vdotFromVam(vam),
+      confidence: 0.55,  // VAM es un punto aislado → confianza media
+      source: "VAM",
+      detail: `VAM ${vam.toFixed(2)} km/h → VDOT ${vdotFromVam(vam).toFixed(1)}`,
+      sources:1,
+    };
+  }
+  if(state.refMode === "pace"){
+    const d = +state.pace.dist, t = parseTime(state.pace.time);
+    if(d <= 0 || t <= 0) return null;
+    const vdot = vdotFromPerf(d, t);
+    if(!vdot) return null;
+    return {
+      vdot, confidence: 0.60,
+      source: "Ritmo test",
+      detail: `${d.toFixed(1)} km en ${fmtTime(t)} → VDOT ${vdot.toFixed(1)}`,
+      sources:1,
+    };
+  }
+  // Modo carrera previa: promediar VDOTs de refs, peso por cercanía a distancia objetivo.
+  if(state.refs.length === 0) return null;
+  let sumW = 0, sumVdot = 0, validN = 0;
+  const detailArr = [];
+  for(const r of state.refs){
+    const flat = refToFlatSeaLevel(r);
+    if(!flat) continue;
+    const vdot = vdotFromPerf(flat.dist, flat.time);
+    if(!vdot) continue;
+    // peso por cercanía en log-distancia
+    let w = 1;
+    if(targetDistKm > 0){
+      const logRatio = Math.abs(Math.log(flat.dist) - Math.log(targetDistKm));
+      w = Math.exp(-logRatio * 1.2); // más cerca en log → más peso
+    }
+    sumW += w; sumVdot += vdot*w; validN++;
+    detailArr.push(`${r.name||"Ref"} (${flat.dist.toFixed(1)}K): VDOT ${vdot.toFixed(1)}`);
+  }
+  if(sumW === 0) return null;
+  const vdotAvg = sumVdot / sumW;
+  return {
+    vdot: vdotAvg,
+    confidence: Math.min(0.95, 0.55 + 0.15*validN),
+    source: "Carreras previas",
+    detail: detailArr.join(" · "),
+    sources: validN,
+  };
+}
+
+// Composición climática para ruta.
+// Óptimo térmico depende de la duración estimada de la carrera.
+function climateMultiplier(cond, raceSecBase){
+  let m = 1;
+  const o = cond.opts;
+
+  if(o.temp){
+    const tOpt = tempOptimal(raceSecBase);
+    const sens = tempSensitivity(raceSecBase);
+    const t = cond.temp;
+    if(t > tOpt){
+      m *= 1 + sens * (t - tOpt);
+      if(t > 28) m *= 1 + 0.008 * (t - 28);   // rango peligroso
+    } else if(t < tOpt - 7){
+      m *= 1 + 0.002 * ((tOpt - 7) - t);      // frío penaliza menos
+    }
+  }
+  if(o.hum && o.temp && cond.temp > 18 && cond.hum > 60){
+    const extraT = Math.min(1, (cond.temp - 18) / 14);
+    m *= 1 + 0.0025 * (cond.hum - 60) * extraT;
+  }
+  if(o.cielo){
+    const skyMult = {clear:1.00, part:1.00, cloud:0.99,
+                     light:1.015, rain:1.03, storm:1.07, snow:1.05};
+    m *= (skyMult[cond.cielo] || 1);
+  }
+  if(o.viento){
+    const windMult = {none:1.00, light:1.005, mod:1.02, strong:1.045, extreme:1.085, favor:0.99};
+    m *= (windMult[cond.viento] || 1);
+  }
+  if(o.sol && o.temp && cond.temp > 18){
+    const solBoost = [0, 0.01, 0.025, 0.04][cond.sol] || 0;
+    m *= 1 + solBoost;
+  }
+  return m;
+}
+
+// Experiencia
+const EXP_FACTORS = {
+  debut_42:1.06, debut_21:1.025, debut_10:1.01, debut_short:1.005,
+  nuevo:1.01, experimentado:1.00, veterano:0.995,
+};
+function experienceFactor(cond, distKm){
+  if(!cond.opts.exp) return 1;
+  const exp = cond.exp;
+  if(exp === "experimentado") return 1.00;
+  if(exp === "veterano") return 0.995;
+  if(exp === "debut"){
+    if(distKm >= 35) return 1.06;
+    if(distKm >= 18) return 1.03;
+    if(distKm >= 8)  return 1.015;
+    return 1.008;
+  }
+  if(exp === "nuevo"){
+    if(distKm >= 35) return 1.025;
+    if(distKm >= 18) return 1.015;
+    return 1.008;
+  }
+  return 1;
+}
+
+// Drafting / pelotón. Depende de la velocidad: a ritmos más lentos, menos efecto.
+function drafting(cond, avgKmh){
+  if(!cond.opts.grupo) return 1;
+  // A 10 km/h, aerodinámica ~ 5% del costo. A 18 km/h, ~14%.
+  const aeroShare = Math.max(0, Math.min(0.18, (avgKmh - 6) * 0.011));
+  const savings = {solo:0, small:0.15, medium:0.40, large:0.60};
+  const sav = savings[cond.grupo] || 0;
+  return 1 - aeroShare * sav;
+}
+
+// ============================================================
+// COMPUTE — cálculo de tiempo para la carrera objetivo
+// ============================================================
+function compute(){
+  const errs=[];
+  const race=state.race;
+
+  if(!(race.dist > 0)) errs.push("Cargá la distancia de la carrera objetivo.");
+  const ref = referenceVdot(race.dist);
+  if(!ref){
+    if(state.refMode==="race" && state.refs.length===0)
+      errs.push("Agregá al menos una carrera de referencia (o cambiá al modo VAM o Ritmo test).");
+    else
+      errs.push("Completá los datos de tu referencia.");
+  }
+  if(errs.length) return {ok:false, errs};
+
+  const vdot = ref.vdot;
+
+  // Tiempo base a nivel del mar en llano:
+  const baseSeaFlat = timeFromVdot(vdot, race.dist);
+  if(!baseSeaFlat) return {ok:false, errs:["No se pudo calcular. Revisá los datos."]};
+
+  // Contribución de cada factor global al tiempo base:
+  const raceDneg = race.opts.dneg ? race.dneg : (race.opts.dplus ? race.dplus : 0);
+  const raceDplus = race.opts.dplus ? race.dplus : 0;
+
+  const hasSegs = state.segEnabled && state.segments.some(s=>(+s.dist||0) > 0);
+
+  let baseTimeSec = 0;
+  const splits = [];
+
+  // Climate necesita duración estimada para óptimo: usamos baseSeaFlat como primer estimador.
+  const climateEst = climateMultiplier(state.cond, baseSeaFlat);
+
+  // Experiencia (una vez)
+  const fExp = experienceFactor(state.cond, race.dist);
+
+  // Drafting necesita velocidad promedio estimada: aproximamos con baseSeaFlat y dist.
+  const avgKmhEst = (race.dist / (baseSeaFlat/3600));
+  const fDraft = drafting(state.cond, avgKmhEst);
+
+  // Superficie global (fallback para tramos sin superficie)
+  const fSupGlob = (race.opts.sup ? (T_SUPERFICIE[race.sup] || 1) : 1);
+
+  // Altitud global (fallback para tramos sin altitud propia)
+  const fAltGlob = (race.opts.alt && race.alt>0) ? altFactor(race.alt) : 1;
+
+  if(hasSegs){
+    // Tramos explícitos. Reparto proporcional del VDOT→pace llano por cada tramo
+    // aplicando pendiente (Minetti), superficie, altitud y fatiga implícita.
+    const segs = state.segments.filter(s => (+s.dist||0)>0);
+    const totSegDist = segs.reduce((a,s)=>a+(+s.dist||0),0);
+
+    // Pace llano de referencia desde VDOT (pace objetivo para la distancia "media"
+    // de la carrera — usamos distancia total para respetar el exponente de Riegel
+    // implícito en Daniels).
+    const paceFlatRace = baseSeaFlat / race.dist; // seg/km
+
+    let acumKm = 0, acumTime = 0;
+    for(const s of segs){
+      const distM = s.dist * 1000;
+      const dp = +s.dplus || 0;
+      const dn = +s.dneg  || 0;
+      // Gradiente neto: si D+ > D-, subida neta; si es al revés, bajada.
+      // Para factor de pendiente usamos un modelo bi-partido dentro del tramo
+      // (repartimos según D+/D- + componente llano si sobra).
+      let fSlope;
+      if(dp === 0 && dn === 0){
+        fSlope = 1;
+      } else {
+        const totE = dp + dn;
+        const fracA = dp / totE;
+        const fracD = 1 - fracA;
+        const gA = fracA > 0 ? dp / (distM * fracA) : 0;
+        const gD = fracD > 0 ? -dn / (distM * fracD) : 0;
+        fSlope = (slopeFactor(gA)*fracA + slopeFactor(gD)*fracD);
+      }
+      const fSup = s.sup ? (T_SUPERFICIE[s.sup]||1) : fSupGlob;
+      const fAlt = (s.alt != null && s.alt > 0) ? altFactor(s.alt) : fAltGlob;
+      const tSec = s.dist * paceFlatRace * fSlope * fSup * fAlt;
+      const stopSec = (+s.stop||0) * 60;
+      acumKm += s.dist;
+      acumTime += tSec + stopSec;
+      splits.push({
+        name: s.name || "Tramo",
+        dist: s.dist, dplus: dp, dneg: dn,
+        fSlope, fSup, fAlt,
+        tSec, stopSec,
+        accDist: acumKm, accTime: acumTime,
+      });
+    }
+    // Si queda distancia por cubrir, la agregamos con factores globales.
+    const leftDist = race.dist - totSegDist;
+    const leftDplus = Math.max(0, raceDplus - segs.reduce((a,s)=>a+(+s.dplus||0),0));
+    const leftDneg  = Math.max(0, raceDneg  - segs.reduce((a,s)=>a+(+s.dneg ||0),0));
+    if(leftDist > 0.1){
+      const paceFlatRace = baseSeaFlat / race.dist;
+      const fSlope = globalSlopeFactor(leftDist, leftDplus, leftDneg);
+      const tSec = leftDist * paceFlatRace * fSlope * fSupGlob * fAltGlob;
+      acumKm += leftDist; acumTime += tSec;
+      splits.push({
+        name: "Resto del circuito",
+        dist: leftDist, dplus: leftDplus, dneg: leftDneg,
+        fSlope, fSup: fSupGlob, fAlt: fAltGlob,
+        tSec, stopSec: 0,
+        accDist: acumKm, accTime: acumTime,
+      });
+    }
+    baseTimeSec = acumTime;
+  } else {
+    // Global. Partimos del baseSeaFlat y aplicamos pendiente + superficie + altitud globales.
+    const fSlope = (raceDplus || raceDneg) ? globalSlopeFactor(race.dist, raceDplus, raceDneg) : 1;
+    const T = baseSeaFlat * fSlope * fSupGlob * fAltGlob;
+    baseTimeSec = T;
+    splits.push({
+      name: race.name || "Carrera",
+      dist: race.dist, dplus: raceDplus, dneg: raceDneg,
+      fSlope, fSup: fSupGlob, fAlt: fAltGlob,
+      tSec: T, stopSec: 0,
+      accDist: race.dist, accTime: T,
+    });
+  }
+
+  // Factores globales que multiplican el total:
+  const condMult = climateEst * fExp * fDraft;
+  const extraSec = state.cond.opts.stops ? (+state.cond.stops||0) : 0;
+  const totalSec = baseTimeSec * condMult + extraSec;
+
+  // Ajustar splits con multiplicador de condiciones (para mostrar tiempos realistas por tramo):
+  let runAcc = 0;
+  splits.forEach(sp=>{
+    sp.tSecAdj = sp.tSec * condMult;
+    runAcc += sp.tSecAdj + sp.stopSec;
+    sp.accTimeAdj = runAcc;
+  });
+  if(splits.length && extraSec>0){
+    splits[splits.length-1].accTimeAdj += extraSec;
+  }
+
+  const pace = totalSec / Math.max(race.dist, 0.01);
+  const avgKmh = race.dist / (totalSec/3600);
+
+  // VAM, %VAM objetivo
+  const vamKmh = vamFromVdot(vdot);
+  const pct = (avgKmh / vamKmh) * 100;
+
+  // Riegel crosscheck: si el modo ref es "race" con una sola referencia cercana,
+  // calculamos el tiempo alternativo para mostrar como sanity check.
+  let riegelSec = null;
+  if(state.refMode === "race" && state.refs.length > 0){
+    const r = state.refs[0];
+    const flat = refToFlatSeaLevel(r);
+    if(flat){
+      const cAvg = (riegelExponent(flat.dist) + riegelExponent(race.dist))/2;
+      const tRiegel = flat.time * Math.pow(race.dist/flat.dist, cAvg);
+      // aplicar los mismos ajustes globales
+      riegelSec = tRiegel * ((raceDplus||raceDneg) ? globalSlopeFactor(race.dist, raceDplus, raceDneg) : 1)
+                  * fSupGlob * fAltGlob * condMult + extraSec;
+    }
+  }
+
+  return {
+    ok:true,
+    totalSec, pace, avgKmh, vdot, vamKmh, pctVam: pct,
+    splits, refInfo: ref, condMult, extraSec,
+    raceDist: race.dist, raceDplus, raceDneg,
+    baseSeaFlat, fSupGlob, fAltGlob,
+    riegelSec,
+  };
+}
+
+/* ============================================================
+   RENDER DEL RESULTADO
+   ============================================================ */
+function recompute(scrollToTop){
+  const r = compute();
+  const eWrap=$("out-errors");
+  if(!r.ok){
+    eWrap.innerHTML = `<div class="notice warn"><b>Faltan datos para calcular:</b><br>${r.errs.map(x=>"• "+x).join("<br>")}</div>`;
+    $("r-time").textContent="--:--:--";
+    $("r-sub").textContent="Completá los campos marcados";
+    $("r-race-name").textContent="—";
+    ["r-dist","r-pace","r-speed","r-vdot","r-vam","r-pctvam","r-conf"].forEach(id=>$(id).textContent="—");
+    $("r-splits").innerHTML="";
+    $("r-compare").innerHTML="";
+    $("r-strategy").innerHTML="";
+    $("r-zones").innerHTML="";
+    $("r-conf-sub").textContent="—";
+    return;
+  }
+  eWrap.innerHTML="";
+  $("r-race-name").textContent = state.race.name || "Carrera";
+  $("r-time").textContent = fmtTime(r.totalSec);
+  $("r-sub").textContent = `Ritmo promedio ${fmtPace(r.pace)} /km · ${r.avgKmh.toFixed(2)} km/h · VDOT ${r.vdot.toFixed(1)}`;
+  $("r-dist").innerHTML = `${r.raceDist.toFixed(r.raceDist<10?2:1)}<small>km</small>`;
+  $("r-pace").textContent = fmtPace(r.pace);
+  $("r-speed").innerHTML = `${r.avgKmh.toFixed(2)}<small>km/h</small>`;
+  $("r-vdot").textContent = r.vdot.toFixed(1);
+  $("r-vam").innerHTML = `${r.vamKmh.toFixed(1)}<small>km/h</small>`;
+  $("r-pctvam").innerHTML = `${r.pctVam.toFixed(1)}<small>%</small>`;
+
+  // Confianza
+  const baseConf = r.refInfo.confidence;
+  let conf = baseConf;
+  if(state.segEnabled && state.segments.length>0) conf = Math.min(1, conf + 0.05);
+  if(Object.values(state.cond.opts).filter(v=>v).length >= 3) conf = Math.min(1, conf + 0.03);
+  $("r-conf").textContent = Math.round(conf*100) + "%";
+  let cs = `${r.refInfo.source}`;
+  if(r.refInfo.sources > 1) cs += ` (${r.refInfo.sources} refs)`;
+  if(state.segEnabled && state.segments.length>0) cs += " · con tramos";
+  $("r-conf-sub").textContent = cs;
+
+  // Splits
+  const maxPace = Math.max(...r.splits.map(s=>s.tSecAdj/Math.max(s.dist,0.01)));
+  const minPace = Math.min(...r.splits.map(s=>s.tSecAdj/Math.max(s.dist,0.01)));
+  $("r-splits").innerHTML = r.splits.map((s,i)=>{
+    const paceSec = s.tSecAdj/Math.max(s.dist,0.01);
+    // Normalizar ancho barra entre minPace y maxPace (invertir: pace más rápido → barra más corta)
+    const span = Math.max(0.01, maxPace - minPace);
+    const normalized = 100 - ((maxPace - paceSec)/span)*60; // 40 a 100
+    const pct = Math.max(38, Math.min(100, normalized));
+    const detail = [];
+    if(s.dplus) detail.push(`${Math.round(s.dplus)}m D+`);
+    if(s.dneg) detail.push(`${Math.round(s.dneg)}m D−`);
+    return `
+    <div class="bar-row">
+      <div class="bar-name" title="${s.name}">${i+1}. ${s.name} <span class="pill" style="margin-left:6px">${s.dist.toFixed(2)}km${detail.length?" · "+detail.join(" · "):""}</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%">${fmtPace(paceSec)}/km</div></div>
+      <div class="bar-val">${fmtTime(s.accTimeAdj)}</div>
+    </div>`;
+  }).join("");
+  $("r-split-sub").textContent = r.splits.length > 1
+    ? "Tiempo proyectado en cada tramo. Barra: ritmo min/km. Derecha: tiempo acumulado desde la largada."
+    : "Resumen global (sin tramos cargados). Activá tramos en la pestaña Perfil para ver splits detallados.";
+
+  // Estrategia de pacing
+  renderStrategy(r);
+
+  // Zonas de entrenamiento (Daniels)
+  renderZones(r.vdot);
+
+  // Comparación
+  renderCompare(r);
+
+  if(scrollToTop) window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function renderStrategy(r){
+  const T = r.totalSec;
+  const half = r.raceDist/2;
+  // Modelo simple: primera mitad T1, segunda mitad T2; T1+T2=T
+  // neg/pos split en % de diferencia relativa: si 2%, T2 = T1 * (1 - 0.02) dado T1/T2 equivalente.
+  // Implementación: T_even = T, T1 = T/2, T2 = T/2.
+  // neg1: T2 = T1 - 1% => T1(1+(1-0.01)) = T  → T1 = T/(1.99), T2 = T1*0.99
+  function split(diffPct){
+    const factor = 1 + diffPct;   // diffPct negativo = T2 más rápido
+    // T1 + T1*factor = T → T1 = T/(1+factor)
+    const T1 = T/(1+factor);
+    const T2 = T1*factor;
+    return {T1, T2, p1: T1/half, p2: T2/half};
+  }
+  const strategies = [
+    {key:"even",  name:"Ritmo parejo",    desc:"Igual ritmo mitad vs mitad", diff: 0,     rec:state.cond.strategy==="even"||!state.cond.opts.strategy},
+    {key:"neg1",  name:"Negative split suave", desc:"Segunda mitad 1 % más rápida", diff:-0.01, rec:state.cond.strategy==="neg1"&&state.cond.opts.strategy},
+    {key:"neg2",  name:"Negative split marcado", desc:"Segunda mitad 2 % más rápida", diff:-0.02, rec:state.cond.strategy==="neg2"&&state.cond.opts.strategy},
+    {key:"pos1",  name:"Positive split", desc:"Primera mitad 1 % más rápida", diff:+0.01, rec:state.cond.strategy==="pos1"&&state.cond.opts.strategy},
+  ];
+  $("r-strategy").innerHTML = strategies.map(s=>{
+    const {T1,T2,p1,p2} = split(s.diff);
+    return `
+    <div class="strat-card ${s.rec?"rec":""}">
+      <div class="s-n"><span>${s.name}</span>${s.rec?'<span class="tag">TU PLAN</span>':""}</div>
+      <div class="s-h">${fmtTime(T)} · ${fmtPace(T/r.raceDist)} /km</div>
+      <div class="s-row"><span>1ra mitad (${half.toFixed(1)} km)</span><b>${fmtTime(T1)}</b></div>
+      <div class="s-row"><span>&nbsp;&nbsp;ritmo</span><b>${fmtPace(p1)} /km</b></div>
+      <div class="s-row"><span>2da mitad (${half.toFixed(1)} km)</span><b>${fmtTime(T2)}</b></div>
+      <div class="s-row"><span>&nbsp;&nbsp;ritmo</span><b>${fmtPace(p2)} /km</b></div>
+    </div>`;
+  }).join("");
+}
+
+function renderZones(vdot){
+  const zones = [
+    {n:"E — Rodaje suave", pct:0.66, desc:"Conversacional · 59–74 % VDOT · base aeróbica"},
+    {n:"M — Ritmo maratón", pct:0.80, desc:"75–84 % VDOT · sostenible larga duración"},
+    {n:"T — Umbral (tempo)", pct:0.86, desc:"83–88 % VDOT · 20–60 min · duro pero controlado"},
+    {n:"I — Intervalos VO₂", pct:0.98, desc:"95–100 % VDOT · series 3–5 min · fuertes"},
+    {n:"R — Repeticiones", pct:1.08, desc:"105–110 % VDOT · 200–600 m · máximo esfuerzo corto"},
+  ];
+  $("r-zones").innerHTML = zones.map(z=>{
+    const pace = vdotPaceSec(vdot, z.pct);
+    return `
+    <div class="zone-card">
+      <div class="z-n">${z.n}</div>
+      <div class="z-t">${fmtPace(pace)} <small style="color:var(--txt-3);font-size:12px">min/km</small></div>
+      <div class="z-d">${z.desc}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderCompare(r){
+  const c = state.cond;
+  const obj = state.race.opts.obj ? parseTime(state.race.obj) : 0;
+  let html="";
+  if(obj > 0){
+    const diff = r.totalSec - obj;
+    const sign = diff >= 0 ? "+" : "−";
+    const cls = Math.abs(diff) < 120 ? "ok" : (Math.abs(diff) < 600 ? "info" : "warn");
+    html += `<div class="notice ${cls}">
+      <b>Tu objetivo:</b> ${fmtTime(obj)}<br>
+      <b>Nuestra estimación:</b> ${fmtTime(r.totalSec)} (${sign}${fmtTime(Math.abs(diff))})<br>
+      ${diff > 0
+        ? "Tu objetivo está <b>por debajo</b> de lo estimado — apuntás a un ritmo ambicioso. Necesitás sesiones específicas o mejores condiciones."
+        : (diff < -180
+            ? "Tu objetivo se ve <b>conservador</b> — tenés margen real para apretar."
+            : "Tu objetivo se ve <b>realista</b> con tu nivel actual.") }
+    </div>`;
+  }
+
+  const conds = [];
+  if(c.opts.temp) conds.push(`temp ${c.temp}°C`);
+  if(c.opts.hum) conds.push(`hum ${c.hum}%`);
+  if(c.opts.cielo) conds.push({clear:"soleado",part:"parcial",cloud:"nublado",light:"llovizna",rain:"lluvia",storm:"tormenta",snow:"nieve"}[c.cielo]);
+  if(c.opts.viento) conds.push({none:"sin viento",light:"viento leve",mod:"viento mod.",strong:"viento fuerte",extreme:"viento extremo",favor:"viento a favor"}[c.viento]);
+  if(c.opts.sol) conds.push(`sol ${["sombra","parcial","expuesto","pleno"][c.sol]||""}`);
+  if(c.opts.exp) conds.push(`exp ${c.exp}`);
+  if(c.opts.grupo) conds.push(`grupo ${c.grupo}`);
+  const condDetail = conds.length ? conds.join(" · ") : "sin ajustes ambientales/corredor";
+
+  html += `
+    <div class="hint">
+      <b>Factores aplicados:</b>
+      <ul style="margin:8px 0 0 18px;line-height:1.7">
+        <li>Calibración: <b>${r.refInfo.source}</b> — ${r.refInfo.detail}</li>
+        <li>VDOT calibrado: <b>${r.vdot.toFixed(1)}</b> · VAM equiv.: <b>${r.vamKmh.toFixed(1)} km/h</b></li>
+        <li>Tiempo base llano+nivel del mar: <b>${fmtTime(r.baseSeaFlat)}</b> (${fmtPace(r.baseSeaFlat/r.raceDist)}/km)</li>
+        <li>D+/D−: <b>${state.race.opts.dplus ? state.race.dplus+" m" : "—"}</b> / <b>${state.race.opts.dneg ? state.race.dneg+" m" : (state.race.opts.dplus ? "igual a D+" : "—")}</b></li>
+        <li>Altitud: <b>${state.race.opts.alt ? state.race.alt+" m (×"+r.fAltGlob.toFixed(3)+")" : "a nivel del mar"}</b></li>
+        <li>Superficie: <b>${state.race.opts.sup ? state.race.sup : "asfalto"}</b> (×${r.fSupGlob.toFixed(3)})</li>
+        <li>Multiplicador condiciones (clima + exp + pelotón): <b>×${r.condMult.toFixed(3)}</b> <span style="color:var(--txt-4)">(${condDetail})</span></li>
+        <li>Paradas totales: <b>${c.opts.stops?c.stops+" s":"—"}</b></li>
+        ${r.riegelSec ? `<li>Crosscheck Riegel: <b>${fmtTime(r.riegelSec)}</b> (diferencia con VDOT: ${(Math.abs(r.riegelSec-r.totalSec)/r.totalSec*100).toFixed(1)} %)</li>` : ""}
+      </ul>
+    </div>`;
+  $("r-compare").innerHTML = html;
+}
+
+// Auto-recompute con debounce
+let reTimer;
+function scheduleRecompute(){ clearTimeout(reTimer); reTimer=setTimeout(()=>recompute(false), 160); }
+document.addEventListener("input", scheduleRecompute);
+document.addEventListener("change", scheduleRecompute);
+document.addEventListener("click", e=>{
+  if(e.target.closest(".toggle") || e.target.closest("[data-del]") || e.target.closest(".mode-opt") || e.target.closest(".dist-pills button")) scheduleRecompute();
+});
+
+/* ============================================================
+   EXPORT / PERSISTENCE
+   ============================================================ */
+function exportCSV(){
+  const r=compute();
+  if(!r.ok){ alert("Completá los datos antes de exportar."); return; }
+  const rows=[["Tramo","Distancia (km)","D+ (m)","D− (m)","Ritmo (min/km)","Tiempo tramo","Tiempo acumulado"]];
+  r.splits.forEach((s,i)=>{
+    rows.push([`${i+1}. ${s.name}`, s.dist.toFixed(2), Math.round(s.dplus||0), Math.round(s.dneg||0),
+      fmtPace(s.tSecAdj/Math.max(s.dist,0.01)),
+      fmtTime(s.tSecAdj + s.stopSec),
+      fmtTime(s.accTimeAdj)]);
+  });
+  rows.push([]);
+  rows.push(["TOTAL", r.raceDist.toFixed(2), Math.round(r.raceDplus||0), Math.round(r.raceDneg||0), fmtPace(r.pace), "", fmtTime(r.totalSec)]);
+  rows.push([]);
+  rows.push(["VDOT", r.vdot.toFixed(1)]);
+  rows.push(["VAM (km/h)", r.vamKmh.toFixed(2)]);
+  rows.push(["% VAM objetivo", r.pctVam.toFixed(1)]);
+  const csv=rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const safeName=(state.race.name||"plan").replace(/[^a-z0-9\-_]/gi,"_");
+  a.href=url; a.download=`plan_ruta_${safeName}.csv`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$("btn-export-csv").addEventListener("click", exportCSV);
+$("btn-print").addEventListener("click", ()=>window.print());
+
+const LS_KEY="ea-ruta-calc-v1";
+$("btn-save").addEventListener("click",()=>{
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    const b=$("btn-save"); const old=b.innerHTML;
+    b.innerHTML="<span>✓ Guardado</span>";
+    setTimeout(()=>b.innerHTML=old, 1400);
+  }catch(e){ alert("No se pudo guardar."); }
+});
+$("btn-reset").addEventListener("click",()=>{
+  if(!confirm("¿Restaurar valores iniciales? Se perderán tus datos.")) return;
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+});
+
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    const s=JSON.parse(raw);
+    if(s.refMode) state.refMode=s.refMode;
+    if(Array.isArray(s.refs)) state.refs=s.refs;
+    if(s.vam) Object.assign(state.vam, s.vam);
+    if(s.pace) Object.assign(state.pace, s.pace);
+    if(s.race){
+      Object.assign(state.race, s.race);
+      if(s.race.opts) state.race.opts=Object.assign({}, state.race.opts, s.race.opts);
+    }
+    if(typeof s.segEnabled==="boolean") state.segEnabled=s.segEnabled;
+    if(Array.isArray(s.segments)) state.segments=s.segments;
+    if(s.cond){
+      const keys=["temp","hum","cielo","viento","sol","exp","grupo","strategy","stops"];
+      keys.forEach(k=>{ if(s.cond[k]!=null) state.cond[k]=s.cond[k]; });
+      if(s.cond.opts){
+        keys.forEach(k=>{ if(typeof s.cond.opts[k]==="boolean") state.cond.opts[k]=s.cond.opts[k]; });
+      }
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function applyStateToUI(){
+  // modo ref
+  $$("#ref-mode-switch .mode-opt").forEach(b=>b.classList.toggle("active", b.dataset.mode===state.refMode));
+  $("ref-mode-race").classList.toggle("hidden", state.refMode!=="race");
+  $("ref-mode-vam").classList.toggle("hidden", state.refMode!=="vam");
+  $("ref-mode-pace").classList.toggle("hidden", state.refMode!=="pace");
+  $("v_speed").value = state.vam.speed;
+  $("v_pace").value = fmtPace(paceFromSpeed(state.vam.speed));
+  $("p_dist").value=state.pace.dist; $("p_time").value=state.pace.time;
+
+  // race
+  $("r_name").value=state.race.name; $("r_date").value=state.race.date||"";
+  $("r_dist").value=state.race.dist;
+  $("r_dplus").value=state.race.dplus; $("r_dneg").value=state.race.dneg;
+  $("r_alt").value=state.race.alt; $("r_sup").value=state.race.sup;
+  $("r_obj").value=state.race.obj;
+  $$("[data-optional]").forEach(f=>{
+    const opt=f.dataset.optional;
+    const tog=f.querySelector(".toggle");
+    let on=false;
+    if(opt.startsWith("r_")) on = !!state.race.opts[opt.slice(2)];
+    else if(opt.startsWith("c_")) on = !!state.cond.opts[opt.slice(2)];
+    tog.classList.toggle("on", on);
+    f.classList.toggle("disabled", !on);
+  });
+  const segTog = document.querySelector('[data-toggle="seg_enabled"]');
+  segTog.classList.toggle("on", state.segEnabled);
+
+  // condiciones
+  $("c_temp").value=state.cond.temp;
+  $("c_hum").value=state.cond.hum;
+  $("c_cielo").value=state.cond.cielo;
+  $("c_viento").value=state.cond.viento;
+  $("c_sol").value=state.cond.sol;
+  $("c_exp").value=state.cond.exp;
+  $("c_grupo").value=state.cond.grupo;
+  $("c_strategy").value=state.cond.strategy;
+  $("c_stops").value=state.cond.stops;
+
+  renderRefs(); renderSegments();
+  bindTogglesOnce(document);
+}
+
+function init(){
+  loadSaved();
+  if(state.refs.length===0) state.refs=[ emptyRef() ];
+  applyStateToUI();
+  $("foot-stamp").textContent = "actualizado " + new Date().toLocaleDateString("es-AR");
+  recompute(false);
+}
+init();
+</script>
+
+<script>
+/* Le avisa a la web qué alto tiene, para que el marco se ajuste solo.
+   Si abrís este archivo suelto (sin internet), esto no hace nada. */
+(function () {
+  if (window.parent === window) return;
+
+  /* Embebida: soltamos el alto atado a la pantalla. `html,body{height:100%}` y
+     `body{min-height:100vh}` sirven cuando abrís el archivo suelto, pero acá
+     adentro 100vh ES el alto del marco: el documento copiaría ese alto y se lo
+     reportaría de vuelta al padre, trabándolo para siempre (solo podría crecer,
+     nunca achicarse). Midiendo el contenido real, el marco lo sigue en los dos
+     sentidos y no queda un vacío abajo. */
+  var soltar = document.createElement('style');
+  soltar.textContent = 'html,body{height:auto!important;min-height:0!important}';
+  document.head.appendChild(soltar);
+
+  var ultimo = -1;
+  /* Medimos el <body>, no el <html>: adentro de un marco el <html> nunca mide
+     menos que el marco, así que nunca podría achicarse. */
+  var medir = function () {
+    var b = document.body;
+    return Math.ceil(b.getBoundingClientRect().height + b.offsetTop);
+  };
+  var enviar = function (forzar) {
+    var alto = medir();
+    if (!forzar && alto === ultimo) return; // no repetimos el mismo mensaje
+    ultimo = alto;
+    window.parent.postMessage({ tipo: 'alto-herramienta', alto: alto }, '*');
+  };
+  /* Al cargar mandamos SIEMPRE, aunque el observer ya haya mandado ese mismo
+     alto: si no, el primer aviso se pierde si el padre todavía no escuchaba. */
+  window.addEventListener('load', function () { enviar(true); });
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () { enviar(false); }).observe(document.body);
+  }
+  /* Y si la web nos pregunta, contestamos: así el alto llega igual aunque
+     nuestro primer aviso haya salido antes de que ella estuviera escuchando. */
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.tipo === 'pedir-alto') enviar(true);
+  });
+})();
+</script>
+</body>
+</html>

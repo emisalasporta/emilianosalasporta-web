@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { TIPOS_RECURSOS } from '../../consts';
+
+/* Mismo molde que /blog y /herramientas: eyebrow, h1, lead y una grilla de
+   tarjetas. Si hay que tocar algo acá, mirá primero cómo lo resuelven esas dos. */
+const recursos = (
+  await getCollection('recursos', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout
+  title="Recursos"
+  description="Planillas, guías y archivos descargables para acompañar tu entrenamiento de trail y ultradistancia. Gratis y sin dejar el mail."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Recursos</p>
+      <h1>Para descargar y usar</h1>
+      <p class="lead recursos-lead">
+        Planillas, guías y archivos que voy armando. Te los bajás, son tuyos y los usás cuando
+        quieras. Gratis, y sin dejar el mail.
+      </p>
+
+      {recursos.length === 0 ? (
+        <div class="vacio">
+          <div class="ghost-card">
+            <span class="ghost-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            </span>
+            <p class="ghost-title">Los primeros están en camino</p>
+            <p class="muted ghost-text">
+              Estoy armando las primeras planillas y guías. Pasá seguido.
+            </p>
+          </div>
+          <p class="muted vacio-nota">
+            Mientras tanto, las <a href="/herramientas">calculadoras</a> ya están listas para usar
+            (y también te las podés bajar), y en el <a href="/blog">blog</a> voy dejando lo que
+            aprendo.
+          </p>
+        </div>
+      ) : (
+        <div class="grid recursos-grid">
+          {recursos.map((r) => (
+            <a href={`/recursos/${r.id}`} class="card card-link recurso-card">
+              <span class="pill">{TIPOS_RECURSOS[r.data.tipo]}</span>
+              <h2 class="recurso-card-title">{r.data.title}</h2>
+              <p class="muted recurso-card-desc">{r.data.description}</p>
+              <span class="recurso-card-cta" aria-hidden="true">Ver recurso →</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .recursos-lead { max-width: 42rem; margin-top: 0.5rem; }
+  .recursos-grid { margin-top: 2.25rem; }
+
+  .recurso-card { display: flex; flex-direction: column; align-items: flex-start; }
+  .recurso-card-title { font-size: 1.2rem; margin: 0.9rem 0 0.4rem; }
+  .recurso-card-desc { font-size: 0.95rem; flex: 1; }
+  .recurso-card-cta {
+    margin-top: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  /* Estado vacío. La página está en el menú desde el día uno, así que alguien
+     va a entrar antes de que haya nada: que se vaya sabiendo qué viene y con
+     algo real en la mano, no con un cartel de "no hay nada". */
+  .vacio { margin-top: 2.25rem; max-width: 34rem; }
+  .vacio-nota { margin-top: 1.5rem; font-size: 0.95rem; }
+
+  /* Misma ghost-card que usa /blog cuando faltan entradas. */
+  .ghost-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    color: var(--muted);
+  }
+  .ghost-icon {
+    display: inline-flex;
+    width: 40px; height: 40px;
+    align-items: center; justify-content: center;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+  .ghost-icon svg { width: 20px; height: 20px; }
+  .ghost-title { font-family: var(--font-heading); font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+  .ghost-text { font-size: 0.9rem; }
+</style>

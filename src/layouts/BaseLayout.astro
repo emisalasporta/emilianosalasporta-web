@@ -1,0 +1,73 @@
+---
+/* Molde base de todas las páginas: <head> con SEO, tipografías,
+   modo claro/oscuro, y la estructura Header + contenido + Footer. */
+import '@fontsource-variable/inter';
+/* Chakra Petch, SOLO el subset latino. Importar `300.css` en vez de
+   `latin-300.css` trae además tailandés y vietnamita (es una fuente tailandesa):
+   83 KB + 42 KB de archivos que se publican y nadie baja nunca. El navegador
+   solo pide el subset que necesita, así que esto no cambia nada para quien
+   visita: es peso muerto que sacamos del deploy.
+   Inter y JetBrains son variables y no ofrecen CSS por subset, así que ahí no
+   hay nada que podar. */
+import '@fontsource/chakra-petch/latin-300.css';
+import '@fontsource/chakra-petch/latin-400.css';
+import '@fontsource/chakra-petch/latin-500.css';
+import '@fontsource/chakra-petch/latin-600.css';
+import '@fontsource/chakra-petch/latin-700.css';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const {
+  title,
+  description = 'Recursos, herramientas y consejos de running, trail y ultradistancia por Emiliano Salas Porta, entrenador de deportes de resistencia.',
+  image = '/og-default.png',
+} = Astro.props;
+
+const siteName = 'Emiliano Salas Porta';
+const fullTitle = title ? `${title} · ${siteName}` : `${siteName} — Entrenador de trail y ultradistancia`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL(image, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0b10" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Redes sociales (Open Graph / Twitter) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="es_AR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <meta name="generator" content={Astro.generator} />
+  </head>
+
+  <body>
+    <a href="#contenido" class="sr-only">Saltar al contenido</a>
+    <Header />
+    <main id="contenido">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

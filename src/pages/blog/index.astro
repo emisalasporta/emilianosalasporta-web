@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+import { CATEGORIAS } from '../../consts';
+
+const posts = (
+  await getCollection('blog', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const categorias = Object.entries(CATEGORIAS);
+---
+
+<BaseLayout title="Blog" description="Notas de entrenamiento, nutrición, carreras y cabeza para corredores de trail y ultra.">
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Blog</p>
+      <h1>Notas de entrenamiento</h1>
+      <p class="lead blog-lead">
+        Lo que voy aprendiendo y quiero compartir: entrenamiento, nutrición, carreras y cabeza.
+        Sin humo, con criterio.
+      </p>
+
+      <nav class="cat-filters" aria-label="Categorías">
+        {categorias.map(([slug, label]) => (
+          <a href={`/categorias/${slug}`} class="pill">{label}</a>
+        ))}
+      </nav>
+
+      {posts.length === 0 ? (
+        <p class="muted blog-empty">Todavía no hay entradas publicadas. Muy pronto las primeras.</p>
+      ) : (
+        <div class="grid blog-grid">
+          {posts.map((post) => <PostCard post={post} />)}
+          {posts.length < 4 && (
+            <div class="ghost-card">
+              <span class="ghost-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </span>
+              <p class="ghost-title">Más notas en camino</p>
+              <p class="muted ghost-text">Estoy escribiendo las próximas. Pasá seguido.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .blog-lead { max-width: 42rem; margin-top: 0.5rem; }
+  .cat-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.75rem 0 2.25rem; }
+  .blog-grid { margin-top: 0.5rem; }
+  .blog-empty { margin-top: 2rem; }
+
+  .ghost-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    color: var(--muted);
+  }
+  .ghost-icon {
+    display: inline-flex;
+    width: 40px; height: 40px;
+    align-items: center; justify-content: center;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+  .ghost-icon svg { width: 20px; height: 20px; }
+  .ghost-title { font-family: var(--font-heading); font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+  .ghost-text { font-size: 0.9rem; }
+</style>

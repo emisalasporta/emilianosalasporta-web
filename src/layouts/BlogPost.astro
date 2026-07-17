@@ -1,0 +1,51 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { CATEGORIAS } from '../consts';
+import { formatFecha, isoFecha } from '../lib/utils';
+
+const { frontmatter } = Astro.props;
+const { title, description, date, updated, category, tags } = frontmatter;
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="section">
+    <div class="container">
+      <div class="post">
+        <a href={`/categorias/${category}`} class="pill post-cat">{CATEGORIAS[category]}</a>
+        <h1 class="post-title">{title}</h1>
+        <p class="lead post-desc">{description}</p>
+        <p class="muted post-byline">
+          <time datetime={isoFecha(date)}>{formatFecha(date)}</time>
+          {updated && <span> · actualizado el {formatFecha(updated)}</span>}
+        </p>
+
+        <hr class="post-rule" />
+
+        <div class="prose post-body">
+          <slot />
+        </div>
+
+        {tags.length > 0 && (
+          <div class="post-tags">
+            {tags.map((t) => <a href={`/tags/${t}`} class="tag">#{t}</a>)}
+          </div>
+        )}
+
+        <div class="post-back">
+          <a href="/blog" class="btn btn-ghost">← Volver al blog</a>
+        </div>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .post { max-width: var(--content-narrow); margin-inline: auto; }
+  .post-cat { margin-bottom: 1rem; }
+  .post-title { margin-top: 0.5rem; }
+  .post-desc { margin-top: 1rem; }
+  .post-byline { font-family: var(--font-mono); font-size: 0.85rem; margin-top: 1.2rem; }
+  .post-rule { margin-block: 2rem; }
+  .post-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2.5rem; }
+  .post-back { margin-top: 2rem; }
+</style>

@@ -1,0 +1,36 @@
+---
+import { CATEGORIAS } from '../consts';
+import { formatFecha, isoFecha } from '../lib/utils';
+
+const { post } = Astro.props;
+const { title, description, date, category, tags } = post.data;
+---
+
+<a href={`/blog/${post.id}`} class="card card-link post-card">
+  <div class="post-card-meta">
+    <span class="pill">{CATEGORIAS[category]}</span>
+    <time datetime={isoFecha(date)} class="muted post-card-date">{formatFecha(date)}</time>
+  </div>
+  <h3 class="post-card-title">{title}</h3>
+  <p class="muted post-card-desc">{description}</p>
+  {tags.length > 0 && (
+    <div class="post-card-tags">
+      {tags.slice(0, 3).map((t) => <span class="tag">#{t}</span>)}
+    </div>
+  )}
+</a>
+
+<style>
+  .post-card { display: flex; flex-direction: column; }
+  .post-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+  }
+  .post-card-date { font-family: var(--font-mono); font-size: 0.78rem; }
+  .post-card-title { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .post-card-desc { font-size: 0.95rem; flex: 1; }
+  .post-card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+</style>

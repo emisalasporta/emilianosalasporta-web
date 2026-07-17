@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--
+  ============================================================
+  CALCULADORA DE TRAIL
+  © 2026 Emiliano Salas Porta — emilianosalasporta.cloud
+
+  Usala libremente para entrenar: para vos, para tus atletas,
+  para planificar tus carreras. Compartila si le sirve a alguien.
+
+  El código y el método de cálculo son de su autoría. No los
+  revendas ni los publiques como propios.
+
+  Archivo autocontenido: anda sin internet, con doble clic.
+  ============================================================
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Este archivo se sirve suelto y también se descarga. La página que vale para
+     el buscador es /herramientas/<nombre>, que lo explica y lo ofrece: sin esto,
+     los dos compiten por el mismo lugar en Google. -->
+<meta name="robots" content="noindex, follow">
+<title>Calculadora de Trail — Emiliano Salas Porta</title>
+<meta name="description" content="Pronostica tu tiempo en carreras de trail running. Por Emiliano Salas Porta.">
+<style>
+/* ============================================================
+   TIPOGRAFÍAS — archivos locales, cero pedidos de red.
+   Van declaradas acá adentro a propósito: la calculadora se monta
+   dentro de un <iframe> y un iframe NO hereda las @font-face del
+   documento padre. Sin esto, todo caía a la fuente del sistema.
+   Las rutas son relativas (../fonts/) para que también funcionen
+   abriendo el archivo con doble clic, sin servidor y sin WiFi.
+   ============================================================ */
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-400-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-600-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:700;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-700-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter Variable';font-style:normal;font-weight:100 900;font-display:swap;
+  src:url('../fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face{
+  font-family:'JetBrains Mono Variable';font-style:normal;font-weight:100 800;font-display:swap;
+  src:url('../fonts/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+/* ============================================================
+   EMILIANO SALAS PORTA — CALCULADORA DE TRAIL
+   Identidad cyberpunk: oscuro fijo + neón azul como señal.
+   Tokens alineados con src/styles/global.css.
+   Nota: --red / --green / --yellow conservan el nombre histórico
+   para no tocar el motor. --red es el ACENTO de marca (neón azul);
+   --green y --yellow son SEMÁNTICOS de estado (.notice.ok / .warn)
+   y siguen distinguiéndose claramente entre sí.
+   ============================================================ */
+:root{
+  --bg-1:#0a0b10;
+  --bg-2:#12141c;
+  --bg-3:#181b26;
+  --bg-card:#12141c;
+  --border:#262a38;
+  --border-2:#333a4a;
+  --txt-1:#e7ecf3;
+  --txt-2:#c3cbd9;
+  --txt-3:#8a93a6;
+  --txt-4:#7b8396;
+  --red:#2fb8ff;
+  --red-2:#7cd4ff;
+  --red-3:#7cd4ff;
+  --on-accent:#062229;
+  --green:#4ade80;
+  --yellow:#f5c451;
+  --font-head:'Chakra Petch',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-body:'Inter Variable','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono Variable','JetBrains Mono',ui-monospace,'Cascadia Code','Consolas',monospace;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow:0 8px 28px rgba(0,0,0,.45);
+  --shadow-red:0 0 18px rgba(47,184,255,.35);
+  --trans:180ms cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-body);
+  background:radial-gradient(1200px 800px at 10% -10%,#12141c 0%,var(--bg-1) 55%) fixed,var(--bg-1);
+  color:var(--txt-1);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 22px 64px}
+
+/* ========== ENCABEZADO ========== */
+.hero{
+  margin-bottom:28px;padding:34px 28px;
+  background:linear-gradient(135deg,rgba(47,184,255,.07),rgba(0,0,0,0) 60%),var(--bg-2);
+  border:1px solid var(--border);border-radius:var(--radius);
+  position:relative;overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.hero::before{
+  content:"";position:absolute;top:-40px;right:-40px;width:220px;height:220px;
+  background:radial-gradient(circle,var(--red) 0%,transparent 70%);
+  opacity:.16;filter:blur(4px);pointer-events:none;
+}
+.hero-txt{position:relative;min-width:0}
+.hero h1{
+  font-family:var(--font-head);
+  font-size:clamp(26px,4vw,38px);font-weight:700;letter-spacing:.01em;margin-bottom:8px;
+  text-shadow:0 0 26px rgba(47,184,255,.10);
+}
+.hero h1 em{color:var(--red);font-style:normal}
+.hero p{color:var(--txt-3);max-width:760px;font-size:15px}
+.hero-actions{display:flex;gap:10px;align-items:center;position:relative;flex-shrink:0}
+.hero-actions .btn-ghost{font-size:13px}
+
+/* ========== TABS ========== */
+.tabs{
+  display:flex;gap:4px;padding:6px;margin-bottom:22px;
+  background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:1;min-width:140px;padding:13px 14px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  background:transparent;border:none;color:var(--txt-3);
+  font-family:var(--font-head);font-size:13px;font-weight:600;letter-spacing:.3px;
+  cursor:pointer;border-radius:var(--radius-sm);
+  transition:all var(--trans);white-space:nowrap;
+}
+.tab svg{width:17px;height:17px}
+.tab:hover{background:rgba(255,255,255,.04);color:var(--txt-2)}
+.tab.active{background:linear-gradient(135deg,var(--red),var(--red-3));color:var(--on-accent);box-shadow:var(--shadow-red)}
+.tab .badge{font-family:var(--font-mono);font-size:10px;background:rgba(255,255,255,.2);padding:2px 6px;border-radius:10px}
+
+/* ========== PANELS ========== */
+.panel{display:none;animation:fadein .3s ease}
+.panel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{
+  background:var(--bg-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:18px;
+}
+.card h2{
+  font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:10px;
+}
+.card h2 svg{width:19px;height:19px;color:var(--red)}
+.card-sub{color:var(--txt-3);font-size:13px;margin-bottom:18px}
+
+/* ========== GRID ========== */
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:880px){.grid-2{grid-template-columns:1fr}}
+@media(max-width:680px){.wrap{padding:18px 14px 48px}.card{padding:18px}}
+
+/* ========== FIELDS ========== */
+.field{
+  background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:13px 14px;transition:all var(--trans);position:relative;
+}
+/* Cuando un field está deshabilitado atenuamos el valor pero mantenemos
+   el toggle y los tooltips CLICKEABLES. Si bloqueamos todo el field,
+   no se puede volver a habilitar y los hovers no funcionan. */
+.field.disabled{opacity:.6}
+.field.disabled > input,
+.field.disabled > select,
+.field.disabled .field-label{pointer-events:none}
+.field.disabled .field-label .tt{pointer-events:auto}
+.field.disabled > .field-head .toggle{pointer-events:auto}
+.field-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;
+}
+.field-label{font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--txt-3);display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+.field-label .info{
+  width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,.08);
+  color:var(--txt-3);display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;cursor:help;flex-shrink:0;
+}
+.field-label .info:hover{background:var(--red);color:var(--on-accent)}
+.field input[type=text],.field input[type=number],.field input[type=time],.field select{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--txt-1);font-family:var(--font-mono);font-size:15px;font-weight:600;
+  padding:4px 0;
+}
+.field select{cursor:pointer}
+.field select option{background:var(--bg-3);color:var(--txt-1)}
+.field .unit{font-size:12px;color:var(--txt-4);font-weight:500;margin-left:4px}
+
+/* Toggle switch */
+.toggle{
+  position:relative;width:34px;height:18px;background:var(--bg-1);
+  border-radius:20px;cursor:pointer;transition:all var(--trans);
+  border:1px solid var(--border-2);flex-shrink:0;
+}
+.toggle::after{
+  content:"";position:absolute;top:2px;left:2px;
+  width:12px;height:12px;border-radius:50%;background:var(--txt-3);
+  transition:all var(--trans);
+}
+.toggle.on{background:var(--red);border-color:var(--red)}
+.toggle.on::after{left:18px;background:var(--on-accent)}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 18px;background:linear-gradient(135deg,var(--red),var(--red-3));
+  color:var(--on-accent);border:none;border-radius:var(--radius-sm);
+  font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;cursor:pointer;transition:all var(--trans);
+  box-shadow:0 4px 14px rgba(47,184,255,.3);
+}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-red)}
+.btn:active{transform:translateY(0)}
+.btn svg{width:15px;height:15px}
+.btn-ghost{
+  background:transparent;border:1px solid var(--border-2);color:var(--txt-2);box-shadow:none;
+}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.06);transform:none;box-shadow:none}
+.btn-sm{padding:7px 12px;font-size:11px;letter-spacing:.3px}
+
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+
+/* ========== SEGMENTS TABLE ========== */
+.seg-table{
+  width:100%;border-collapse:separate;border-spacing:0;
+  font-size:13px;overflow:hidden;
+}
+.seg-table-wrap{
+  overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg-3);
+}
+.seg-table th,.seg-table td{
+  padding:10px 8px;text-align:center;border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.seg-table th{
+  background:var(--bg-1);font-family:var(--font-mono);font-weight:600;color:var(--txt-3);
+  font-size:11px;letter-spacing:.3px;text-transform:uppercase;
+  position:sticky;top:0;z-index:1;
+}
+.seg-table td:first-child{text-align:left;font-weight:600}
+.seg-table tr:last-child td{border-bottom:none}
+.seg-table input,.seg-table select{
+  width:100%;background:var(--bg-1);border:1px solid var(--border);
+  border-radius:6px;padding:6px 8px;color:var(--txt-1);font-family:var(--font-mono);
+  font-size:13px;outline:none;
+}
+.seg-table input:focus,.seg-table select:focus{border-color:var(--red)}
+.seg-table input[type=number]{text-align:right}
+.seg-table .seg-name{min-width:120px}
+.seg-row-del{
+  background:transparent;border:none;color:var(--txt-4);cursor:pointer;
+  font-size:16px;line-height:1;padding:4px 8px;border-radius:6px;transition:all var(--trans);
+}
+.seg-row-del:hover{color:var(--red);background:rgba(47,184,255,.08)}
+
+/* ========== RESULT ========== */
+/* El acento es SEÑAL, no relleno: el panel es superficie oscura con borde
+   neón y el TIEMPO en acento. Así el dato clave es lo único que brilla y
+   ningún texto queda apoyado sobre un degradado de color variable. */
+.result-hero{
+  background:linear-gradient(135deg,rgba(47,184,255,.10),rgba(0,0,0,0) 60%),var(--bg-2);
+  color:var(--txt-1);
+  border:1px solid var(--red);box-shadow:var(--shadow-red);
+  border-radius:var(--radius);padding:32px 28px;margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.result-hero::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 90% 20%,rgba(47,184,255,.08),transparent 60%);
+}
+.result-hero .r-label{font-family:var(--font-mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--txt-2);margin-bottom:8px;position:relative}
+.result-hero .r-time{font-family:var(--font-mono);font-size:clamp(42px,7vw,72px);font-weight:700;letter-spacing:-.02em;line-height:1;position:relative;font-variant-numeric:tabular-nums;color:var(--red)}
+.result-hero .r-sub{margin-top:8px;font-size:14px;color:var(--txt-2);position:relative}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
+.kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px}
+.kpi .k-v{font-family:var(--font-mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .k-s{font-size:12px;color:var(--txt-3);margin-top:2px}
+.kpi .k-v small{font-size:13px;color:var(--txt-3);font-weight:500;margin-left:4px}
+
+.divider{height:1px;background:var(--border);margin:14px 0}
+
+/* Bars */
+.bar-row{display:grid;grid-template-columns:150px 1fr 80px;gap:12px;align-items:center;font-size:13px}
+.bar-row .bar-name{color:var(--txt-2);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.bar-row .bar-bg{height:26px;background:var(--bg-3);border-radius:6px;overflow:hidden;position:relative}
+.bar-row .bar-fill{
+  height:100%;background:linear-gradient(90deg,var(--red),var(--red-3));
+  border-radius:6px;display:flex;align-items:center;padding:0 8px;
+  color:var(--on-accent);font-size:11px;font-weight:600;min-width:max-content;
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.bar-row .bar-val{font-family:var(--font-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--txt-2);font-weight:600}
+@media(max-width:600px){.bar-row{grid-template-columns:1fr;gap:4px}.bar-row .bar-val{text-align:left}}
+
+/* Notice */
+.notice{
+  border-left:3px solid var(--red);background:rgba(47,184,255,.05);
+  padding:12px 14px;border-radius:6px;font-size:13px;color:var(--txt-2);margin-bottom:14px;
+}
+.notice b{color:#fff}
+.notice.warn{border-color:var(--yellow);background:rgba(245,196,81,.06)}
+.notice.ok{border-color:var(--green);background:rgba(74,222,128,.06)}
+
+/* ========== FIRMA DE MARCA ==========
+   El logo se declara UNA SOLA VEZ acá como data URI y se reusa
+   (firma al pie + encabezado de impresión). No lo dupliques. */
+.marca-logo{
+  background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABPESURBVHhe7VsLcBT3faZpkiaepEmaR9PESaftuG3SGLCTNB5nnNSdOvE0dTpt4kzcNHUyTozu9m7few89kE3s2MbGNjjYBtsI9AC93+iBQEgIvZBO0klCIAE2JjHGBp2EJJB0t/v7Or/dExwLGAfwIxl/M9/8V7e/3dv/t9//93+dFi16D+/hPbwTyH4JH8rej089MEqfz47StdnD+Kyxjz7qjvujQDbwvvAgLQ5G6ReBAWudErHa1D56UeulcbWHZvRemtEimNT76ajWT1F9kEqUQVqujtBtwgh90n2/Pxgo0fhNwSitUvtpr9wLBPYD4VEgsBfQo4DaDyh9gBpxjrUBQBt24oIHAX0vIPfRa8oglRkjdFfwED7m/o53JYxB3KkNoIUrFB4D9EFA2gOI3YDcDSjMPYDSC6g9gMplLyBzzB7Av8AeQB5wBAmNAtogHTH20gp5hP7K/Z3vCgQG6LvBKHWE9gEGv709gNwFSF1ORUNDQNYokDkKpO8FAv2A3kOW3kOm0QsEo0B4JOmSEccVUo8jHlMZBEKHbCGOa8MUvnsnPuR+hncESgf9hdZn5QSHgNCwU2mlE9C6gfAQkLnfrmhc76GI2kvr9H5T0Prpe+mD9LVA//w/BSL0Jc4RRm/8FrXPvEuJ4D4lQrVahI7y/dL57fedFYKdlX6QmxL1a3vpW+7neVshddO3tAEa44dU+Y13OBXP2gdkRoH0AdqtD5h+dYD+3n3tpSD14+Naf+J7ej826v3WZOYBwOh3mpLUDYRGAGOYLHXYzHJf+7ZA7qZf6H0UN6KA1O689fQhIJ2tPEBVRj/d6r7mcqEO0ReCQ7TCGKDj6WNO/mAR1D4g4xBgDFqlq47Qh93XvWWQuimDLc9vXdwNqPzWR4FwP3r1fvqOO/5qwdhHnzMGaX1gCGCyCJxrWITAMLWGBvEJ9zVXHXI7ZYU5yXUC4i5A7wVCUcCIWA/dWYwPuuPfCiiD9O/BQTrCTY97FqadF4ap45G3ckDlbyOBs7nS4VQ+2MekaWUP/cAd+1Yj2Sx2ZR1wHMjJN4NFiFJjNvB+d/wVQ26nf9V6ye7HpYXKR+i4v51udse+XcjeiQ8Fo1STddAZX3CTyHyRcwOtc8deEdIG6DNKN72iRQBfK8D9dihCE2I7fd0d+3YjeyfeH4pSLfcS7AK5B+DjQJR+6Y69bEhtVMJJz98CqJ227RNyG/7NHfdO4d7eV64xotSdcQAIDwMPHAUCfVa1O+6yoHbS99nuUqtD7urEDtPnjnunERzGF4ODNBqMUncwip95rkaPcOcwPijvov1BHoo2O3282k5l7rh3C5SOqzwWkNtwb7gfkJsBox0wOq2YsfvU59xxf5S4txcfkJqtA4FOQN7Bw1pAaTM1d9wfLZQW+q8gT0m3O29f2WUdvvulqz8Dyz5EvswjVm3Wb60Xssfoy+7z7xiUnVQb4rl7E5AZAbTdZLhjrhTBMVp33zgQfAVYfhzIeMkaNw7S19xxlwO6PucmWrJxBS3JvZ8W537Dff4NoWynz8s76JTWDOg7AaPFmpF7ru5ChDZiPZj5KqDsBcQhQB4CwoeB9BfpWOjQ7z97TAUted7ADfnAjUUOb8iDufh53R13UWg76KchbvuNQJjn9q1U7o65EqjDpIZ/61ReGgS0fUkhokDoZSB80DqYvY8uK9liSc5SLN0ELMkBFq93yMdLN4Ju2LjYHX9BKDsoJ9QBSPVARhcQaKW73TGXC32I/s94EZC48jx15vW/ITrJq0jaCCDxUtoRXgazItlj9Ofu6y8F++1/tehs5Rd4YxFo8QuXTuK8iqs00RBbX2kEtCZKGC10nTvucqANJO7Q9/EiBiD1AZkvAxn7KeIfo2tD+82f8jiehVD6gcwjQHAfNWUPD/9eM0xaukG6oABfZQFy/O7482C3/3qaURoAYwegNtHY1Zhdyb10izZCsypbncfrL9qV35/9Ej67EBMcIokrHuBmkRQoOGwVnXunNwYW6Z+lJRvmsTT3bOWX5oKW5Mzh+oK/dcefh1ATfV1vApStQKgV0Juoyh1zIah76ObQiFUcGKUqdSjxH6nn9EFarI3QOFucV3x5lTe8j46ERnHeA6UPU/bylwGNl80jjgjGsPW0O+5C0IfoB3fF6A5adP+ttCR3HDcWgmktzY3R0o0/dMdfEFoj3RFsBpQaIKPNFuBJd4wb3m66XYnSfJBnYaNsXV69NX/O57T99DfqoPU7rryvCzD28Vul49oIfcV9nwUEh2g1V1yOAFIESD/Mewb0gDsuFdogvhoYpTl9lGZ/SPTPtCj8aVpS+BO6YfP/0vXrr3XHXxTadronnWd9VUkBGingjkmFr4tukfvoFLdpXztB4OSZXOcXeqyHfN3WiDoE+HjBNGqv2kwFonST+z5uGFErL3TYaS4yrz3wPD9qXvBZjL10XWAfHQ2OsluA9EOA/zA96457U9AbyJ+xE1ArgQye+zeR1x2zAHl3/GtyD03wzo93lwVfJ+DvSh63A+qgs9nhbSP7beqDFBd66LZzbgL8SdYoiXo/fTP1Y07GepRq7crwkng/wA4TByktNc6I0OfUEToQ4PWAHhYYCO0nUkbox3zv1Ng3BbWepIxmQKsAMncCgW3kcccw/Lvoy3K3dUzpAbw7LXs1xtdmzfl3WVO8Rie0WBBaTHhaTFsUZQDwd9OP3PdReign8yiLY53SBuicERuv9AYGqS3MFe8CxD5A502TYbqLzxvH6aPiIEW0g4BvDzsEYBcoA/Tj1Psw1q3DB9yfXRB6PQmZ2wGtHMhqBgINJLtj/Lvp7+QOepnX4rxNZnLLiyakzvg3uMtUOuiw0QP4dlgQ25zNDG8HLXPfR9pDj+v7gbQOsvt/NUqvSRH6UmpMqPvkJ41+K6rvg928uDlIPWSKA5S1rNdqUfYD3m7Az81kjPPGuQ5haAMUXv47a0wboHvc586DvpX+J7wNUMoAdoJRRytSzy/roM9LbTSmdQFCownZ3hOgad/u+C0LMVILfUnpoFdD/bxHAPh2nd92xS7K5vGAZzchbZcJT6tp9/9SD70o9uKLqbH+LrpW77cO8eapdzfBx3sCI4A4AHg6AV8PYBwA/L0UTr2OIfZQQBsD0n9rrxJdukfTKuPfCtQ5DshoAgJ1lLNwzr9r6tNSKw3q/KUNJuRWQN1N82KLq10vWrRIaKUbM6I0pLbR/e5zYhtJXFnvLoJ3ZwKeJNOaE/aOsb+bhu7txadSrzH66DolYr2qDgDCboK3neBpB4ROp1tVIvRoajzD10PLOAELXc5us9Z96R5tkVhD16mVlDAqgXA9oNdYnfy5dxgfkXdYXTw19tUm7DUCtZUsf1PiP933OAu8z/2JrxU/U7oAXzPBuy0Ob1MCQlMCnqY4vNuZCXvHR+iy2u99BdekXit30I1qhCYMXp9sd/JC+gF2jbUhNY7h76UfsUO8nYBnV3KE2UOXXsrjpWalwno5UAMYVYBeRUfVVvqCtI0aA22AryYBqRFQWwBpm2knozcLaQf9t9xCJG4HhPo5eBvmbQqN8xAa4hBYkG1xeLbF7d8NeHdbdXcCf5p6D62TvqH3UUTdQ5YeoSltj7XGne2Fdvquv4/i/ObTWhwBOHfIfW9yIVeroKpwA6CWENRya16uTrykNQJipQl5K0+PAX+9+Qv3dUqNGVQbrF+5P2f4axO3K01WXGogCDWzEGpn4d06C6FuzqaXWT/nCNEQh6dh3t5687YkCt33ys7G+7IP05eDrlzBSGujm/zd1jTnibSdjgBCOzuGprQB+ow7/oJQK0lN50RYYkIutaBVA1JpHEoVIdQM+Gvi5/UMSun8g+nNzuBJqrN+k3rOtzX+TbnempHrCL7yUxAqTkGoOg2hehbemll4ak7Dw2XtLDxbZ+Gpc0rv1nl7t1lopbWp97sYxHb6ir/DOs4jzmU7LEeAnQCPU/wd1OqOvyiUCrperzDjailBLk5ALo5DKbMQ3g5I1fEMd7xUPBcObQWkolmIRbPgJCpWxDf5K+I3i5XzP5cr4xNqDeArmYFQOgNv2Qy85afgq5iFwKw8DS+zahbeKi5Pw1vtUKidh7Yb8LVYa779BpMysYW+7m+1fsc71WnbEli23UJaM+DhMQ0PyLoRcl9zUdxbjWuUksQJvQyQC+NQiy1ksCMqrPPG43JBXApWAPLmWfjzpuDPn4aYPwNOoiyaVgXIJXH4t0xDLJyBv+gUfCWnbCGE0lMQys6SReGSXbLgFG/FDITKWajNgLDN7PbuMO/irvhO4IPKEfqw1IilQpP1iG+bOSvthO0aT30cadsJaZxrdgJiO5lSlP7B/ewXhVKSyA1UAMrmOLRCE1mc9MqtJ9xxWv78PcESQM2dhbxhCtLGKYgbT0Lc5FDKm4GYP50U5iT8+VPwb56Gn4WwxZiBr3jGFsRXfMr+Wyiehrdk2i6FEufYWzIFT+k0pDpAbgI8NXMnha3zB4Ta+ZeFmjl7z0KojcNTeRqe6lksq4tjWRPBs935eY6/jba7n/2i0AriORlVgJI3BzU/juX1gFZmrXfHyXnzPwoWWNA2nob03CRk5vMnIb0w6XCDQ5G5cRJ+5qaT8OWehC9/Cr4Ch7YgW2bg2zJ9loX8mUPflikIRcxphyUz8FfGIdYQxGoTQvlpeEpn4Cmbgad8xhYhrcFCWqMFT5OzfS910vfdz39BaJsTq5ZX8xudh5o7h6waQC+18s+L2zB3R2Bj3NQ3zEJ+dsKmxOW6ScjrJyE971B8bsLmgiDihgn4cyZsMcRNUxBzpyHmTdl0ms40xAVRuGTHFCSFKFzgDHxF0/AWTcHLZfG07SKheAbekhl4auaTAhBUexufIjyxctfhPGilp/9a3RyHUQCoG+exvAoIltA27nJS4wK5idvCGxJzwefiUNZOQF47AeU3DuWnY5CfiUF6JnaOMNL6CUgsxvMTEF+YsIWwnZGTJDcbm+ySSfhzTzpcOGaBmEnX+DY7FLZMnXENiyaUzcJbb9kUtgEB/gVLO52zOHNR+Ivo03pBfCa7ElhRC4SKrLbsYnwkNUYpom+HK2gmPRfQnpyEtmYS6poJqKsdKqtjkNfEID81Dvk3zBjktSxKUoh1MUeM9bEzgkhJ2sIsMCmO4xbHMQtNyJ87BX/uZLIpsThJgViAWhNCHUGoAwLdgNhs1ac+/yWRXkg/WF5Be9JLKF+qwMdTzwVK4jcHy6yT4TJAL7BgrD0FfdUk9Mcnoa6KQV01DvXxGLTHY3apPhmDujoGZXWqGOOOIOyUp2OQno3ZoohnhHGc4jQhbjqOIP5k0znjGNs1SedsOAkpZwq+ijiErWSTh+lyK83wrDW1DlcEo8isW9EA6LkEI9+CkWdCXz0F7dEY1MfGz+OCEMrj41CePGELoayJOXyKyWKMQ7JFGYf09Pg5gojrxp1yfQzic0k+zzzrFNs5nGuK5+Gv4RGmBX8dEN7Dcw3zvOn3FUEvStweKrWs8BbA2GRCZwE2JaA9MQV1ZQzqo+NQklQfi0F7jIVhnnBoO8RxifoEc9xuMo4oLM64LQznFGntCZvi0ycg2UwK9Mw4xGeTQj2TzDGF8xCrLPgrTfirCen869QmK9f9/FcF2hbznqxKIFgAGBsTthC2GGtmoDwSg7Jy/AzVR2OOIPy3LcwJKLY7YtBWObTFOMNxu9nYonCzWX0C8prjkNYch7yGj8fP5BbbTWsnIW+Zh1RJEMsT8FdYCPEwvNFqub1u7M/cz37VoBeYIbuHyAeMnASMXBNGngX9mVmoKycgP3Qc0kOvQ374OORHTiRL5ut2qaw8cUYUdo1Ddsl4ikuSTuG/Vy24J/k3xz09BaUoAbmCIJVb8JdbCLXwRo7V66m9Cr8MuRQCm83w8gogfMYJCScvbEhAe3wK0oOvQ3zwGMRfvwaJ+VCSDzMXxElyJYuSFMZuPg7ZLbZrHj3uCLSS88oE1BdOQy5JQC6z7ImaXA6EWwGt3urknsz9rG8ZwkXmL9OLLDOzOEWEPBMBdsO6OSiPxiA98BrEX70K8cFXIf76mC0ClwvHsi1GCm1BTtii2G55+HUoDx+HumoC6rpTUApNKKUWlKI45GLTXrjNagG0OqvyJ3knfu99xCuGUUi3phdZY/dzXsjj5JhAgPNCHueGBPT1c1BXT0F+ePyMGP5fHYX4wFFbFOnBYw5ZkAW3PHgM8q9fh/II9x4noT53GjxA46m5zWITSpGJMO9cbSUYtdY5a5ZvO3i8kFFMz2SWAMvLgAB3k+wGZjI/sEM0FuOpaShPTEJ+bALyynFID3OOOAH5kXHInDSfmIT61BS0daehbZqHtiUBtdCEuoWZsB3Ak7Tl24BQtTWg1ST+xf087xjCpXRrerHVklUGMNkRgY3m2eaRm4CelyzZHWcYh8bMnYeWF4eR7zhIy09AK0hys4UQ37cBCFbQsUCVGbg756Wr/nOdq4L00sQd6YVWY3gz0X0VQEYREMxN5gkm9xwLoiRFSC25W7VdlA8Ei4DMKiCzGgiWWYcDFWaWWEV/6f7OdyWCZbQkXGitCG0x+0L5VoKbx3282VICpG9xehDuSpl8zAOsjGJgeTlwP1eaXVRovhYstcpCVbjT65qX/EEhXIp/DBXSTwKF1kqjIF5vFJjDRn7iiJYXf13LjZ/QcuPHjPzEIT3P7AtsThSESxEKl9FtQvnJP9x/m3sj8Pw8uxrXeArwCWETfTJYjI/56+itG729h/fwHi6E/wfA+Xq6+e5A5QAAAABJRU5ErkJggg==');
+  background-size:contain;background-repeat:no-repeat;background-position:center;
+  flex-shrink:0;
+}
+
+/* Firma al pie: discreta. Online la marca ya está en el header del
+   sitio, así que acá no gritamos; descargada, es la única marca. */
+.footnote{
+  margin-top:24px;padding-top:18px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  flex-wrap:wrap;text-align:left;
+}
+.footnote .marca-logo{width:28px;height:28px;opacity:.85}
+.marca-nombre{
+  font-family:var(--font-head);font-size:14px;font-weight:300;
+  letter-spacing:.01em;color:var(--txt-3);line-height:1.2;
+  text-transform:lowercase;
+}
+.marca-nombre b{font-weight:700;color:var(--txt-2)}
+.marca-sitio{
+  font-family:var(--font-mono);font-size:11px;color:var(--txt-4);
+  letter-spacing:.02em;
+}
+.footnote .marca-meta{
+  font-size:11px;color:var(--txt-4);font-family:var(--font-mono);
+  padding-left:12px;border-left:1px solid var(--border);
+}
+@media(max-width:520px){
+  .footnote{flex-direction:column;gap:8px;text-align:center}
+  .footnote .marca-meta{padding-left:0;border-left:none;border-top:1px solid var(--border);padding-top:8px}
+}
+
+/* Encabezado de hoja: SOLO impresión. */
+.print-head{display:none}
+
+/* Helpers */
+.hint{font-size:12px;color:var(--txt-4);line-height:1.5}
+.pill{
+  display:inline-flex;gap:5px;align-items:center;
+  font-family:var(--font-mono);font-size:11px;padding:3px 8px;background:var(--bg-3);
+  border:1px solid var(--border);border-radius:20px;color:var(--txt-3);
+}
+.pill.red{background:rgba(47,184,255,.1);border-color:var(--red);color:var(--red)}
+.hidden{display:none !important}
+
+/* Tooltip */
+.tt{position:relative;display:inline-block;cursor:help}
+.tt-body{
+  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--bg-1);border:1px solid var(--border-2);
+  padding:10px 12px;border-radius:8px;font-size:12px;
+  line-height:1.45;color:var(--txt-2);min-width:220px;max-width:280px;
+  opacity:0;visibility:hidden;
+  transition:opacity var(--trans), visibility 0s linear var(--trans);
+  z-index:9999;text-align:left;font-weight:400;text-transform:none;letter-spacing:0;
+  box-shadow:var(--shadow);pointer-events:none;white-space:normal;
+}
+.tt:hover .tt-body,
+.tt:focus-within .tt-body{
+  opacity:1;visibility:visible;
+  transition:opacity var(--trans), visibility 0s linear 0s;
+}
+
+/* Segmentos actions */
+.seg-foot{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--red)}
+
+/* ============================================================
+   IMPRESIÓN — el plan de carrera en papel
+   En pantalla el diseño es oscuro; en papel el navegador no imprime
+   fondos, así que quedaría texto casi blanco sobre hoja blanca.
+   Como todo el diseño usa tokens, damos vuelta las variables acá y
+   la interfaz entera se adapta sola. Después neutralizamos a mano
+   los degradados y glows que están hardcodeados.
+   Va SOLO el panel de Resultado: es lo único que sirve impreso.
+   ============================================================ */
+@media print{
+  /* --- Fuera del papel: lo que no es el plan ---
+     'Cómo funciona el cálculo' explica la matemática: va en pantalla (transparencia),
+     pero en la hoja son ~427px que empujan el plan a una segunda página. Y el título
+     'Comparación y exportación' promete botones que en papel no existen; abajo queda
+     'Factores aplicados', que sí sirve de encabezado. */
+  .solo-pantalla{display:none!important}
+
+  @page{margin:14mm}
+
+  /* --- 1. TOKENS DADOS VUELTA --- */
+  :root{
+    --bg-1:#ffffff;
+    --bg-2:#ffffff;
+    --bg-3:#f4f5f7;
+    --bg-card:#ffffff;
+    --border:#c8ccd4;
+    --border-2:#b0b6c0;
+    --txt-1:#101319;
+    --txt-2:#2b303a;
+    --txt-3:#525a68;
+    --txt-4:#6b7382;
+    /* El neón #2fb8ff sobre papel blanco no se lee: lo bajamos a un
+       azul de tinta con contraste real. */
+    --red:#0b5fa5;
+    --red-2:#0b5fa5;
+    --red-3:#0b5fa5;
+    --on-accent:#ffffff;
+    --green:#1c6b3a;
+    --yellow:#8a6410;
+    --shadow:none;
+    --shadow-red:none;
+    --trans:0s;
+  }
+
+  html,body{
+    height:auto!important;min-height:0!important;
+    background:#fff!important;color:var(--txt-1)!important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  body{font-size:11pt;line-height:1.45}
+  .wrap{max-width:none;margin:0;padding:0}
+
+  /* --- 2. SOLO EL RESULTADO --- */
+  .hero,
+  .tabs,
+  .panel{display:none!important}
+  .panel[data-panel="out"]{display:block!important;animation:none!important}
+
+  /* Controles: no aportan nada en papel. */
+  #btn-print,#btn-export-csv,#btn-save,#btn-reset,
+  .seg-foot,.toggle,.seg-row-del,.tt-body,
+  .panel[data-panel="out"] input,
+  .panel[data-panel="out"] select,
+  .panel[data-panel="out"] button{display:none!important}
+
+  /* La tarjeta de exportación se queda sin botones: le sacamos la fila
+     vacía, pero los factores aplicados (#r-compare) SÍ van. */
+  .panel[data-panel="out"] .card .row{display:none!important}
+
+  /* Al pie ya no repetimos el logo ni el nombre: la hoja los tiene arriba.
+     Queda solo la versión y el sello de fecha. */
+  .footnote > div:not(.marca-meta){display:none!important}
+  .footnote{justify-content:flex-start;margin-top:14px;padding-top:10px;border-top:1px solid var(--border)}
+  .footnote .marca-meta{padding-left:0;border-left:none;color:var(--txt-4)}
+
+  /* --- 3. ENCABEZADO DE HOJA CON LA MARCA --- */
+  .print-head{
+    display:flex!important;align-items:center;gap:12px;
+    padding-bottom:10px;margin-bottom:16px;
+    border-bottom:1.5pt solid var(--txt-1);
+  }
+  /* El logo de pantalla está pintado para fondo oscuro: sobre papel blanco
+     queda un fantasma lavado. Acá va la MISMA geometría con la tinta de la
+     hoja. Embebido igual que el otro: el archivo tiene que andar sin red. */
+  .print-head .marca-logo{
+    width:34px;height:34px;opacity:1;
+    background-image:url('data:image/png;base64,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');
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .print-head .marca-nombre{font-size:15pt;color:var(--txt-1)}
+  .print-head .marca-nombre b{color:var(--txt-1)}
+  .print-head .marca-sitio{font-size:8.5pt;color:var(--txt-3)}
+  .print-head .ph-txt{display:flex;flex-direction:column;gap:2px}
+
+  /* --- 4. PROLIJIDAD EN PAPEL --- */
+  .card,.kpi,.result-hero,.notice,.bar-row,.seg-table tr{
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  .card{
+    background:#fff!important;border:0.75pt solid var(--border)!important;
+    box-shadow:none!important;padding:14px;margin-bottom:12px;
+  }
+  .card h2{font-size:13pt}
+  .card h2 svg{color:var(--txt-1)}
+
+  /* El hero del resultado: sin glow, sin degradado, borde de tinta. */
+  .result-hero{
+    background:#fff!important;
+    border:1pt solid var(--red)!important;box-shadow:none!important;
+    padding:16px;margin-bottom:12px;
+  }
+  .result-hero::before{display:none!important}
+  .result-hero .r-time{font-size:34pt;color:var(--red)!important}
+
+  .kpi-grid{grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .kpi{background:#fff!important;border:0.75pt solid var(--border)!important;padding:10px}
+  .kpi .k-v{font-size:15pt}
+
+  /* Barras de pacing: la barra rellena se imprime en gris claro para no
+     tapar el texto si el navegador sí decide imprimir fondos. */
+  .bar-row .bar-bg{background:#eef0f3!important;border:0.5pt solid var(--border)}
+  .bar-row .bar-fill{
+    background:#dde6ef!important;color:var(--txt-1)!important;
+    box-shadow:none!important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .pill{background:#fff!important;border:0.5pt solid var(--border)!important;color:var(--txt-3)!important}
+  .pill.red{background:#fff!important;border-color:var(--red)!important;color:var(--red)!important}
+
+  /* Avisos: fondo blanco, se distinguen por el borde. */
+  .notice{background:#fff!important;border-left:2.5pt solid var(--red)}
+  .notice.warn{background:#fff!important;border-left-color:var(--yellow)}
+  .notice.ok{background:#fff!important;border-left-color:var(--green)}
+  /* El markup trae color:#fff inline en varios <b>: en papel desaparecen. */
+  .notice b,.hint b,.card b{color:var(--txt-1)!important}
+
+  /* Tablas: encabezados repetidos si parte en dos hojas. */
+  .seg-table-wrap{overflow:visible!important;background:#fff!important;border:0.75pt solid var(--border)}
+  .seg-table{font-size:9pt}
+  thead{display:table-header-group}
+  tfoot{display:table-footer-group}
+  tr{page-break-inside:avoid}
+  .seg-table th{
+    background:#f0f2f5!important;color:var(--txt-2)!important;
+    position:static!important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+
+  /* La firma al pie cierra la hoja; sin margen de más que deje página vacía. */
+  .footnote{
+    margin-top:14px;padding-top:10px;padding-bottom:0;
+    border-top:0.75pt solid var(--border);
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  .footnote .marca-logo{opacity:1;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .footnote:after{content:none}
+
+  /* Nada de animaciones ni transiciones al imprimir. */
+  *,*::before,*::after{
+    animation:none!important;transition:none!important;
+    text-shadow:none!important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ENCABEZADO DE HOJA — solo se ve al imprimir -->
+  <div class="print-head" aria-hidden="true">
+    <div class="marca-logo"></div>
+    <div class="ph-txt">
+      <div class="marca-nombre"><b>emiliano</b> salas porta</div>
+      <div class="marca-sitio">emilianosalasporta.cloud</div>
+    </div>
+  </div>
+
+  <!-- ENCABEZADO -->
+  <header class="hero">
+    <div class="hero-txt">
+      <h1>Calculadora de <em>Trail</em></h1>
+      <p>Estimá tu tiempo en carrera cruzando una referencia tuya con distancia y desnivel; terreno,
+        superficie y clima son opcionales y afinan el pronóstico.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="btn btn-ghost btn-sm" id="btn-save" title="Guardar datos en este navegador">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset" title="Restaurar valores iniciales">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Reiniciar
+      </button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="ref">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Tu referencia
+    </button>
+    <button class="tab" data-tab="race">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      Carrera objetivo
+    </button>
+    <button class="tab" data-tab="seg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Segmentos <span class="badge" id="seg-count">0</span>
+    </button>
+    <button class="tab" data-tab="cond">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      Condiciones
+    </button>
+    <button class="tab" data-tab="out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Resultado
+    </button>
+  </div>
+
+  <!-- ========== PANEL: REFERENCIA ========== -->
+  <div class="panel active" data-panel="ref">
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        ¿Cómo calibramos tu calculadora?
+      </h2>
+      <p class="card-sub">Usamos una o más carreras que ya corriste como "referencia" de tu nivel. Si no tenés ninguna, podés usar un ritmo de ruta como aproximación.</p>
+
+      <div class="row" style="gap:8px;margin-bottom:16px" id="ref-mode-switch">
+        <button class="btn btn-ghost btn-sm mode-opt active" data-mode="race">Carrera previa (recomendado)</button>
+        <button class="btn btn-ghost btn-sm mode-opt" data-mode="pace">Ritmo de ruta / test</button>
+      </div>
+
+      <!-- Modo CARRERA PREVIA -->
+      <div id="ref-mode-race">
+        <div id="ref-list"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-ghost btn-sm" id="btn-add-ref">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar otra carrera de referencia
+          </button>
+          <span class="hint">Si cargás más de una, promediamos con más peso a las recientes y parecidas.</span>
+        </div>
+      </div>
+
+      <!-- Modo RITMO DE RUTA -->
+      <div id="ref-mode-pace" class="hidden">
+        <div class="notice">
+          <b>¿No tenés carrera de trail para referenciar?</b> Usá un ritmo de ruta (media maratón, 10K, test).
+          Lo convertiremos a un equivalente de trail, pero la precisión baja: cuando tengas una carrera de trail real, cambiate a ese modo.
+        </div>
+        <div class="grid grid-2">
+          <div class="field"><div class="field-head"><span class="field-label">Distancia del test / carrera de ruta</span></div><input type="number" id="p_dist" value="21.1" step="0.1" min="1"><span class="unit">km</span></div>
+          <div class="field"><div class="field-head"><span class="field-label">Tiempo</span></div><input type="text" id="p_time" value="01:45:00" placeholder="hh:mm:ss"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: CARRERA ========== -->
+  <div class="panel" data-panel="race">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Datos de la carrera objetivo
+      </h2>
+      <p class="card-sub">Cargá lo que sabés. La distancia y el desnivel positivo son obligatorios; todo lo demás es opcional y solo mejora la estimación.</p>
+
+      <div class="grid grid-2">
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" value="Mi próxima carrera"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Fecha (opcional)</span></div><input type="text" id="r_date" placeholder="dd/mm/aaaa"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Distancia total
+          <span class="tt"><span class="info">?</span><span class="tt-body">Distancia oficial del circuito según el organizador. Si hay varias variantes, cargá la que vas a correr.</span></span>
+        </span></div><input type="number" id="r_dist" step="0.1" min="1" value="42"><span class="unit">km</span></div>
+        <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo (D+)
+          <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. Si el organizador publica "1800 m D+", cargá 1800. El D+ pesa más que la distancia pura: una carrera de 20 km con 1500 m equivale a ~29 km-esfuerzo en tipo mixto.</span></span>
+        </span></div><input type="number" id="r_dplus" step="10" min="0" value="2000"><span class="unit">m</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid grid-2" id="race-optional">
+        <div class="field" data-optional="r_tipo">
+          <div class="field-head">
+            <span class="field-label">Tipo de recorrido
+              <span class="tt"><span class="info">?</span><span class="tt-body">Define el "costo" de cada 100 m de desnivel. <b>1-Muy corrible</b>: camino ancho, senderos fluidos (100 m D+ ≈ 1 km). <b>3-Mixto</b> (default): típico trail (100 m D+ ≈ 1.16 km). <b>5-Alpino</b>: rocoso, pasamanos, escalada suave (100 m D+ ≈ 1.32 km).</span></span>
+            </span>
+            <span class="toggle on" data-toggle="r_tipo"></span>
+          </div>
+          <select id="r_tipo">
+            <option value="1">1 – Muy corrible (camino, senderos fluidos)</option>
+            <option value="2">2 – Moderadamente corrible</option>
+            <option value="3" selected>3 – Mixto balanceado</option>
+            <option value="4">4 – Técnico dominante (caminar estratégico)</option>
+            <option value="5">5 – Muy técnico / alpino</option>
+          </select>
+        </div>
+
+        <div class="field" data-optional="r_dneg">
+          <div class="field-head">
+            <span class="field-label">Desnivel negativo (D-)
+              <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de bajada. Influye en el cálculo: <b>circuito con bajada más empinada que subida</b> (típico en carreras punto-a-punto descendentes) aprovecha velocidad pero genera daño muscular. Si lo dejás en blanco asumimos D- = D+ (circuito cerrado).</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_dneg"></span>
+          </div>
+          <input type="number" id="r_dneg" step="10" min="0" value="2000"><span class="unit">m</span>
+        </div>
+
+        <div class="field" data-optional="r_alt">
+          <div class="field-head">
+            <span class="field-label">Altitud media del circuito
+              <span class="tt"><span class="info">?</span><span class="tt-body">Altitud promedio sobre el nivel del mar. Por debajo de 1200 m el efecto es despreciable. Entre 1200–1800 m: +2 %. 1800–2300: +5 %. 2300–2800: +8 %. &gt;3000 m: +12 % o más. Esto refleja la menor disponibilidad de oxígeno (Fulco et al., 1998).</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_alt"></span>
+          </div>
+          <input type="number" id="r_alt" step="50" min="0" value="1000"><span class="unit">m s.n.m.</span>
+        </div>
+
+        <div class="field" data-optional="r_obj">
+          <div class="field-head">
+            <span class="field-label">Tiempo objetivo (comparar)
+              <span class="tt"><span class="info">?</span><span class="tt-body">Si tenés un tiempo objetivo en mente, lo comparamos con nuestra estimación.</span></span>
+            </span>
+            <span class="toggle" data-toggle="r_obj"></span>
+          </div>
+          <input type="text" id="r_obj" value="05:00:00" placeholder="hh:mm:ss">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: SEGMENTOS ========== -->
+  <div class="panel" data-panel="seg">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Segmentos (opcional)
+      </h2>
+      <p class="card-sub">Si la organización te pasó los datos de cada tramo (o los podés estimar), cargalos acá para tener un pacing por puesto de control.
+        <b>Si no, dejá todo vacío</b> y usamos la carrera completa.</p>
+
+      <div class="row" style="margin-bottom:12px;gap:14px">
+        <label class="row" style="gap:8px;font-size:13px;cursor:pointer">
+          <span class="toggle on" data-toggle="seg_enabled"></span>
+          <span>Usar segmentos para la estimación</span>
+        </label>
+      </div>
+
+      <div class="seg-table-wrap">
+        <table class="seg-table">
+          <thead>
+            <tr>
+              <th>Tramo</th>
+              <th>Dist (km)</th>
+              <th>D+ (m)</th>
+              <th>D- (m)</th>
+              <th>Alt media (m)</th>
+              <th>Tecnicidad</th>
+              <th>Superficie</th>
+              <th>PC (min)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="seg-body"></tbody>
+        </table>
+      </div>
+
+      <div class="seg-foot">
+        <button class="btn btn-ghost btn-sm" id="btn-add-seg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar segmento
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-clear-seg">Limpiar todos</button>
+        <span class="hint" id="seg-sum"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: CONDICIONES ========== -->
+  <div class="panel" data-panel="cond">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Condiciones del día
+      </h2>
+      <p class="card-sub">Ajustes que pueden afectar el ritmo. Activá sólo los que apliquen. Los valores se componen (multiplican) entre sí, por lo que reflejan mejor el efecto real que un único menú "clima".</p>
+
+      <div class="notice">
+        <b>¿Cómo funciona?</b> Cada factor tiene un efecto cuantificado basado en estudios de fisiología deportiva (Ely 2007, Vihma 2010 para temperatura; Minetti 2002 para pendiente; Fulco 1998 para altitud). Activá el toggle y ajustá el valor: vas a ver el impacto reflejado en el panel <b>Resultado</b>.
+      </div>
+
+      <h3 style="font-size:13px;color:var(--txt-3);letter-spacing:.4px;text-transform:uppercase;margin:18px 0 10px">Clima</h3>
+      <div class="grid grid-2">
+        <div class="field" data-optional="c_temp">
+          <div class="field-head">
+            <span class="field-label">Temperatura prevista
+              <span class="tt"><span class="info">?</span><span class="tt-body">Ideal para correr: <b>8–13 °C</b>. Cada grado sobre 15 °C suma ~0.5 % al tiempo; sobre 25 °C el efecto se acelera (calor). Debajo de 5 °C también penaliza (~0.3 %/°C) por rigidez muscular y más ropa.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_temp"></span>
+          </div>
+          <input type="number" id="c_temp" step="1" min="-20" max="50" value="20"><span class="unit">°C a la hora de la carrera</span>
+        </div>
+
+        <div class="field" data-optional="c_hum">
+          <div class="field-head">
+            <span class="field-label">Humedad relativa
+              <span class="tt"><span class="info">?</span><span class="tt-body">Solo impacta con calor (&gt;18 °C). Sobre 60 % de humedad, cada 10 % extra reduce la capacidad de evaporar sudor y enfriarse. En clima fresco o nublado fresco, ignoralo.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_hum"></span>
+          </div>
+          <input type="number" id="c_hum" step="5" min="0" max="100" value="60"><span class="unit">% HR</span>
+        </div>
+
+        <div class="field" data-optional="c_cielo">
+          <div class="field-head">
+            <span class="field-label">Cielo / precipitación
+              <span class="tt"><span class="info">?</span><span class="tt-body">Referencia: nublado fresco es ligeramente mejor que sol pleno (−1 %). Lluvia leve +2 % (suelo resbaladizo), lluvia intensa +5 %, tormenta/granizo +10 %, nieve +8 %.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_cielo"></span>
+          </div>
+          <select id="c_cielo">
+            <option value="clear">Soleado a pleno</option>
+            <option value="part">Parcialmente nublado</option>
+            <option value="cloud" selected>Nublado</option>
+            <option value="light">Llovizna / lluvia leve</option>
+            <option value="rain">Lluvia persistente</option>
+            <option value="storm">Tormenta / granizo</option>
+            <option value="snow">Nieve cayendo</option>
+          </select>
+        </div>
+
+        <div class="field" data-optional="c_viento">
+          <div class="field-head">
+            <span class="field-label">Viento
+              <span class="tt"><span class="info">?</span><span class="tt-body">En sendero cerrado con árboles el efecto es menor. En cumbres y expuesto pesa mucho: viento moderado (20–35 km/h) suma ~2 %, fuerte (35–55) ~5 %, extremo (&gt;55) 10 % + riesgo.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_viento"></span>
+          </div>
+          <select id="c_viento">
+            <option value="none">Sin viento / brisa (&lt;10 km/h)</option>
+            <option value="light">Leve (10–20 km/h)</option>
+            <option value="mod" selected>Moderado (20–35 km/h)</option>
+            <option value="strong">Fuerte (35–55 km/h)</option>
+            <option value="extreme">Extremo (&gt;55 km/h)</option>
+          </select>
+        </div>
+
+        <div class="field" data-optional="c_sol">
+          <div class="field-head">
+            <span class="field-label">Exposición al sol
+              <span class="tt"><span class="info">?</span><span class="tt-body">Activalo si la carrera es en terreno pelado (estepa, altura sobre línea de bosque, desierto) <b>y</b> hace calor/sol. La radiación directa eleva la temperatura corporal efectiva 3–5 °C.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_sol"></span>
+          </div>
+          <select id="c_sol">
+            <option value="0">Sombra o bosque cerrado</option>
+            <option value="1" selected>Parcial (claros)</option>
+            <option value="2">Expuesto en su mayoría</option>
+            <option value="3">Totalmente expuesto (sin sombra)</option>
+          </select>
+        </div>
+
+        <div class="field" data-optional="c_noche">
+          <div class="field-head">
+            <span class="field-label">Porción nocturna
+              <span class="tt"><span class="info">?</span><span class="tt-body">Correr con frontal baja el ritmo por menor visibilidad del terreno: entre 4 % y 8 % más lento en la porción nocturna (más en tramos técnicos). Ignoralo si es 100 % de día.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_noche"></span>
+          </div>
+          <select id="c_noche">
+            <option value="0">Toda de día</option>
+            <option value="0.15">~25 % de noche</option>
+            <option value="0.35">~50 % de noche</option>
+            <option value="0.70">Mayoritariamente nocturna</option>
+            <option value="1.00">Totalmente nocturna</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 style="font-size:13px;color:var(--txt-3);letter-spacing:.4px;text-transform:uppercase;margin:22px 0 10px">Corredor y equipo</h3>
+      <div class="grid grid-2">
+        <div class="field" data-optional="c_mochila">
+          <div class="field-head">
+            <span class="field-label">Peso de mochila / equipo
+              <span class="tt"><span class="info">?</span><span class="tt-body">Cada kilo extra cuesta ~1 % en tiempo en terreno mixto (más en subidas). Si corrés con vaso, celu y 500 ml, eso es "mínima". Carreras con autosuficiencia (chaqueta, 1.5 L, comida) son "pesada".</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_mochila"></span>
+          </div>
+          <select id="c_mochila">
+            <option value="1.00">Mínima (&lt;2 kg)</option>
+            <option value="1.015">Media (2–4 kg) +1.5 %</option>
+            <option value="1.03">Pesada (4–6 kg) +3 %</option>
+            <option value="1.05">Autosuficiencia total (+6 kg) +5 %</option>
+          </select>
+        </div>
+
+        <div class="field" data-optional="c_exp">
+          <div class="field-head">
+            <span class="field-label">Experiencia en trail
+              <span class="tt"><span class="info">?</span><span class="tt-body">Un corredor experimentado gestiona mejor bajadas técnicas, pacing en subida y alimentación. Un principiante suele pagar más caro los tramos complicados incluso con el mismo VO₂max.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_exp"></span>
+          </div>
+          <select id="c_exp">
+            <option value="1.04">Principiante (primeras carreras) +4 %</option>
+            <option value="1.01">Intermedio (varias carreras) +1 %</option>
+            <option value="1.00" selected>Experimentado</option>
+            <option value="0.98">Elite / muy técnico −2 %</option>
+          </select>
+        </div>
+
+        <div class="field" data-optional="c_cruces">
+          <div class="field-head">
+            <span class="field-label">Cruces de río / obstáculos
+              <span class="tt"><span class="info">?</span><span class="tt-body">Cada vadeo, escalera fijada, paso con cuerda, etc. suma ~2 minutos en promedio (parar, cruzar, secarse, retomar).</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_cruces"></span>
+          </div>
+          <input type="number" id="c_cruces" min="0" step="1" value="0"><span class="unit">eventos (~2 min c/u)</span>
+        </div>
+
+        <div class="field" data-optional="c_desnudo">
+          <div class="field-head">
+            <span class="field-label">Tiempo extra en PCs
+              <span class="tt"><span class="info">?</span><span class="tt-body">Tiempo total que planeás detenido en puestos de control: rellenar bidones, comer, cambiar calcetines, etc. En carreras largas puede llegar a 15–30 minutos acumulados.</span></span>
+            </span>
+            <span class="toggle" data-toggle="c_desnudo"></span>
+          </div>
+          <input type="number" id="c_desnudo" min="0" step="1" value="0"><span class="unit">minutos totales</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PANEL: RESULTADO ========== -->
+  <div class="panel" data-panel="out">
+    <div id="out-errors"></div>
+
+    <div class="result-hero" id="r-hero">
+      <div class="r-label">Tiempo estimado · <span id="r-race-name">—</span></div>
+      <div class="r-time" id="r-time">--:--:--</div>
+      <div class="r-sub" id="r-sub">Completá los datos para ver el pronóstico</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="k-l">Distancia</div><div class="k-v" id="r-dist">—<small>km</small></div></div>
+      <div class="kpi"><div class="k-l">D+ total</div><div class="k-v" id="r-dplus">—<small>m</small></div></div>
+      <div class="kpi"><div class="k-l">Ritmo promedio</div><div class="k-v" id="r-pace">—</div><div class="k-s">min/km</div></div>
+      <div class="kpi"><div class="k-l">Ritmo esfuerzo</div><div class="k-v" id="r-effpace">—</div><div class="k-s">min/km-esfuerzo</div></div>
+      <div class="kpi"><div class="k-l">Km esfuerzo</div><div class="k-v" id="r-kmeff">—</div><div class="k-s">equivalentes</div></div>
+      <div class="kpi"><div class="k-l">Confianza</div><div class="k-v" id="r-conf">—</div><div class="k-s" id="r-conf-sub">—</div></div>
+    </div>
+
+    <div class="card" id="r-split-card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Pacing estimado por segmento
+      </h2>
+      <div class="card-sub" id="r-split-sub">Tiempo proyectado en cada tramo, acumulado desde la largada.</div>
+      <div id="r-splits"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="solo-pantalla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Comparación y exportación
+      </h2>
+      <div id="r-compare"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" id="btn-export-csv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar plan (CSV)
+        </button>
+        <button class="btn btn-ghost" id="btn-print">Imprimir</button>
+      </div>
+    </div>
+
+    <div class="card solo-pantalla">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Cómo funciona el cálculo
+      </h2>
+      <p class="card-sub">Transparencia total. La matemática que hay debajo.</p>
+      <div class="hint" style="line-height:1.7;font-size:13px;color:var(--txt-2)">
+        <p><b style="color:#fff">Base — fórmula de Riegel sobre km-esfuerzo:</b><br>
+        <code style="color:var(--red)">T = T_ref × (KmEff_objetivo / KmEff_ref)^1.05</code><br>
+        donde <code>KmEff = distancia + (D+/100) × factor_recorrido</code>. Este "km-esfuerzo" convierte el desnivel en distancia equivalente según lo técnico que sea el circuito.</p>
+        <p style="margin-top:10px"><b style="color:#fff">Factor de pendiente (D+/D-):</b> en modo global repartimos la distancia entre subida y bajada según la proporción de desnivel y aplicamos un costo distinto a cada una. Bajadas muy empinadas <b>penalizan</b> (carga excéntrica); bajadas suaves descuentan tiempo (Minetti 2002).</p>
+        <p style="margin-top:10px"><b style="color:#fff">Altitud:</b> sobre 1200 m aplicamos un factor creciente (+2 % a 1500 m, +5 % a 2300 m, +8 % a 2800 m, +12 % a 3300 m). Si la <b>referencia</b> fue en altura, descontamos ese efecto para tener tu ritmo real a nivel del mar (Fulco 1998).</p>
+        <p style="margin-top:10px"><b style="color:#fff">Clima — fórmula compuesta:</b> temperatura (óptimo 10–13 °C; +0.5 %/°C sobre 15 °C, extra sobre 25 °C), humedad relativa (solo con calor &gt;18 °C, cada 10 % sobre 60 % penaliza según temperatura), cielo/precipitación, viento y radiación solar se <b>multiplican</b> entre sí. Basado en Vihma 2010 y Ely 2007.</p>
+        <p style="margin-top:10px"><b style="color:#fff">Ajuste por segmentos:</b> si cargás tramos, cada uno multiplica por factores de pendiente, tecnicidad, superficie, altitud (usa la del tramo o cae a la altitud media del circuito como fallback) y fatiga acumulada <code>(1 + 0.06 × %dist_acumulada)</code>.</p>
+        <p style="margin-top:10px"><b style="color:#fff">Tiempos fijos:</b> puestos de control y cruces se <b>suman</b> al total (no multiplican). Mochila y experiencia se aplican como multiplicadores.</p>
+        <p style="margin-top:10px"><b style="color:#fff">Promedio de referencias:</b> si cargás varias carreras previas, cada una se pondera por lo parecido que es su km-esfuerzo a la carrera objetivo (dando más peso a referencias similares).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIRMA — el id "foot-stamp" lo escribe el motor: no lo saques. -->
+  <div class="footnote">
+    <div class="marca-logo"></div>
+    <div>
+      <div class="marca-nombre"><b>emiliano</b> salas porta</div>
+      <div class="marca-sitio">emilianosalasporta.cloud</div>
+    </div>
+    <div class="marca-meta">Calculadora de Trail v1.0 · <span id="foot-stamp"></span></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CALCULADORA DE TRAIL — Lógica de cálculo + UI
+   ============================================================ */
+"use strict";
+
+// -------- TABLAS (desde CALCULADORA PRO v.1) --------
+const T_TECNICIDAD = {1:0.9, 2:1.0, 3:1.1, 4:1.25, 5:1.4};
+const T_RECORRIDO  = {1:1.00, 2:1.08, 3:1.16, 4:1.24, 5:1.32};
+const K_FATIGA     = 0.06;
+const EXP_RIEGEL   = 1.05;
+
+// (Pend_max_%, factor_subida, factor_bajada)
+const T_PENDIENTE = [
+  [3,  1.00, 0.94],
+  [5,  1.02, 0.95],
+  [10, 1.05, 1.02],
+  [15, 1.10, 1.05],
+  [20, 1.15, 1.08],
+  [25, 1.20, 1.10],
+  [40, 1.28, 1.15],
+];
+
+const T_SUPERFICIE = {
+  "tierra":1.00, "ripio":1.03, "cesped":1.02, "cespedalto":1.05,
+  "arena":1.15, "barro":1.20, "nieve":1.25,
+};
+
+// (Alt_max_m, factor)
+const T_ALTITUD = [
+  [1200, 1.00],
+  [1800, 1.02],
+  [2300, 1.05],
+  [2800, 1.08],
+  [3300, 1.12],
+  [4500, 1.18],
+];
+
+// -------- Helpers --------
+const $=id=>document.getElementById(id);
+const $$=sel=>document.querySelectorAll(sel);
+
+function parseTime(s){
+  if(!s) return 0;
+  s=String(s).trim();
+  const parts=s.split(":").map(Number);
+  if(parts.some(isNaN)) return 0;
+  if(parts.length===3) return parts[0]*3600+parts[1]*60+parts[2];
+  if(parts.length===2) return parts[0]*60+parts[1];
+  if(parts.length===1) return parts[0]*60; // asume minutos
+  return 0;
+}
+function fmtTime(sec){
+  if(!isFinite(sec)||sec<0) sec=0;
+  sec=Math.round(sec);
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+function fmtPace(secPerKm){
+  if(!isFinite(secPerKm)||secPerKm<=0) return "—";
+  const m=Math.floor(secPerKm/60), s=Math.round(secPerKm%60);
+  return m+":"+String(s).padStart(2,"0");
+}
+function lookupStep(table, value, col){
+  // Busca el primer umbral >= value; si no, el último
+  for(const row of table){ if(value<=row[0]) return row[col]; }
+  return table[table.length-1][col];
+}
+
+// -------- STATE --------
+const state = {
+  refMode:"race", // "race" | "pace"
+  refs:[],
+  pace:{dist:21.1, time:"01:45:00"},
+  race:{
+    name:"Mi próxima carrera", date:"",
+    dist:42, dplus:2000,
+    opts:{tipo:true, dneg:false, alt:false, obj:false},
+    tipo:3, dneg:2000, alt:1000, obj:"05:00:00",
+  },
+  segEnabled:true,
+  segments:[],
+  cond:{
+    opts:{temp:false, hum:false, cielo:false, viento:false, sol:false,
+          noche:false, mochila:false, exp:false, cruces:false, desnudo:false},
+    temp:20, hum:60, cielo:"cloud", viento:"mod", sol:1,
+    noche:0, mochila:1.00, exp:1.00, cruces:0, desnudo:0,
+  },
+};
+
+function emptyRef(){
+  return {name:"Carrera pasada", dist:21, dplus:600, tipo:3, time:"02:15:00",
+          opts:{tipo:true, alt:false, sup:false}, alt:500, sup:"tierra"};
+}
+function emptySeg(){
+  return {name:"Segmento", dist:0, dplus:0, dneg:0, alt:null, tec:"", sup:"", pc:0};
+}
+
+// -------- TABS --------
+$$(".tab").forEach(t=>t.addEventListener("click",()=>{
+  $$(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  const id=t.dataset.tab;
+  $$(".panel").forEach(p=>p.classList.toggle("active", p.dataset.panel===id));
+  if(id==="out") recompute(true);
+}));
+
+// -------- Referencia: modo switch --------
+$$("#ref-mode-switch .mode-opt").forEach(b=>b.addEventListener("click",()=>{
+  $$("#ref-mode-switch .mode-opt").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  state.refMode=b.dataset.mode;
+  $("ref-mode-race").classList.toggle("hidden", state.refMode!=="race");
+  $("ref-mode-pace").classList.toggle("hidden", state.refMode!=="pace");
+}));
+
+// -------- Referencia: renderizar carreras --------
+function renderRefs(){
+  const wrap=$("ref-list"); wrap.innerHTML="";
+  state.refs.forEach((r,i)=>{
+    const el=document.createElement("div");
+    el.className="card";
+    el.style.padding="18px";
+    el.style.background="var(--bg-3)";
+    el.innerHTML=`
+      <div class="row between" style="margin-bottom:10px">
+        <span class="pill red">Referencia ${i+1}</span>
+        ${state.refs.length>1?`<button class="btn btn-ghost btn-sm" data-del="${i}">Eliminar</button>`:""}
+      </div>
+      <div class="grid grid-2">
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" data-k="name" data-i="${i}" value="${r.name.replace(/"/g,'&quot;')}"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time}" placeholder="hh:mm:ss"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Distancia</span></div><input type="number" data-k="dist" data-i="${i}" step="0.1" min="1" value="${r.dist}"><span class="unit">km</span></div>
+        <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo</span></div><input type="number" data-k="dplus" data-i="${i}" step="10" min="0" value="${r.dplus}"><span class="unit">m</span></div>
+        <div class="field ${r.opts.tipo?"":"disabled"}" data-opt="tipo" data-i="${i}">
+          <div class="field-head">
+            <span class="field-label">Tipo de recorrido
+              <span class="tt"><span class="info">?</span><span class="tt-body">Qué tan técnico fue el circuito de esa carrera. Es clave para que el sistema entienda a qué ritmo corriste <b>realmente</b>: 2h en 21 km con 1500 m D+ alpino valen más que los mismos 21 km con 300 m D+ en camino.</span></span>
+            </span>
+            <span class="toggle ${r.opts.tipo?"on":""}" data-toptionref="tipo" data-i="${i}"></span>
+          </div>
+          <select data-k="tipo" data-i="${i}">
+            ${[1,2,3,4,5].map(n=>`<option value="${n}" ${r.tipo==n?"selected":""}>${n} – ${{1:"Muy corrible",2:"Moderadamente corrible",3:"Mixto balanceado",4:"Técnico dominante",5:"Muy técnico / alpino"}[n]}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field ${r.opts.alt?"":"disabled"}" data-opt="alt" data-i="${i}">
+          <div class="field-head">
+            <span class="field-label">Altitud media
+              <span class="tt"><span class="info">?</span><span class="tt-body">Si esa carrera fue en altura, la calculadora <b>descuenta</b> el efecto (te rendiste menos por el oxígeno): así tu ritmo-base se ajusta para que la comparación con la nueva carrera sea justa. Ignoralo si fue &lt;1200 m.</span></span>
+            </span>
+            <span class="toggle ${r.opts.alt?"on":""}" data-toptionref="alt" data-i="${i}"></span>
+          </div>
+          <input type="number" data-k="alt" data-i="${i}" step="50" min="0" value="${r.alt}"><span class="unit">m s.n.m.</span>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(el);
+  });
+  // events
+  wrap.querySelectorAll("input[data-k],select[data-k]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const i=+e.target.dataset.i, k=e.target.dataset.k;
+      let v=e.target.value;
+      if(["dist","dplus","alt","tipo"].includes(k)) v=parseFloat(v)||0;
+      state.refs[i][k]=v;
+    });
+  });
+  wrap.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+    state.refs.splice(+e.currentTarget.dataset.del,1); renderRefs();
+  }));
+  wrap.querySelectorAll("[data-toptionref]").forEach(t=>t.addEventListener("click",e=>{
+    const i=+e.currentTarget.dataset.i, k=e.currentTarget.dataset.toptionref;
+    state.refs[i].opts[k]=!state.refs[i].opts[k];
+    renderRefs();
+  }));
+}
+
+$("btn-add-ref").addEventListener("click",()=>{
+  if(state.refs.length===0) state.refs.push(emptyRef());
+  state.refs.push(emptyRef());
+  renderRefs();
+});
+
+// Pace mode inputs
+$("p_dist").addEventListener("input",e=>state.pace.dist=+e.target.value||0);
+$("p_time").addEventListener("input",e=>state.pace.time=e.target.value);
+
+// -------- Carrera objetivo --------
+$("r_name").addEventListener("input",e=>state.race.name=e.target.value);
+$("r_date").addEventListener("input",e=>state.race.date=e.target.value);
+$("r_dist").addEventListener("input",e=>state.race.dist=+e.target.value||0);
+$("r_dplus").addEventListener("input",e=>state.race.dplus=+e.target.value||0);
+$("r_tipo").addEventListener("change",e=>state.race.tipo=+e.target.value);
+$("r_dneg").addEventListener("input",e=>state.race.dneg=+e.target.value||0);
+$("r_alt").addEventListener("input",e=>state.race.alt=+e.target.value||0);
+$("r_obj").addEventListener("input",e=>state.race.obj=e.target.value);
+
+// Toggles genéricos — [data-toggle]
+function bindTogglesOnce(root){
+  root.querySelectorAll("[data-toggle]:not([data-bound])").forEach(t=>{
+    t.dataset.bound="1";
+    t.addEventListener("click",()=>{
+      const key=t.dataset.toggle;
+      t.classList.toggle("on");
+      const field=t.closest("[data-optional]");
+      if(field) field.classList.toggle("disabled", !t.classList.contains("on"));
+      // map to state
+      if(key.startsWith("r_")){
+        const k=key.slice(2); state.race.opts[k]=t.classList.contains("on");
+      } else if(key.startsWith("c_")){
+        const k=key.slice(2); state.cond.opts[k]=t.classList.contains("on");
+      } else if(key==="seg_enabled"){
+        state.segEnabled=t.classList.contains("on");
+      }
+    });
+  });
+}
+
+// Condiciones bindings
+$("c_temp").addEventListener("input",e=>state.cond.temp=+e.target.value);
+$("c_hum").addEventListener("input",e=>state.cond.hum=+e.target.value);
+$("c_cielo").addEventListener("change",e=>state.cond.cielo=e.target.value);
+$("c_viento").addEventListener("change",e=>state.cond.viento=e.target.value);
+$("c_sol").addEventListener("change",e=>state.cond.sol=+e.target.value);
+$("c_noche").addEventListener("change",e=>state.cond.noche=+e.target.value);
+$("c_mochila").addEventListener("change",e=>state.cond.mochila=+e.target.value);
+$("c_exp").addEventListener("change",e=>state.cond.exp=+e.target.value);
+$("c_cruces").addEventListener("input",e=>state.cond.cruces=+e.target.value||0);
+$("c_desnudo").addEventListener("input",e=>state.cond.desnudo=+e.target.value||0);
+
+// -------- Segmentos --------
+function renderSegments(){
+  const tb=$("seg-body"); tb.innerHTML="";
+  state.segments.forEach((s,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${s.name.replace(/"/g,'&quot;')}"></td>
+      <td><input type="number" step="0.1" min="0" data-k="dist" data-i="${i}" value="${s.dist||""}"></td>
+      <td><input type="number" step="5" min="0" data-k="dplus" data-i="${i}" value="${s.dplus||""}"></td>
+      <td><input type="number" step="5" min="0" data-k="dneg" data-i="${i}" value="${s.dneg||""}"></td>
+      <td><input type="number" step="50" min="0" data-k="alt" data-i="${i}" value="${s.alt==null?"":s.alt}" placeholder="—"></td>
+      <td>
+        <select data-k="tec" data-i="${i}">
+          <option value="">—</option>
+          <option value="1" ${s.tec=="1"?"selected":""}>1 – Muy corrible</option>
+          <option value="2" ${s.tec=="2"?"selected":""}>2 – Corrible mod.</option>
+          <option value="3" ${s.tec=="3"?"selected":""}>3 – Mixto técnico</option>
+          <option value="4" ${s.tec=="4"?"selected":""}>4 – Técnico difícil</option>
+          <option value="5" ${s.tec=="5"?"selected":""}>5 – Muy técnico</option>
+        </select>
+      </td>
+      <td>
+        <select data-k="sup" data-i="${i}">
+          <option value="">—</option>
+          <option value="tierra" ${s.sup=="tierra"?"selected":""}>Tierra compacta</option>
+          <option value="ripio" ${s.sup=="ripio"?"selected":""}>Ripio / grava</option>
+          <option value="cesped" ${s.sup=="cesped"?"selected":""}>Césped corto</option>
+          <option value="cespedalto" ${s.sup=="cespedalto"?"selected":""}>Césped alto</option>
+          <option value="arena" ${s.sup=="arena"?"selected":""}>Arena</option>
+          <option value="barro" ${s.sup=="barro"?"selected":""}>Barro</option>
+          <option value="nieve" ${s.sup=="nieve"?"selected":""}>Nieve / hielo</option>
+        </select>
+      </td>
+      <td><input type="number" step="1" min="0" data-k="pc" data-i="${i}" value="${s.pc||0}"></td>
+      <td><button class="seg-row-del" data-del="${i}" title="Eliminar">✕</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("input[data-k],select[data-k]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const i=+e.target.dataset.i, k=e.target.dataset.k;
+      let v=e.target.value;
+      if(["dist","dplus","dneg","pc"].includes(k)) v=parseFloat(v)||0;
+      if(k==="alt") v=v===""?null:(parseFloat(v)||0);
+      state.segments[i][k]=v;
+      updateSegSum();
+    });
+  });
+  tb.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
+    state.segments.splice(+e.currentTarget.dataset.del,1); renderSegments(); updateSegSum();
+  }));
+  $("seg-count").textContent=state.segments.length;
+  updateSegSum();
+}
+function updateSegSum(){
+  const totD=state.segments.reduce((a,s)=>a+(+s.dist||0),0);
+  const totDP=state.segments.reduce((a,s)=>a+(+s.dplus||0),0);
+  $("seg-sum").innerHTML = state.segments.length
+    ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>`
+    : "";
+}
+$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); });
+$("btn-clear-seg").addEventListener("click",()=>{
+  if(!confirm("¿Eliminar todos los segmentos?")) return;
+  state.segments=[]; renderSegments();
+});
+
+/* ============================================================
+   MOTOR DE CÁLCULO
+   ============================================================ */
+
+// Calcula km-esfuerzo de una referencia/carrera según tipo
+function kmEff(dist, dplus, tipoFactor){
+  return dist + (dplus/100)*tipoFactor;
+}
+
+// Devuelve ritmo-esfuerzo (seg / km-esfuerzo) ponderado desde refs,
+// o null si no hay datos válidos.
+function referenceEffortPace(targetKmEff){
+  if(state.refMode==="pace"){
+    // Convertir pace de ruta a trail: penalización genérica ~6% (trail vs ruta plana)
+    const d=state.pace.dist, t=parseTime(state.pace.time);
+    if(d<=0||t<=0) return null;
+    const paceSecPerKm=t/d;
+    const secPerKmEff = paceSecPerKm*1.06;
+    // Para Riegel necesitamos un kmEff de referencia: asumimos el mismo d (pace ya es llano)
+    return { secPerKmEff, kmEffRef:d, confidence:0.4, sources:1 };
+  }
+  if(state.refs.length===0) return null;
+  let sumW=0, sumPace=0, sumKeRef=0;
+  for(const r of state.refs){
+    const t=parseTime(r.time), d=+r.dist||0, dp=+r.dplus||0;
+    if(t<=0||d<=0) continue;
+    const tipoF = r.opts.tipo ? (T_RECORRIDO[r.tipo]||1) : 1.16;
+    const ke=kmEff(d,dp,tipoF);
+    if(ke<=0) continue;
+    let pace=t/ke;
+    if(r.opts.alt && r.alt>0){
+      const fA=lookupStep(T_ALTITUD, r.alt, 1);
+      pace=pace/fA;
+    }
+    let w=1;
+    if(targetKmEff>0){
+      const ratio=Math.max(ke,targetKmEff)/Math.min(ke,targetKmEff);
+      w=Math.max(0.35, 1/ratio);
+    }
+    sumW+=w; sumPace+=pace*w; sumKeRef+=ke*w;
+  }
+  if(sumW===0) return null;
+  return {
+    secPerKmEff: sumPace/sumW,
+    kmEffRef: sumKeRef/sumW,
+    confidence: Math.min(1, state.refs.length*0.45+0.2),
+    sources: state.refs.length,
+  };
+}
+
+// Interpola factor de pendiente para una pendiente dada (lineal simple)
+function slopeFactor(pendPct, isDescent){
+  const col=isDescent?2:1;
+  const abs=Math.abs(pendPct);
+  // Usa lookupStep (primer umbral >= abs)
+  return lookupStep(T_PENDIENTE, abs, col);
+}
+
+// Multiplicador climático — compone factores de temperatura, humedad, cielo,
+// viento, radiación solar y nocturnidad. Basado en:
+//  - Vihma (2010) & Ely (2007): temperatura óptima 10-12°C; penalización ~0.3-0.5%/°C sobre 15°C
+//  - Índice WBGT simplificado para combinación calor+humedad
+//  - Minetti / estudios de ultramaratón para viento expuesto
+function climateMultiplier(cond){
+  let m = 1;
+  const o = cond.opts;
+
+  if(o.temp){
+    const t = cond.temp;
+    if(t > 15){
+      m *= 1 + 0.005 * (t - 15);
+      if(t > 25) m *= 1 + 0.008 * (t - 25); // calor acelera sobre 25°C
+    } else if(t < 5){
+      m *= 1 + 0.003 * (5 - t);
+    }
+  }
+
+  if(o.hum && o.temp && cond.temp > 18 && cond.hum > 60){
+    // Humedad solo penaliza con calor; efecto crece con ambas
+    const extraT = Math.min(1, (cond.temp - 18) / 15);
+    m *= 1 + 0.003 * (cond.hum - 60) * extraT;
+  }
+
+  if(o.cielo){
+    const skyMult = {clear:1.00, part:1.00, cloud:0.99,
+                     light:1.02, rain:1.04, storm:1.10, snow:1.08};
+    m *= (skyMult[cond.cielo] || 1);
+  }
+
+  if(o.viento){
+    const windMult = {none:1.00, light:1.005, mod:1.02, strong:1.05, extreme:1.10};
+    m *= (windMult[cond.viento] || 1);
+  }
+
+  if(o.sol && o.temp && cond.temp > 18){
+    // Radiación solar solo suma con calor
+    const solBoost = [0, 0.01, 0.025, 0.04][cond.sol] || 0;
+    m *= 1 + solBoost;
+  }
+
+  if(o.noche && cond.noche > 0){
+    // La porción nocturna aplica ~6% más lento a esa fracción
+    m *= 1 + cond.noche * 0.06;
+  }
+
+  return m;
+}
+
+// Factor por perfil de pendiente global cuando no hay segmentos:
+// reparte distancia en subida + bajada + llano según D+ y D-,
+// y aplica slopeFactor a cada parte. Devuelve un factor medio ponderado.
+function globalSlopeFactor(dist, dplus, dneg){
+  if(dist <= 0) return 1;
+  // Asumimos que subida y bajada cubren cada una la mitad de la distancia
+  // total dedicada a desnivel. El resto es llano.
+  // Pendientes medias aproximadas (en %)
+  const pendAsc = dplus / (dist * 5); // (dplus_m / (dist_km * 1000 / 2)) * 100
+  const pendDsc = dneg  / (dist * 5);
+  const fAsc = slopeFactor(pendAsc, false);
+  const fDsc = slopeFactor(pendDsc, true);
+  // Fracciones: estimamos proporcionalmente al desnivel
+  const total = dplus + dneg;
+  if(total <= 0) return 1;
+  const wAsc = dplus / total;
+  const wDsc = dneg  / total;
+  return fAsc * wAsc + fDsc * wDsc;
+}
+
+function compute(){
+  const errs=[];
+  const race=state.race;
+
+  if(!(race.dist>0)) errs.push("Cargá la distancia de la carrera objetivo.");
+  if(!(race.dplus>=0)) errs.push("Cargá el desnivel positivo de la carrera.");
+
+  const tipoF_race = race.opts.tipo ? (T_RECORRIDO[race.tipo]||1.16) : 1.16;
+  const kmEffRace = kmEff(race.dist, race.dplus, tipoF_race);
+
+  const refPace = referenceEffortPace(kmEffRace);
+  if(!refPace){
+    if(state.refMode==="race" && state.refs.length===0)
+      errs.push("Agregá al menos una carrera de referencia (o cambiá al modo 'Ritmo de ruta').");
+    else
+      errs.push("Completá los datos de tu referencia (distancia, D+ y tiempo).");
+  }
+
+  if(errs.length) return {ok:false, errs};
+
+  // --- SEGMENTOS O GLOBAL ---
+  const hasSegs = state.segEnabled && state.segments.some(s=>(+s.dist||0)>0);
+  const splits=[];
+
+  let baseTimeSec = 0;
+
+  // Altitud de la carrera como fallback para segmentos sin altura propia
+  const fAltGlobFallback = (race.opts.alt && race.alt>0) ? lookupStep(T_ALTITUD, race.alt, 1) : 1;
+  // D- efectivo de la carrera (si no está habilitado, asumimos D- = D+)
+  const raceDneg = race.opts.dneg ? race.dneg : race.dplus;
+
+  if(hasSegs){
+    // Usar segmentos. Acumulamos km y aplicamos fatiga por %dist acumulada sobre km_eff_total.
+    // Calculamos km_eff total esperado primero (suma de km_eff por segmento).
+    const segs=state.segments.filter(s=>(+s.dist||0)>0);
+    // Tipo de recorrido como fallback para tecnicidad cuando no se declara:
+    const fallbackTec = race.opts.tipo ? ({1:0.9,2:1.0,3:1.1,4:1.25,5:1.4}[race.tipo]||1.0) : 1.0;
+    // Primera pasada: km_eff totales
+    let kmEffTot=0;
+    const segCalc=segs.map(s=>{
+      const fTec = s.tec ? (T_TECNICIDAD[+s.tec]||1) : fallbackTec;
+      const kE = (+s.dist>0) ? (s.dist + (s.dplus/100)*fTec) : 0;
+      kmEffTot += kE;
+      return {s, fTec, kE};
+    });
+    // Fatiga referencia: proporción respecto al km_eff_total
+    let acumKm=0, acumKmEff=0, acumTime=0;
+    for(const x of segCalc){
+      const s=x.s;
+      const pendMed = s.dist>0 ? (s.dplus+s.dneg)/(s.dist*10) : 0;
+      const pendNet = s.dist>0 ? (s.dplus-s.dneg)/(s.dist*10) : 0;
+      const isDesc = pendNet<0;
+      const fPend = slopeFactor(pendMed, isDesc);
+      const fSup  = s.sup ? (T_SUPERFICIE[s.sup]||1) : 1;
+      // Si el segmento no trae altitud propia, usamos la altitud media del circuito
+      const fAlt  = (s.alt!=null && s.alt>0)
+        ? lookupStep(T_ALTITUD, s.alt, 1)
+        : fAltGlobFallback;
+      // Fatiga evaluada en la mitad del tramo (promedio)
+      const midPct = kmEffTot>0 ? (acumKmEff + x.kE/2)/kmEffTot : 0;
+      const fFat = 1 + K_FATIGA * midPct;
+      const tSec = x.kE * refPace.secPerKmEff * fPend * fSup * fAlt * fFat;
+      const pcSec = (+s.pc||0)*60;
+      acumKm += (+s.dist||0);
+      acumKmEff += x.kE;
+      acumTime += tSec + pcSec;
+      splits.push({
+        name:s.name||"Segmento",
+        dist:s.dist, dplus:s.dplus, dneg:s.dneg,
+        pendMed, pendNet, fTec:x.fTec, fPend, fSup, fAlt, fFat,
+        kE:x.kE, tSec, pcSec,
+        accDist:acumKm, accTime:acumTime,
+      });
+    }
+    baseTimeSec = acumTime;
+    // Si hay distancia "faltante" respecto a la carrera total, la agregamos como tramo implícito
+    const leftDist = race.dist - splits.reduce((a,s)=>a+(+s.dist||0),0);
+    const leftDplus = Math.max(0, race.dplus - splits.reduce((a,s)=>a+(+s.dplus||0),0));
+    const leftDneg  = Math.max(0, raceDneg    - splits.reduce((a,s)=>a+(+s.dneg||0),0));
+    if(leftDist > 0.1){
+      const fTec = fallbackTec;
+      const kE = leftDist + (leftDplus/100)*fTec;
+      const pendMed = (leftDplus + leftDneg)/(leftDist*10);
+      const pendNet = (leftDplus - leftDneg)/(leftDist*10);
+      const fPend = slopeFactor(pendMed, pendNet<0);
+      const fAlt = fAltGlobFallback;
+      const midPct = 1; // último tramo → fatiga máxima
+      const fFat = 1 + K_FATIGA * (Math.min(1,midPct));
+      const tSec = kE * refPace.secPerKmEff * fPend * fAlt * fFat;
+      acumKm+=leftDist; baseTimeSec+=tSec;
+      splits.push({
+        name:"Resto del circuito",
+        dist:leftDist, dplus:leftDplus, dneg:leftDneg,
+        pendMed, pendNet, fTec, fPend, fSup:1, fAlt, fFat,
+        kE, tSec, pcSec:0,
+        accDist:acumKm, accTime:baseTimeSec,
+      });
+    }
+  } else {
+    // Global — Riegel sobre km-esfuerzo, más ajustes por pendiente (D+/D-) y altitud
+    const tRef = refPace.secPerKmEff * refPace.kmEffRef;
+    const riegelRatio = refPace.kmEffRef>0 ? Math.pow(kmEffRace/refPace.kmEffRef, EXP_RIEGEL) : 1;
+    let T = tRef * riegelRatio;
+    // Factor de perfil: diferencia entre carrera balanceada (D-=D+) vs carrera
+    // con bajada neta (D- >> D+) o subida neta. También captura el costo extra
+    // de bajadas empinadas.
+    const fSlope = globalSlopeFactor(race.dist, race.dplus, raceDneg);
+    // Normalizamos dividiendo por el factor "balanceado" (D-=D+),
+    // para no doble-contar lo que ya captura km-esfuerzo.
+    const fSlopeBalanced = globalSlopeFactor(race.dist, race.dplus, race.dplus);
+    const fSlopeNorm = fSlopeBalanced>0 ? fSlope/fSlopeBalanced : 1;
+    T *= fSlopeNorm;
+    const fAltGlob = fAltGlobFallback;
+    T *= fAltGlob;
+    baseTimeSec = T;
+    splits.push({
+      name:race.name||"Carrera",
+      dist:race.dist, dplus:race.dplus, dneg:raceDneg,
+      pendMed:(race.dplus+raceDneg)/(race.dist*10), pendNet:(race.dplus-raceDneg)/(race.dist*10),
+      fTec:tipoF_race, fPend:fSlopeNorm, fSup:1, fAlt:fAltGlob, fFat:1,
+      kE:kmEffRace, tSec:T, pcSec:0,
+      accDist:race.dist, accTime:T,
+    });
+  }
+
+  // --- CONDICIONES GLOBALES ---
+  let condMult = climateMultiplier(state.cond); // temp, hum, cielo, viento, sol, noche
+  if(state.cond.opts.mochila) condMult *= state.cond.mochila;
+  if(state.cond.opts.exp) condMult *= state.cond.exp;
+  let extraSec = 0;
+  if(state.cond.opts.cruces) extraSec += state.cond.cruces * 120;
+  if(state.cond.opts.desnudo) extraSec += state.cond.desnudo * 60;
+
+  const totalSec = baseTimeSec * condMult + extraSec;
+
+  // Reescalar splits con multiplicador (excluyendo pc y extras explícitos)
+  let runAcc=0;
+  splits.forEach(sp=>{
+    sp.tSecAdj = sp.tSec * condMult;
+    runAcc += sp.tSecAdj + sp.pcSec;
+    sp.accTimeAdj = runAcc;
+  });
+  // Añadimos extras fijos al último split (para que cierre):
+  if(splits.length && extraSec>0){
+    splits[splits.length-1].accTimeAdj += extraSec;
+  }
+
+  const pace = totalSec / Math.max(race.dist,0.01); // seg/km real
+  const effPace = refPace.secPerKmEff * condMult;
+
+  return {
+    ok:true,
+    totalSec, pace, effPace, kmEffRace,
+    splits, refPace, condMult, extraSec,
+    raceDist:race.dist, raceDplus:race.dplus,
+  };
+}
+
+/* ============================================================
+   RENDER DE RESULTADO
+   ============================================================ */
+function recompute(scrollToTop){
+  const r = compute();
+  const eWrap=$("out-errors");
+  if(!r.ok){
+    eWrap.innerHTML = `<div class="notice warn"><b>Faltan datos para calcular:</b><br>${r.errs.map(x=>"• "+x).join("<br>")}</div>`;
+    $("r-time").textContent="--:--:--";
+    $("r-sub").textContent="Completá los campos marcados";
+    $("r-race-name").textContent="—";
+    ["r-dist","r-dplus","r-pace","r-effpace","r-kmeff","r-conf"].forEach(id=>$(id).textContent="—");
+    $("r-splits").innerHTML="";
+    $("r-compare").innerHTML="";
+    $("r-conf-sub").textContent="—";
+    return;
+  }
+  eWrap.innerHTML="";
+  $("r-race-name").textContent=state.race.name||"Carrera";
+  $("r-time").textContent=fmtTime(r.totalSec);
+  $("r-sub").textContent = `Ritmo promedio ${fmtPace(r.pace)} /km · ${r.splits.length} ${r.splits.length===1?"tramo":"tramos"}`;
+  $("r-dist").innerHTML=`${r.raceDist.toFixed(1)}<small>km</small>`;
+  $("r-dplus").innerHTML=`${Math.round(r.raceDplus)}<small>m</small>`;
+  $("r-pace").textContent=fmtPace(r.pace);
+  $("r-effpace").textContent=fmtPace(r.effPace);
+  $("r-kmeff").innerHTML=`${r.kmEffRace.toFixed(1)}<small>km-ef</small>`;
+
+  // Confianza
+  const conf = Math.round(100 * r.refPace.confidence * (state.segEnabled && state.segments.length ? 1 : 0.85));
+  $("r-conf").textContent = conf+"%";
+  let cs = state.refMode==="pace" ? "Basado en pace de ruta" : `${r.refPace.sources} referencia${r.refPace.sources!==1?"s":""} de trail`;
+  if(state.segments.filter(s=>s.dist>0).length>0) cs += " · con segmentos";
+  $("r-conf-sub").textContent=cs;
+
+  // SPLITS
+  const maxPace = Math.max(...r.splits.map(s=>s.tSecAdj/Math.max(s.dist,0.01)));
+  $("r-splits").innerHTML = r.splits.map((s,i)=>{
+    const paceSec = s.tSecAdj/Math.max(s.dist,0.01);
+    const pct = Math.min(100, (paceSec/maxPace)*100);
+    return `
+    <div class="bar-row">
+      <div class="bar-name" title="${s.name}">${i+1}. ${s.name} <span class="pill" style="margin-left:6px">${s.dist.toFixed(1)}km · ${Math.round(s.dplus)}m D+</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%">${fmtPace(paceSec)}/km</div></div>
+      <div class="bar-val">${fmtTime(s.accTimeAdj)}</div>
+    </div>`;
+  }).join("");
+  $("r-split-sub").textContent = r.splits.length>1
+    ? "Tiempo proyectado en cada tramo. La barra muestra el ritmo min/km y a la derecha el tiempo acumulado desde la largada."
+    : "Resumen sin segmentación. Agregá segmentos para tener splits detallados.";
+
+  // Compare
+  const obj = state.race.opts.obj ? parseTime(state.race.obj) : 0;
+  let cmpHtml="";
+  if(obj>0){
+    const diff = r.totalSec - obj;
+    const sign = diff>=0?"+":"−";
+    cmpHtml += `<div class="notice ${Math.abs(diff)<900?"ok":"warn"}">
+      <b>Tu objetivo:</b> ${fmtTime(obj)}<br>
+      <b>Nuestra estimación:</b> ${fmtTime(r.totalSec)} (${sign}${fmtTime(Math.abs(diff))})<br>
+      ${diff>0?"Tu objetivo está <b>por debajo</b> de lo estimado — apuntás a un ritmo ambicioso. Confirmalo con sesiones específicas.":"Tu objetivo se ve <b>realista o conservador</b> según tu nivel actual. Hay margen."}
+    </div>`;
+  }
+  const activeConds = [];
+  const c = state.cond;
+  if(c.opts.temp)    activeConds.push(`temp ${c.temp}°C`);
+  if(c.opts.hum)     activeConds.push(`hum ${c.hum}%`);
+  if(c.opts.cielo)   activeConds.push({clear:"soleado",part:"parcial",cloud:"nublado",light:"llovizna",rain:"lluvia",storm:"tormenta",snow:"nieve"}[c.cielo]||c.cielo);
+  if(c.opts.viento)  activeConds.push({none:"sin viento",light:"viento leve",mod:"viento mod.",strong:"viento fuerte",extreme:"viento extremo"}[c.viento]||c.viento);
+  if(c.opts.sol)     activeConds.push(`sol ${["sombra","parcial","expuesto","pleno"][c.sol]||""}`);
+  if(c.opts.noche && c.noche>0) activeConds.push(`noche ${Math.round(c.noche*100)}%`);
+  if(c.opts.mochila) activeConds.push(`mochila ×${c.mochila}`);
+  if(c.opts.exp)     activeConds.push(`exp ×${c.exp}`);
+  const condDetail = activeConds.length ? activeConds.join(" · ") : "sin ajustes climáticos/corredor";
+
+  cmpHtml += `
+    <div class="hint">
+      <b>Factores aplicados:</b>
+      <ul style="margin:8px 0 0 18px;line-height:1.7">
+        <li>Tipo de recorrido: <b>${state.race.opts.tipo?state.race.tipo:"—"}</b> (factor ${(T_RECORRIDO[state.race.tipo]||1.16).toFixed(2)})</li>
+        <li>Desnivel negativo: <b>${state.race.opts.dneg?state.race.dneg+" m":"asumido = D+"}</b></li>
+        <li>Altitud media del circuito: <b>${state.race.opts.alt?state.race.alt+" m":"—"}</b></li>
+        <li>Multiplicador condiciones del día: <b>×${r.condMult.toFixed(3)}</b> <span style="color:var(--txt-4)">(${condDetail})</span></li>
+        <li>Tiempo extra por cruces + PCs: <b>+${fmtTime(r.extraSec)}</b></li>
+        <li>Exponente de Riegel: <b>${EXP_RIEGEL}</b> · k fatiga: <b>${K_FATIGA}</b></li>
+      </ul>
+    </div>`;
+  $("r-compare").innerHTML=cmpHtml;
+
+  if(scrollToTop) window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// Auto-recompute con debounce cuando cualquier input cambia
+let reTimer;
+function scheduleRecompute(){ clearTimeout(reTimer); reTimer=setTimeout(()=>recompute(false), 160); }
+document.addEventListener("input", scheduleRecompute);
+document.addEventListener("change", scheduleRecompute);
+document.addEventListener("click", e=>{
+  if(e.target.closest(".toggle") || e.target.closest("[data-del]") || e.target.closest(".mode-opt")) scheduleRecompute();
+});
+
+/* ============================================================
+   EXPORT / PERSISTENCE
+   ============================================================ */
+function exportCSV(){
+  const r=compute();
+  if(!r.ok){ alert("Completá los datos antes de exportar."); return; }
+  const rows=[["Tramo","Distancia (km)","D+ (m)","D- (m)","Ritmo (min/km)","Tiempo tramo","Tiempo acumulado"]];
+  r.splits.forEach((s,i)=>{
+    rows.push([`${i+1}. ${s.name}`, s.dist.toFixed(2), Math.round(s.dplus), Math.round(s.dneg||0),
+      fmtPace(s.tSecAdj/Math.max(s.dist,0.01)),
+      fmtTime(s.tSecAdj + s.pcSec),
+      fmtTime(s.accTimeAdj)]);
+  });
+  rows.push([]);
+  rows.push(["TOTAL", r.raceDist.toFixed(2), Math.round(r.raceDplus), "", fmtPace(r.pace), "", fmtTime(r.totalSec)]);
+  const csv=rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const safeName=(state.race.name||"plan").replace(/[^a-z0-9\-_]/gi,"_");
+  a.href=url; a.download=`plan_${safeName}.csv`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$("btn-export-csv").addEventListener("click", exportCSV);
+$("btn-print").addEventListener("click", ()=>window.print());
+
+const LS_KEY="ea-trail-calc-v1";
+$("btn-save").addEventListener("click",()=>{
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    const b=$("btn-save"); const old=b.innerHTML;
+    b.innerHTML="<span>✓ Guardado</span>";
+    setTimeout(()=>b.innerHTML=old, 1400);
+  }catch(e){ alert("No se pudo guardar."); }
+});
+$("btn-reset").addEventListener("click",()=>{
+  if(!confirm("¿Restaurar valores iniciales? Se perderán tus datos.")) return;
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+});
+
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    const s=JSON.parse(raw);
+    // Merge defensivo para no romper si el localStorage viene de una versión anterior
+    if(s.refMode) state.refMode=s.refMode;
+    if(Array.isArray(s.refs)) state.refs=s.refs;
+    if(s.pace) Object.assign(state.pace, s.pace);
+    if(s.race){
+      Object.assign(state.race, s.race);
+      if(s.race.opts) state.race.opts=Object.assign({}, state.race.opts, s.race.opts);
+    }
+    if(typeof s.segEnabled==="boolean") state.segEnabled=s.segEnabled;
+    if(Array.isArray(s.segments)) state.segments=s.segments;
+    if(s.cond){
+      // Copiamos solo las claves conocidas para ignorar campos retirados (clima viejo, etc.)
+      const keys=["temp","hum","cielo","viento","sol","noche","mochila","exp","cruces","desnudo"];
+      keys.forEach(k=>{ if(s.cond[k]!=null) state.cond[k]=s.cond[k]; });
+      if(s.cond.opts){
+        keys.forEach(k=>{ if(typeof s.cond.opts[k]==="boolean") state.cond.opts[k]=s.cond.opts[k]; });
+      }
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function applyStateToUI(){
+  // modo ref
+  $$("#ref-mode-switch .mode-opt").forEach(b=>b.classList.toggle("active", b.dataset.mode===state.refMode));
+  $("ref-mode-race").classList.toggle("hidden", state.refMode!=="race");
+  $("ref-mode-pace").classList.toggle("hidden", state.refMode!=="pace");
+  $("p_dist").value=state.pace.dist; $("p_time").value=state.pace.time;
+
+  // race
+  $("r_name").value=state.race.name; $("r_date").value=state.race.date||"";
+  $("r_dist").value=state.race.dist; $("r_dplus").value=state.race.dplus;
+  $("r_tipo").value=state.race.tipo; $("r_dneg").value=state.race.dneg;
+  $("r_alt").value=state.race.alt; $("r_obj").value=state.race.obj;
+  $$("[data-optional]").forEach(f=>{
+    const opt=f.dataset.optional;
+    const tog=f.querySelector(".toggle");
+    let on=false;
+    if(opt.startsWith("r_")) on = !!state.race.opts[opt.slice(2)];
+    else if(opt.startsWith("c_")) on = !!state.cond.opts[opt.slice(2)];
+    tog.classList.toggle("on", on);
+    f.classList.toggle("disabled", !on);
+  });
+  // seg toggle
+  const segTog = document.querySelector('[data-toggle="seg_enabled"]');
+  segTog.classList.toggle("on", state.segEnabled);
+
+  // condiciones
+  $("c_temp").value=state.cond.temp;
+  $("c_hum").value=state.cond.hum;
+  $("c_cielo").value=state.cond.cielo;
+  $("c_viento").value=state.cond.viento;
+  $("c_sol").value=state.cond.sol;
+  $("c_noche").value=state.cond.noche;
+  $("c_mochila").value=state.cond.mochila;
+  $("c_exp").value=state.cond.exp;
+  $("c_cruces").value=state.cond.cruces;
+  $("c_desnudo").value=state.cond.desnudo;
+
+  renderRefs(); renderSegments();
+  bindTogglesOnce(document);
+}
+
+function init(){
+  loadSaved();
+  if(state.refs.length===0) state.refs=[ emptyRef() ];
+  applyStateToUI();
+  // footer stamp
+  $("foot-stamp").textContent = "actualizado " + new Date().toLocaleDateString("es-AR");
+  recompute(false);
+}
+init();
+</script>
+
+<script>
+/* Le avisa a la web qué alto tiene, para que el marco se ajuste solo.
+   Si abrís este archivo suelto (sin internet), esto no hace nada. */
+(function () {
+  if (window.parent === window) return;
+
+  /* Embebida: soltamos el alto atado a la pantalla. `html,body{height:100%}` y
+     `body{min-height:100vh}` sirven cuando abrís el archivo suelto, pero acá
+     adentro 100vh ES el alto del marco: el documento copiaría ese alto y se lo
+     reportaría de vuelta al padre, trabándolo para siempre (solo podría crecer,
+     nunca achicarse). Midiendo el contenido real, el marco lo sigue en los dos
+     sentidos y no queda un vacío abajo. */
+  var soltar = document.createElement('style');
+  soltar.textContent = 'html,body{height:auto!important;min-height:0!important}';
+  document.head.appendChild(soltar);
+
+  var ultimo = -1;
+  /* Medimos el <body>, no el <html>: adentro de un marco el <html> nunca mide
+     menos que el marco, así que nunca podría achicarse. */
+  var medir = function () {
+    var b = document.body;
+    return Math.ceil(b.getBoundingClientRect().height + b.offsetTop);
+  };
+  var enviar = function (forzar) {
+    var alto = medir();
+    if (!forzar && alto === ultimo) return; // no repetimos el mismo mensaje
+    ultimo = alto;
+    window.parent.postMessage({ tipo: 'alto-herramienta', alto: alto }, '*');
+  };
+  /* Al cargar mandamos SIEMPRE, aunque el observer ya haya mandado ese mismo
+     alto: si no, el primer aviso se pierde si el padre todavía no escuchaba. */
+  window.addEventListener('load', function () { enviar(true); });
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () { enviar(false); }).observe(document.body);
+  }
+  /* Y si la web nos pregunta, contestamos: así el alto llega igual aunque
+     nuestro primer aviso haya salido antes de que ella estuviera escuchando. */
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.tipo === 'pedir-alto') enviar(true);
+  });
+})();
+</script>
+</body>
+</html>
