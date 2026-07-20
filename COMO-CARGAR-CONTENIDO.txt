@@ -2,66 +2,71 @@
   CÓMO CARGAR CONTENIDO EN TU WEB (sin tocar código)
 ============================================================
 
-Vas a usar un panel con formularios (como un "editor de posts").
-Escribís, apretás guardar, y la nota aparece en tu web.
+Hay DOS formas. La 1 es la fácil y la que vas a usar casi siempre.
+
+
+############################################################
+  FORMA 1 — ONLINE (la fácil, publica sola en internet)
+############################################################
+
+No hace falta prender nada en tu compu. Se hace desde el navegador,
+incluso desde el celular.
+
+------------------------------------------------------------
+  PASO 1 — Entrar al panel
+------------------------------------------------------------
+Andá a:   emilianosalasporta.cloud/admin
+
+La PRIMERA vez, tocá  "Sign In with GitHub"  e iniciá sesión con
+tu cuenta de GitHub (la personal, emisalasporta). Si te pregunta
+si autorizás la app "Panel web", decí que sí.
+(Las próximas veces ya entra solo.)
+
+------------------------------------------------------------
+  PASO 2 — Escribir una nota o cargar un recurso
+------------------------------------------------------------
+- A la izquierda ves dos secciones:  Blog  y  Recursos.
+- Para algo nuevo: tocá la sección y después  "New" / "Nuevo".
+- Completá el formulario (título, fecha, categoría, el texto…).
+- Cuando termines, tocá  "Publish".
+
+------------------------------------------------------------
+  PASO 3 — ¡Y listo, se publica solo!
+------------------------------------------------------------
+En cuanto tocás Publish, tu nota se guarda y la web se
+reconstruye sola. En unos 2 o 3 minutos ya la ve TODO EL
+MUNDO en emilianosalasporta.cloud. No tenés que hacer nada más.
+
+(Si querés que una nota NO se publique todavía, marcá la
+casilla  "Borrador"  antes de guardar.)
+
+
+############################################################
+  FORMA 2 — LOCAL (sin internet, en tu compu)
+############################################################
+
+Sirve si querés trabajar sin conexión o probar cosas antes.
+Lo que cargues acá queda SOLO en tu compu hasta que lo subas.
 
 IMPORTANTE: hacelo con GOOGLE CHROME o MICROSOFT EDGE.
 (En Firefox no funciona el modo local.)
 
+  1) Doble clic en:   INICIAR-WEB.bat
+     Esperá a que diga:   Local   http://localhost:4321/
+     DEJÁ ESA VENTANA ABIERTA mientras trabajás.
 
-------------------------------------------------------------
-  PASO 1 — Prender la web
-------------------------------------------------------------
-Hacé doble clic en:   INICIAR-WEB.bat
+  2) Doble clic en:   ABRIR-PANEL.url
+     La primera vez, tocá  "Work with Local Repository"  y elegí
+     la carpeta:   D:\profesional\proyectos\website
 
-Se abre una ventana negra. Esperá hasta que diga:
-      Local   http://localhost:4321/
+  3) Cargás la nota igual que en la Forma 1 (Blog / Recursos / New).
 
-DEJÁ ESA VENTANA ABIERTA mientras trabajás.
-(Para apagar la web después, cerrás esa ventana.)
+  4) Para verla, andá a  http://localhost:4321  y apretá  F5.
 
-
-------------------------------------------------------------
-  PASO 2 — Abrir el panel
-------------------------------------------------------------
-Hacé doble clic en:   ABRIR-PANEL.url
-
-Se abre el panel en el navegador.
-La PRIMERA vez tenés que conectarlo con tu carpeta:
-
-  1) Tocá el botón  "Work with Local Repository"
-  2) Cuando te pregunte, elegí ESTA carpeta:
-         D:\profesional\proyectos\website
-  3) Si te pide permiso, tocá  "Ver archivos" / "Allow".
-
-(La próxima vez que entres, ya queda conectado.)
+Ojo: lo que cargás así queda en tu compu. Para que lo vea todo el
+mundo hay que "subirlo" (eso lo vemos juntos si lo necesitás).
 
 
 ------------------------------------------------------------
-  PASO 3 — Escribir una nota o cargar un recurso
-------------------------------------------------------------
-- A la izquierda ves dos secciones:  Blog  y  Recursos.
-- Para algo nuevo: tocá la sección y después el botón de
-  "New" / "Nuevo".
-- Completá el formulario (título, fecha, categoría, el texto…).
-- Cuando termines, tocá  "Publish" / "Save".
-
-¡Listo! Se guardó en tu computadora.
-
-
-------------------------------------------------------------
-  PASO 4 — Verlo en la web
-------------------------------------------------------------
-Volvé a la pestaña de tu web (http://localhost:4321) y
-actualizá con  F5.  Tu nota nueva ya tiene que estar ahí.
-
-
-------------------------------------------------------------
-  ¿Y para que lo vea todo el mundo en internet?
-------------------------------------------------------------
-Eso es el paso de "publicar la web", que lo hacemos aparte
-más adelante. Por ahora, todo esto queda guardado en tu
-compu (que es justo lo que queremos mientras la armamos).
-
 Cualquier cosa que no entiendas, escribime y lo vemos. 💪
 ============================================================
