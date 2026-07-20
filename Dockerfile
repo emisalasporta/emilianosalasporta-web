@@ -31,6 +31,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-# Chequeo de salud: si nginx deja de responder, Dokploy se entera.
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -q --spider http://localhost/ || exit 1
+# Nada de HEALTHCHECK acá: el `wget --spider` de nginx-alpine (BusyBox) no anda,
+# el chequeo quedaba "unhealthy" para siempre y Docker Swarm nunca metía el
+# contenedor en el ruteo de Traefik -> 502 Bad Gateway. Dokploy/Traefik vigilan
+# la salud por su cuenta, no hace falta uno propio.
