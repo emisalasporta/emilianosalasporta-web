@@ -5,11 +5,12 @@
 # ============================================================
 
 # Backend para editar ONLINE (desde cualquier lado, incluso el celular).
-# Se completa cuando publiquemos la web y conectemos GitHub.
 backend:
   name: github
-  repo: usuario/repositorio
+  repo: emisalasporta/emilianosalasporta-web
   branch: main
+  # base_url = el "portero" (Worker de Cloudflare) que hace el login seguro.
+  base_url: https://sveltia-cms-auth.emilianosalas85.workers.dev
 
 # Para editar DESDE TU COMPU no se usa este backend:
 # entrá con Chrome o Edge a /admin/ y tocá "Work with Local Repository".
