@@ -19,6 +19,14 @@ backend:
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
+# Cómo se nombran los archivos que crea el panel.
+# Sin esto, el título "¿Hielo o sauna...?" generaba un archivo con "¿" y tildes.
+# Con esto salen limpios: solo letras sin acento, números y guiones.
+slug:
+  encoding: "ascii"        # nada de tildes ni caracteres raros
+  clean_accents: true      # "recuperación" -> "recuperacion"
+  sanitize_replacement: "-" # los espacios y signos se vuelven guiones
+
 # Sin panel de vista previa (usamos la web real para verlo).
 editor:
   preview: false
@@ -33,7 +41,8 @@ collections:
     create: true
     extension: "md"
     format: "yaml-frontmatter"
-    slug: "{{slug}}"
+    # Nombre del archivo = año-mes-titulo-limpio (ej: 2026-07-hielo-o-sauna.md)
+    slug: "{{year}}-{{month}}-{{slug}}"
     sortable_fields: ["date", "title"]
     fields:
       - { name: "title", label: "Título", widget: "string" }
