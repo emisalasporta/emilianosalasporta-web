@@ -4,7 +4,10 @@ description: 'Salió charlando con Anabel: ¿el agua fría ya no va y ahora es t
 date: 2026-07-20
 category: entrenamiento
 tags:
-  - recuperacion, frio, calor, sauna
+  - recuperacion
+  - frio
+  - calor
+  - sauna
 cover: ''
 updated: ''
 draft: false
@@ -73,7 +76,7 @@ En criollo, lo que yo te recomiendo:
 4. Cuidá el timing con la fuerza. Nada de hielo pegado a la pesa: dejá que ese trabajo haga su efecto.
 5. Lo que te hace sentir bien y no te perjudica, dale. ¿El sauna te relaja y dormís mejor? ¿El agua fría te despeja la cabeza después de un día bravo? Si no estás en pleno bloque de fuerza, no hay evidencia de que te haga mal. El "me sienta bien" también cuenta, siempre que no choque con lo que estás buscando.
 
----
+***
 
 En resumen: el alumno tenía razón a medias. El frío sí puede jugarte en contra... pero para ganar músculo, no para correr. Para nosotros, los locos de andar comiendo kilómetros, el hielo sigue siendo un buen amigo para recuperar, y el sauna es más una herramienta para prepararte para el calor que una pócima para recuperar. Ninguno de los dos es "el ganador": son herramientas distintas para trabajos distintos. Y la mejor recuperación, la que nunca falla, sigue siendo dormir, comer y darle tiempo al cuerpo.
 
