@@ -1162,9 +1162,13 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         </p>
         <p>
           Los <b>bordes de las zonas</b> no salen de una tabla copiada: están contrastados por tres caminos
-          distintos que dan lo mismo. Por <b>ritmo de carrera</b>, el 10K debería caer alrededor del 86 % de la
-          VAM (el 10K se corre casi exactamente en la velocidad crítica, y la velocidad crítica está medida en
-          86,1 ± 1,5 % de la vVO₂ máx); acá cae entre 87 y 89 %. Por <b>duración</b>, el piso de la zona de
+          distintos que dan lo mismo. Por <b>ritmo de carrera</b>, los tiempos de 5K a media maratón quedan dentro
+          del 1 al 2 % de las tablas VDOT de Daniels. Es la única comparación limpia que existe, porque enfrenta
+          ritmo contra ritmo y no depende de con qué test se midió nada. Acá el 10K no cae en un porcentaje
+          fijo: va de alrededor del <b>84 %</b> de la VAM cuando lleva más de una hora a cerca del <b>89 %</b>
+          cuando se cierra en media hora, y el selector de perfil corre esos valores un par de puntos para
+          cada lado. Es justo lo que tiene que pasar si el porcentaje depende de la duración.
+          Por <b>duración</b>, el piso de la zona de
           umbral se sostiene una hora y el techo unos 24 minutos, que es justo lo medido para el máximo estado
           estable de lactato (54,7 ± 10,9 min) y para la velocidad crítica (15 a 40 min). Y por <b>pulso</b>, en
           165 corredores recreativos con análisis de lactato los dos umbrales cayeron en 80,7 ± 4,9 % y
@@ -1295,7 +1299,10 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             de ella, y cuánto se cae ese porcentaje al final de un esfuerzo largo va del <b>1 % al 31 %</b> según
             la persona (Hunter y col. 2025). Del maratón para arriba, los tiempos de acá ya están calibrados
             contra lo que corrieron <b>7.663 personas</b> en Valencia, así que traen adentro parte del castigo
-            real de la distancia.
+            real de la distancia. Aun así, en el maratón el nivel pesa más que en ninguna otra distancia: sobre
+            82.303 maratonistas medidos, los más rápidos corren cerca de su techo sostenible y los que pasan de
+            las cinco horas se caen bastante más de lo que predice cualquier fórmula. <b>Si es el primer maratón
+            o se viene de poco volumen, este número es el techo optimista, no el pronóstico.</b>
           </p>
           <p>
             <b>Por qué no hay 50K.</b> Estaba y se sacó. No existe ninguna validación publicada de predicción de
@@ -2023,7 +2030,13 @@ const CURVA = [
   [1200,  91.0],
   [1800,  89.0],
   [2700,  86.5],
-  [3600,  85.0],   // una hora: coincide con el umbral clásico (85-88 % de la vVO2max)
+  /* Una hora. El 85 % es coherente con la velocidad de umbral medida en 82 a
+     86 % de la velocidad aeróbica máxima en 75 corredores de tres niveles
+     (Støa y col., Front Physiol 2020;11:585267).
+     OJO: el "85-88 %" que circula por todos lados está publicado en % del
+     VO2 MAX (consumo de oxígeno) y de la FC máxima, NO de la velocidad. Son
+     cosas distintas y mezclarlas es el error más común de este tema. */
+  [3600,  85.0],
   [5400,  82.5],
   [7200,  81.0],
   /* De acá para abajo la curva se dobla más fuerte. No es un capricho: es lo que
@@ -2151,12 +2164,33 @@ const FASES = [
    NO MOVER ESTOS BORDES SIN LEER ESTO PRIMERO. Están validados por tres
    caminos independientes que dan lo mismo:
 
-   1) Por ritmo de carrera. En 60 corredores recreativos el 10K se corre al
-      99,9 % de la velocidad crítica y el 5K al 107,5 % (Antonio y col., Int J
-      Sports Med 2025;46(1):51-58). Y la velocidad crítica está medida en
-      86,1 ± 1,5 % de la vVO2máx (Billat y col., Arch Physiol Biochem
-      1998;106(1):38-45). O sea que el 10K debería caer cerca del 86 % de la
-      VAM: acá cae entre 87 y 89 %.
+   1) Por ritmo de carrera, contra Daniels. De 5K a media maratón los tiempos
+      que salen de acá quedan dentro del 1 al 2 % de las tablas VDOT
+      (verificado número por número en tres niveles). Es la única comparación
+      limpia: enfrenta RITMO contra RITMO y no depende de con qué test se midió
+      la velocidad de referencia.
+
+      OJO, ACÁ HUBO UN ERROR Y NO HAY QUE REPETIRLO. Antes este punto encadenaba
+      el 99,9 % de la velocidad crítica (Antonio y col., Int J Sports Med
+      2025;46(1):51-58) con el 86,1 ± 1,5 % de la vVO2máx (Billat y col., Arch
+      Physiol Biochem 1998;106(1):38-45) para concluir "el 10K cae cerca del
+      86 % de la VAM". No sirve: ese 86,1 % está medido contra una vVO2máx de
+      CINTA en 14 corredores de élite, y la VAM de acá sale de un test de CAMPO
+      de 5 minutos, que mide más rápido (17,1 vs 16,9 km/h en los mismos 48
+      sujetos, p<0,001: Berthon y col., Eur J Appl Physiol 1997;75:233-238).
+      Es la misma trampa del denominador que se advierte más abajo.
+      Y decía "acá cae entre 87 y 89 %", que es falso: barriendo el motor con
+      VAM de 10 a 22 por los tres perfiles, el 10K va de 81,3 % a 90,4 % y solo
+      el 31 % de los corredores cae en ese 87-89. Ese rango se rompió al
+      recalibrar la parte larga de la curva y nadie lo recalculó.
+      SI SE TOCA `CURVA`, HAY QUE RECALCULAR EL RANGO DEL 10K QUE DICE LA
+      PANTALLA, igual que pasa con el campo `sesiones` de las zonas.
+
+      Sobre la velocidad crítica, en cualitativo: en corredores entrenados el
+      10K cae cerca de ella, pero no es una propiedad de la distancia. La
+      velocidad crítica es una intensidad de unos 20 a 40 minutos (Jones y col.,
+      Physiol Rep 2019;7(10):e14098), así que en un corredor lento el 10K queda
+      por debajo y la crítica se le acerca más al ritmo de 5K.
 
    2) Por duración. Invirtiendo la curva, el piso del umbral (85 %) se sostiene
       una hora y el techo (90 %) unos 24 min. Medido: el MLSS aguanta
