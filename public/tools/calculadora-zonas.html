@@ -969,7 +969,8 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="field" id="wrap-fcmax">
           <div class="field-head"><span class="field-label">FC máxima</span><span class="unit">ppm</span></div>
           <input type="number" id="fc-max" min="120" max="230" step="1" placeholder="188">
-          <p class="field-hint" id="hint-fcmax">Sale de la fórmula elegida arriba.</p>
+          <p class="field-hint" id="hint-fcmax">Sale de la fórmula elegida arriba. Medirla en un test propio
+            es lo que más afina las zonas de pulso, más que elegir entre una fórmula y otra.</p>
         </div>
 
         <div class="field">
@@ -1014,6 +1015,37 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             <div><code>216,6 − 0,84 × edad</code> · <b>Åstrand</b>. Cae más rápido con la edad; suele dar el número más alto en gente joven.</div>
             <div><code>206 − 0,88 × edad</code> · <b>Gulati (2010)</b>. Salió de un estudio con más de 5.000 mujeres, y en ellas suele ajustar mejor que las anteriores.</div>
           </div>
+          <p style="margin-top:14px"><b>Cuatro límites del pulso, para no pedirle lo que no puede dar</b></p>
+          <p>
+            <b>En la zona 5 el pulso no sirve.</b> No es un problema de calibración: la frecuencia cardíaca
+            tarda uno o dos minutos en llegar a donde corresponde, y una serie de 400 metros termina antes. Ahí
+            la referencia es el ritmo. El pulso se mira después, no durante.
+          </p>
+          <p>
+            <b>Pasada la hora y media, el pulso y el ritmo se separan, y para lados opuestos.</b> Medido en 31
+            corredores recreativos: después de 90 minutos de rodaje suave, la velocidad de umbral <b>bajó</b>
+            alrededor de un 5 % y el pulso de umbral <b>subió</b> entre 6 y 9 pulsaciones (Nuuttila y col.,
+            Eur J Appl Physiol 2025;125(3):697-705). Encima está la deriva: la misma velocidad que en un test
+            de rampa se lee al 88 % de la máxima, a los 40 minutos de esfuerzo continuo se lee al 92 %
+            (Fleckenstein y col., Sports 2023;11(10):198). O sea que en una tirada larga, una zona 2 correcta
+            por ritmo se va a leer como zona 3 por pulso, y las dos lecturas están bien. En ultradistancia eso
+            no es la excepción, es el estado normal.
+          </p>
+          <p>
+            <b>El umbral que calcula el reloj no es una medición.</b> Contrastados contra laboratorio en 100
+            corredores, los umbrales que estiman los relojes erraron entre <b>9 y 11 pulsaciones</b> de
+            promedio, con casos de 16 para abajo y 29 para arriba (Lu y col., Front Physiol 2025;16:1621996).
+            Eso es igual o peor que la fórmula por edad. Si el número viene del reloj, es una estimación más,
+            no un dato medido.
+          </p>
+          <p>
+            <b>Y estos porcentajes son de todos juntos: hay diferencia por sexo.</b> En 165 corredores
+            recreativos, el primer umbral cayó en el <b>83,6 %</b> de la FC máxima en las mujeres y en el
+            <b>78,9 %</b> en los varones (Nuuttila y col., Eur J Appl Physiol 2025;125(8):2161-2171), y un
+            trabajo con 1.411 corredores apunta en la misma dirección. Traducido: con una escala única, a una
+            mujer el techo de la zona 2 le queda unas 8 o 9 pulsaciones más bajo de lo que le corresponde. Las
+            zonas de acá no separan por sexo. Es mejor saberlo que enterarse.
+          </p>
           <p style="margin-top:14px"><b>Las dos formas de repartir las zonas de pulso</b></p>
           <p>
             <b>Sobre la FC máxima.</b> La cuenta directa: se toma la máxima y se le sacan porcentajes. Es la más
@@ -2219,6 +2251,12 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.4 · 22-07-2026.</b> Se explican cuatro límites del pulso que antes no estaban dichos: en la
+        zona 5 no sirve como referencia, pasada la hora y media se separa del ritmo y para el lado contrario,
+        el umbral que estima el reloj no es una medición, y dónde cae el primer umbral difiere entre mujeres
+        y varones.
+      </p>
+      <p>
         <b>v1.3 · 22-07-2026.</b> La primera pestaña deja de llamarse “La VAM” y pasa a ser “Tu test”: la
         calculadora siempre aceptó cualquier esfuerzo máximo, incluida una carrera y una distancia suelta, pero
         el nombre lo escondía. Se suman los protocolos de 5K y de 10K, y una guía para usar una carrera que ya
@@ -2267,7 +2305,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.3", fecha:"22-07-2026" };
+const VERSION = { n:"1.4", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
