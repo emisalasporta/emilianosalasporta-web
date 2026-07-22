@@ -1039,12 +1039,22 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             no un dato medido.
           </p>
           <p>
-            <b>Y estos porcentajes son de todos juntos: hay diferencia por sexo.</b> En 165 corredores
+            <b>Y hay diferencia por sexo, así que acá las zonas de pulso salen distintas.</b> En 165 corredores
             recreativos, el primer umbral cayó en el <b>83,6 %</b> de la FC máxima en las mujeres y en el
-            <b>78,9 %</b> en los varones (Nuuttila y col., Eur J Appl Physiol 2025;125(8):2161-2171), y un
-            trabajo con 1.411 corredores apunta en la misma dirección. Traducido: con una escala única, a una
-            mujer el techo de la zona 2 le queda unas 8 o 9 pulsaciones más bajo de lo que le corresponde. Las
-            zonas de acá no separan por sexo. Es mejor saberlo que enterarse.
+            <b>78,9 %</b> en los varones; el segundo, en 91,7 contra 89,9 (Nuuttila y col., Eur J Appl Physiol
+            2025;125(8):2161-2171), y un trabajo con 1.411 corredores apunta igual. Con una escala única, a una
+            mujer el techo de la zona 2 le queda unas 8 o 9 pulsaciones más bajo de lo que le corresponde, así
+            que cargando el sexo la calculadora corrige eso sola. Sin sexo cargado no ajusta nada.
+          </p>
+          <p>
+            De ese estudio <b>no se copian los porcentajes</b>, se copia la <b>diferencia entre los dos
+            grupos</b>. Los umbrales de ahí salen de un test de laboratorio y los de acá están anclados a la
+            velocidad crítica: mezclar los valores absolutos sería comparar cosas medidas de distinta manera.
+            Una diferencia entre dos grupos de la misma muestra, en cambio, se puede trasladar. El corrimiento
+            se achica a medida que sube la intensidad y llega a cero en la máxima, que es donde las dos escalas
+            terminan igual. Conviene saber también que solo los dos bordes del medio tienen umbral medido
+            detrás; los otros se corren por la misma forma, y eso es criterio. Lo mismo la escala de FC de
+            reserva: nadie midió ahí el desfase entre sexos, se asume el mismo.
           </p>
           <p style="margin-top:14px"><b>Las dos formas de repartir las zonas de pulso</b></p>
           <p>
@@ -2251,6 +2261,12 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.5 · 22-07-2026.</b> Las zonas de pulso ahora se ajustan según el sexo, porque los umbrales no
+        caen en el mismo porcentaje de la FC máxima en mujeres y en varones. Cargando el sexo, la calculadora
+        corrige sola las 8 o 9 pulsaciones que la escala única le sacaba de más a una mujer. Los ritmos no
+        cambian.
+      </p>
+      <p>
         <b>v1.4 · 22-07-2026.</b> Se explican cuatro límites del pulso que antes no estaban dichos: en la
         zona 5 no sirve como referencia, pasada la hora y media se separa del ritmo y para el lado contrario,
         el umbral que estima el reloj no es una medición, y dónde cae el primer umbral difiere entre mujeres
@@ -2305,7 +2321,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.4", fecha:"22-07-2026" };
+const VERSION = { n:"1.5", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
@@ -2827,6 +2843,47 @@ let BASE_FC = "fcmax";
 let EDAD = null;
 let SEXO = "";       // "h" | "m" | "" (sin decir)
 
+/* ------------------------------------------------------------------
+   AJUSTE POR SEXO DE LAS ZONAS DE PULSO
+   El primer umbral no cae en el mismo punto: 83,6 % de la FC máxima en
+   mujeres contra 78,9 % en varones, y el segundo 91,7 contra 89,9
+   (Nuuttila y col., Eur J Appl Physiol 2025;125(8):2161-2171, n=165;
+   mismo sentido en Esteve-Lanao y col., Sports 2026;14(1):29, n=1411).
+
+   OJO, ACÁ NO SE IMPORTAN LOS VALORES ABSOLUTOS DE ESE ESTUDIO. Sus
+   umbrales salen de un test incremental de laboratorio y los nuestros
+   están anclados a la velocidad crítica: mezclarlos sería la trampa del
+   denominador de nuevo. Lo que se importa es la DIFERENCIA ENTRE LOS
+   DOS GRUPOS, medida con el mismo método en la misma muestra, donde el
+   denominador se cancela. Nuestros bordes conservan su validación.
+
+   La forma: el desfase se achica a medida que sube la intensidad (4,7
+   puntos en el primer umbral, 1,8 en el segundo) y tiene que ser CERO
+   en la máxima, porque ahí las dos escalas terminan en 100 por
+   definición. O sea un corrimiento proporcional a lo que falta para el
+   techo. Ajustando a los dos umbrales medidos:
+     base      50   68   82   90   94   100
+     mujeres   57   72   84   91   95   100
+     varones   46   65   80   89   93   100
+
+   Solo los bordes Z2/Q3 y Z3/Z4 tienen umbral medido detrás. Los otros
+   se mueven por la misma forma, y eso es criterio. La escala de FC de
+   reserva se mueve con el mismo factor: nadie midió el desfase en % de
+   reserva, se asume igual porque también termina en 100. Todo esto está
+   declarado en pantalla.
+   SIN SEXO CARGADO NO SE AJUSTA NADA. ------------------------------- */
+const K_SEXO = { m: 0.133, h: -0.084 };
+
+/** Bordes de pulso de una zona, ya ajustados por sexo y por la base elegida. */
+function bordesFc(z){
+  const base = BASE_FC === "karvonen" ? z.fcr : z.fcmax;
+  if(!base) return null;
+  const k = K_SEXO[SEXO];
+  if(!k) return base;
+  const mover = (b)=> Math.min(100, Math.max(0, Math.round(b + k*(100-b))));
+  return [mover(base[0]), mover(base[1])];
+}
+
 /** Lee los campos del test y devuelve { metros, segundos } o null. */
 function leerTest(){
   const tipo = $("t-tipo").value;
@@ -3092,7 +3149,7 @@ function pintarZonas(){
     for(const z of ZONAS.filter((x)=>x.fase === fase.n)){
       const vLo = VAM * z.vam[0]/100, vHi = VAM * z.vam[1]/100;
       const rLo = fmtRitmo(ritmoDe(vHi)), rHi = fmtRitmo(ritmoDe(vLo));  // más rápido primero
-      const rangoFc = BASE_FC === "karvonen" ? z.fcr : z.fcmax;
+      const rangoFc = bordesFc(z);
 
       let fcTxt = "—";
       if(rangoFc && FCMAX){
@@ -3413,7 +3470,7 @@ function zonasComoTexto(){
     L.push(fase.titulo.toUpperCase());
     for(const z of ZONAS.filter((x)=>x.fase === fase.n)){
       const vLo = VAM*z.vam[0]/100, vHi = VAM*z.vam[1]/100;
-      const rangoFc = BASE_FC === "karvonen" ? z.fcr : z.fcmax;
+      const rangoFc = bordesFc(z);
       let fc = "";
       if(rangoFc && FCMAX) fc = ` · ${ppm(rangoFc[0],FCMAX,FCREP,BASE_FC)}-${ppm(rangoFc[1],FCMAX,FCREP,BASE_FC)} ppm`;
       L.push(`${z.id} ${z.nombre}: ${fmtRitmo(ritmoDe(vHi))}-${fmtRitmo(ritmoDe(vLo))} min/km${fc} · RPE ${z.rpe}`);
