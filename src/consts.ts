@@ -11,31 +11,27 @@ export const SITE = {
 };
 
 /* ===========================================================================
-   MEDICIÓN DE VISITAS — Cloudflare Web Analytics
+   MEDICIÓN DE VISITAS — ya está hecha, y NO va en el código
    ---------------------------------------------------------------------------
-   Acá va el token que da Cloudflare. Mientras esté vacío, el sitio no carga
-   NINGÚN script de medición: queda exactamente como está hoy.
+   El sitio se mide con Cloudflare Web Analytics desde mayo de 2026, y funciona
+   sin que el repo tenga una sola línea al respecto: el dominio pasa por
+   Cloudflare (la nube naranja), así que Cloudflare le inyecta el medidor a
+   cada página desde su propio servidor. En el panel esa ficha figura como
+   "Automatic setup".
 
-   Cómo se consigue (se puede desde el celular, son cuatro toques):
-     1. Entrar a dash.cloudflare.com con la cuenta de siempre.
-     2. Menú de la izquierda: Analytics & Logs → Web Analytics.
-     3. "Add a site" y escribir  emilianosalasporta.cloud
-     4. Cloudflare devuelve un bloque de código. Adentro dice
-        data-cf-beacon='{"token": "abc123..."}'. Ese "abc123..." es lo único
-        que hace falta: se pega acá abajo entre las comillas.
+   POR ESO NO HAY QUE AGREGAR EL SNIPPET DE JAVASCRIPT. Ya se probó (2026-07-21)
+   y el resultado fue el sitio contándose DOS VECES, repartido entre dos fichas
+   distintas del mismo dominio. Si algún día parece que "falta configurar la
+   analítica", antes de tocar nada: dash.cloudflare.com → Analytics & Logs →
+   Web Analytics, y mirar si ya hay una ficha con datos.
 
-   Se eligió esta y no Google Analytics por un motivo concreto: no usa cookies,
-   así que el sitio no necesita el cartel de consentimiento. A cambio da menos
-   detalle (visitas, páginas, de dónde vienen y país; nada de embudos).
+   Ventaja de que sea así: el sitio no pide NADA a ningún servidor ajeno, ni
+   siquiera las tipografías. Y al no usar cookies, tampoco necesita el cartel
+   de consentimiento.
 
-   Ojo con dos cosas, para que los números no sorprendan:
-     - Es el único pedido a un servidor ajeno que hace el sitio. Todo lo demás
-       (tipografías incluidas) viaja con la página.
-     - Como cualquier medición por JavaScript, los bloqueadores de publicidad
-       la frenan. El número real de visitas siempre es algo mayor que el que
-       muestra el panel.
+   Lo único que Cloudflare no puede ver son las visitas de quien usa bloqueador
+   de publicidad: el número real siempre es algo mayor que el del panel.
    =========================================================================== */
-export const CF_ANALYTICS_TOKEN = 'ad12b3aa499940a18078255ff90b7eb4';
 
 export const CATEGORIAS = {
   entrenamiento: 'Entrenamiento',
