@@ -21,7 +21,7 @@
      el buscador es /herramientas/<nombre>, que lo explica y lo ofrece: sin esto,
      los dos compiten por el mismo lugar en Google. -->
 <meta name="robots" content="noindex, follow">
-<title>Calculadora de Trail — Emiliano Salas Porta</title>
+<title>Calculadora de Trail · Emiliano Salas Porta</title>
 <meta name="description" content="Pronostica tu tiempo en carreras de trail running. Por Emiliano Salas Porta.">
 <style>
 /* ============================================================
@@ -87,6 +87,10 @@
   --shadow:0 8px 28px rgba(0,0,0,.45);
   --shadow-red:0 0 18px rgba(47,184,255,.35);
   --trans:180ms cubic-bezier(.4,0,.2,1);
+
+  /* Le avisa al navegador que esta pagina es oscura, para que dibuje
+     los controles nativos (desplegables, calendarios) en oscuro. */
+  color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -197,7 +201,31 @@ body{
   padding:4px 0;
 }
 .field select{cursor:pointer}
-.field select option{background:var(--bg-3);color:var(--txt-1)}
+/* ============================================================
+   CONTROLES NATIVOS — que se lean y que no parezcan de 2005
+   El desplegable abierto lo dibuja el SISTEMA OPERATIVO, no
+   nosotros: el CSS de la página casi no lo toca. Lo único que el
+   navegador sí escucha es "color-scheme" (declarado arriba en
+   :root): sin eso Windows pinta la lista en claro y las etiquetas
+   de grupo quedan azul sobre azul, ilegibles. Igual dejamos los
+   colores puestos a mano por si algún navegador lo ignora.
+   ============================================================ */
+.field select option,select option{background-color:var(--bg-3);color:var(--txt-1)}
+.field select optgroup,select optgroup{
+  background-color:var(--bg-1);color:var(--txt-3);
+  font-style:normal;font-weight:600;
+}
+select option:checked,select option:hover{background-color:var(--red);color:var(--on-accent)}
+
+/* Las flechitas de subir/bajar de los campos numericos las dibuja el
+   navegador y no se les puede dar estilo: son de otra epoca. Fuera. */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+
+/* El icono del calendario viene negro sobre fondo oscuro: lo invertimos. */
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.55);cursor:pointer}
+input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opacity(1)}
 .field .unit{font-size:12px;color:var(--txt-4);font-weight:500;margin-left:4px}
 
 /* Toggle switch */

@@ -32,3 +32,12 @@ AGENTS.md
 # originales pesados: la web usa public/logo.png (37 KB), no este de 856 KB.
 # Guardalo aparte si querés, pero no infla el repo.
 /logo.png
+
+# archivos de trabajo de Emiliano en la raiz (originales, pruebas de logo,
+# planillas y documentos fuente). No los sirve el sitio: no van al repo.
+/*.xlsx
+/*.docx
+/logo-anterior.png
+/logo[0-9].png
+/iconoYT.png
+/banner*.png

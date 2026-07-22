@@ -26,6 +26,24 @@ export interface Herramienta {
 
 export const HERRAMIENTAS: Herramienta[] = [
   {
+    slug: 'calculadora-zonas',
+    title: 'Calculadora de Zonas',
+    summary:
+      'Un test de VAM de cinco minutos, cargado acá, y salen los ritmos, las pulsaciones y las zonas de entrenamiento.',
+    /* Texto de Emiliano. Va en varios párrafos: la página los separa sola. */
+    description: `La VAM (velocidad aeróbica máxima) es la velocidad mínima a la que se alcanza el máximo consumo de oxígeno que el cuerpo puede procesar.
+
+Esta calculadora traduce tu VAM a zonas de entrenamiento: el ritmo, el pulso, el esfuerzo percibido y para qué sirve cada una, ordenadas utilizando de base un modelo trifásico.
+
+Podés utilizarla en base a cualquier esfuerzo máximo (el test de 5 minutos, un 1500 o un 3000 metros, o una carrera reciente), porque el porcentaje de VAM se ajusta según cuánto duró el esfuerzo y no según la distancia, que es donde fallan las tablas de siempre.
+
+Incluye la estimación de la frecuencia cardíaca máxima con cinco fórmulas, las zonas de pulso calculadas sobre la FC máxima o sobre la FC de reserva, la comparación del VO2 máx con las tablas de referencia por edad y sexo, los tiempos estimados de 800 metros a maratón con su rango probable, y las cuentas de todos los días: ritmo, tiempo y distancia, kilómetros a millas, cuánto falta para la carrera y desnivel equivalente.
+
+También se incluyen los protocolos explicados paso a paso para realizar cualquiera de los tests.`,
+    file: 'public/tools/calculadora-zonas.html',
+    category: 'calculadoras',
+  },
+  {
     slug: 'calculadora-trail',
     title: 'Calculadora de Trail',
     summary:
@@ -41,7 +59,7 @@ export const HERRAMIENTAS: Herramienta[] = [
     summary:
       'Proyectá tu tiempo en 5K, 10K, 21K o 42K a partir de tu VDOT, y sacá de ahí tus zonas de entrenamiento.',
     description:
-      'Proyecta tu tiempo en carreras de calle —5K, 10K, 15K, 21K, 42K o la distancia que te toque— calculando tu VDOT (Daniels) desde una carrera previa, un test de VAM o cualquier ritmo sostenido. Ajusta por perfil, altitud, superficie y clima, arma el pacing por tramo y deriva tus zonas de entrenamiento. Sólo la distancia es obligatoria; el resto afina el resultado. Incluye las ecuaciones y las referencias detrás de cada ajuste.',
+      'Proyecta el tiempo en carreras de calle (5K, 10K, 15K, 21K, 42K o la distancia que toque) calculando el VDOT de Daniels desde una carrera previa, un test de VAM o cualquier ritmo sostenido. Ajusta por perfil, altitud, superficie y clima, arma el pacing por tramo y deriva las zonas de entrenamiento. Sólo la distancia es obligatoria; el resto afina el resultado. Incluye las ecuaciones y las referencias detrás de cada ajuste.',
     file: 'public/tools/calculadora-calle.html',
     category: 'calculadoras',
   },

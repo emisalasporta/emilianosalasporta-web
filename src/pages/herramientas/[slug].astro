@@ -21,6 +21,17 @@ const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 8);
 
 const src = `/tools/${tool.slug}.html`;
 const hrefDescarga = `${src}?v=${hash}`;
+
+/* La descripción del registro puede venir en varios párrafos (separados por una
+   línea en blanco). Los partimos acá para que se lean como texto y no como un
+   ladrillo. Escapamos el HTML: el texto es nuestro, pero no hay razón para
+   dejar una puerta abierta. */
+const escapar = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const descripcionHtml = tool.description
+  .split(/\n\s*\n/)
+  .map((p) => `<p>${escapar(p.trim())}</p>`)
+  .join('');
 ---
 
 {/* El `summary` (una línea) va de meta description y la `description` (larga) de
@@ -28,24 +39,30 @@ const hrefDescarga = `${src}?v=${hash}`;
     quedaba truncada a la mitad de una frase en los resultados. */}
 <BaseLayout title={tool.title} description={tool.summary}>
   <section class="section">
-    <div class="container">
+    <div class="container container-tool">
       <p class="eyebrow">{CATEGORIAS_HERRAMIENTAS[tool.category]}</p>
       <h1>{tool.title}</h1>
-      <p class="lead tool-desc">{tool.description}</p>
 
-      <div class="tool-actions">
-        <a class="btn btn-ghost" href={hrefDescarga} download={`${tool.slug}.html`}>
-          Descargar para usar sin internet (HTML, {pesoKB} KB)
-        </a>
-        <p class="muted tool-note">
-          Es un solo archivo: bajalo, abrilo con cualquier navegador y funciona igual, sin conexión.
+      {/* El texto usa el ancho completo de la columna y la descarga va como un
+          enlace al pie del párrafo, no como un botón al costado: acá el que
+          manda es lo que explica de qué se trata. */}
+      <div class="tool-intro">
+        <div class="lead tool-desc" set:html={descripcionHtml} />
+
+        <p class="tool-descarga">
+          <a href={hrefDescarga} download={`${tool.slug}.html`}>
+            Descargar para usar sin internet (HTML, {pesoKB} KB)
+          </a>
+          <span class="muted tool-note">
+            Es un solo archivo: bajalo, abrilo con cualquier navegador y funciona igual, sin conexión.
+          </span>
         </p>
       </div>
     </div>
   </section>
 
   <section class="tool-frame-section">
-    <div class="container">
+    <div class="container container-tool">
       <iframe
         id="tool-frame"
         src={src}
@@ -93,10 +110,24 @@ const hrefDescarga = `${src}?v=${hash}`;
 </script>
 
 <style>
-  .tool-desc { max-width: 46rem; margin-top: 0.5rem; }
+  /* La página de una herramienta es más ancha que el resto del sitio: acá el
+     protagonista es la calculadora, que por dentro mide 1280px. Con 82rem el
+     marco la contiene justa y no le sobra aire a los costados. */
+  .container-tool { max-width: 82rem; }
 
-  .tool-actions { margin-top: 1.75rem; }
-  .tool-note { font-size: 0.88rem; margin-top: 0.6rem; max-width: 40rem; }
+  .tool-intro { margin-top: 0.75rem; }
+  .tool-desc :global(p + p) { margin-top: 0.9rem; }
+
+  .tool-descarga {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+  }
+  .tool-descarga a { font-weight: 500; }
+  .tool-note { font-size: 0.88rem; }
 
   .tool-frame-section { padding-bottom: clamp(2.5rem, 1.5rem + 4vw, 5rem); }
 

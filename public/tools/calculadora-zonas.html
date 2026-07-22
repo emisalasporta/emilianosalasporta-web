@@ -1,0 +1,3230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<!--
+  ============================================================
+  CALCULADORA DE ZONAS
+  © 2026 Emiliano Salas Porta — emilianosalasporta.cloud
+
+  Autor: Emiliano Salas Porta, entrenador de trail y ultradistancia.
+
+  Usala libremente para entrenar: corré, planificá tus carreras,
+  compartila con quien quieras y guardate el archivo para tenerlo
+  a mano sin internet. Eso es exactamente para lo que existe.
+
+  El código y el modelo de cálculo son de su autoría. No los
+  copies, republiques ni los integres en un producto propio sin
+  su permiso.
+
+  La calculadora es una herramienta de estimación, no una
+  promesa de rendimiento ni consejo médico.
+  ============================================================
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Este archivo se sirve suelto y también se descarga. La página que vale para
+     el buscador es /herramientas/<nombre>, que lo explica y lo ofrece: sin esto,
+     los dos compiten por el mismo lugar en Google. -->
+<meta name="robots" content="noindex, follow">
+<title>Calculadora de Zonas · Emiliano Salas Porta</title>
+<meta name="description" content="Zonas de entrenamiento a partir de un test de VAM, con pulso, RPE y ritmos de carrera. Una herramienta de Emiliano Salas Porta.">
+<style>
+/* ============================================================
+   TIPOGRAFÍAS — archivos locales, cero pedidos de red.
+   Van declaradas acá adentro a propósito: la calculadora se monta
+   dentro de un <iframe> y un iframe NO hereda las @font-face del
+   documento padre. Sin esto, todo caía a la fuente del sistema.
+   Las rutas son relativas (../fonts/) para que también funcionen
+   abriendo el archivo con doble clic, sin servidor y sin WiFi.
+   ============================================================ */
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-400-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-600-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Chakra Petch';font-style:normal;font-weight:700;font-display:swap;
+  src:url('../fonts/chakra-petch-latin-700-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Inter Variable';font-style:normal;font-weight:100 900;font-display:swap;
+  src:url('../fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face{
+  font-family:'JetBrains Mono Variable';font-style:normal;font-weight:100 800;font-display:swap;
+  src:url('../fonts/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+/* ============================================================
+   CALCULADORA DE ZONAS — identidad "SYSTEM // TRAIL"
+   Paleta cyberpunk (espejo de src/styles/global.css):
+   fondo #0a0b10 · superficie #12141c · superficie-2 #181b26
+   texto #e7ecf3 · tenue #8a93a6 · acento neón #2fb8ff
+   contrapunto magenta #ff2e9a · sobre-acento #062229
+   ============================================================ */
+:root{
+  --bg-1:#0a0b10;
+  --bg-2:#12141c;
+  --bg-3:#181b26;
+  --border:#262a38;
+  --border-2:#333a4a;
+  --txt-1:#e7ecf3;
+  --txt-2:#c3ccda;
+  --txt-3:#8a93a6;
+  --txt-4:#6b7386;
+
+  /* Acento de marca. NO es color de zona. */
+  --red:#2fb8ff;
+  --red-2:#7cd4ff;
+  --red-3:#2196d8;
+  --on-accent:#062229;
+  --accent-2:#ff2e9a;
+
+  /* Semánticos de estado (ok / atención / info): tono Y luminancia
+     propios, así se distinguen entre sí y del acento de marca. */
+  --green:#2fe39b;
+  --yellow:#ff9d3d;
+  --blue:#a58bff;
+
+  /* Las tres fases del modelo trifásico. Una escala de temperatura:
+     cuanto más arriba, más caliente. Cada una con luminancia distinta
+     para que se separen también en escala de grises. */
+  --fase-1:#2fe39b;
+  --fase-2:#ffc23d;
+  --fase-3:#ff5c7a;
+
+  --font-head:'Chakra Petch',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-body:'Inter Variable','Segoe UI',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono Variable',ui-monospace,'Cascadia Code','Consolas',monospace;
+
+  --radius:14px;
+  --radius-sm:9px;
+  --shadow:0 8px 28px rgba(0,0,0,.45);
+  --shadow-red:0 0 18px rgba(47,184,255,.35);
+  --trans:180ms cubic-bezier(.4,0,.2,1);
+
+  /* Le avisa al navegador que esta pagina es oscura, para que dibuje
+     los controles nativos (desplegables, calendarios) en oscuro. */
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-body);
+  background:radial-gradient(1200px 800px at 10% -10%,var(--bg-3) 0%,var(--bg-1) 55%) fixed,var(--bg-1);
+  color:var(--txt-1);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 22px 64px}
+
+/* ========== ENCABEZADO ========== */
+.tool-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;
+  margin:8px 0 30px;padding-bottom:20px;
+  border-bottom:1px solid var(--border);
+}
+.tool-head h1{
+  font-family:var(--font-head);
+  font-size:clamp(26px,4vw,38px);font-weight:700;
+  letter-spacing:.01em;line-height:1.12;margin-bottom:8px;
+}
+.tool-head p{color:var(--txt-3);max-width:60ch;font-size:15px}
+.tool-head-actions{display:flex;gap:10px;align-items:center}
+.tool-head-actions .btn-ghost{font-size:13px}
+
+/* ========== TABS ========== */
+.tabs{
+  display:flex;gap:4px;padding:6px;margin-bottom:22px;
+  background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:1;min-width:132px;padding:13px 14px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  background:transparent;border:none;color:var(--txt-3);
+  font-size:13px;font-weight:600;letter-spacing:.3px;
+  cursor:pointer;border-radius:var(--radius-sm);
+  transition:all var(--trans);white-space:nowrap;
+  font-family:var(--font-head);
+}
+.tab svg{width:17px;height:17px;flex-shrink:0}
+.tab:hover{background:rgba(255,255,255,.04);color:var(--txt-2)}
+.tab.active{background:var(--red);color:var(--on-accent);box-shadow:var(--shadow-red)}
+
+/* ========== PANELS ========== */
+.panel{display:none;animation:fadein .3s ease}
+.panel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{
+  background:var(--bg-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:18px;
+}
+.card h2{
+  font-family:var(--font-head);
+  font-size:17px;font-weight:700;margin-bottom:6px;
+  display:flex;align-items:center;gap:10px;
+}
+.card h2 svg{width:19px;height:19px;color:var(--red);flex-shrink:0}
+.card h3{
+  font-family:var(--font-head);font-size:14px;font-weight:700;
+  margin:20px 0 8px;color:var(--txt-1);
+}
+.card-sub{color:var(--txt-3);font-size:13px;margin-bottom:18px}
+
+/* ========== GRID ========== */
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3,.grid-4{display:flex;flex-wrap:wrap;align-items:stretch}
+.grid-3 > *{flex:1 1 calc(33.333% - 11px);min-width:210px}
+.grid-4 > *{flex:1 1 calc(25% - 12px);min-width:195px}
+@media(max-width:880px){
+  .grid-2{grid-template-columns:1fr}
+  .grid-3 > *,.grid-4 > *{flex-basis:100%}
+}
+@media(max-width:680px){.wrap{padding:18px 14px 48px}.card{padding:18px}}
+
+/* ========== CAMPOS ========== */
+.field{
+  background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:13px 14px;transition:all var(--trans);position:relative;
+}
+.field.disabled{opacity:.55}
+.field.disabled input,.field.disabled select,.field.disabled .stp{pointer-events:none}
+.field-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.field-label{
+  font-size:12px;font-weight:600;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--txt-3);
+  display:flex;align-items:center;gap:7px;flex:1;min-width:0;
+}
+.field input[type=text],.field input[type=number],.field input[type=date],.field select{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--txt-1);font-family:inherit;font-size:15px;font-weight:600;padding:4px 0;
+}
+.field input[type=number],.field input[type=text].num,.field input[type=date]{
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;
+}
+.field input::placeholder{color:var(--txt-4);font-weight:400}
+.field:focus-within{border-color:var(--border-2)}
+.field select{cursor:pointer}
+/* ============================================================
+   CONTROLES NATIVOS — que se lean y que no parezcan de 2005
+   El desplegable abierto lo dibuja el SISTEMA OPERATIVO, no
+   nosotros: el CSS de la página casi no lo toca. Lo único que el
+   navegador sí escucha es "color-scheme" (declarado arriba en
+   :root): sin eso Windows pinta la lista en claro y las etiquetas
+   de grupo quedan azul sobre azul, ilegibles. Igual dejamos los
+   colores puestos a mano por si algún navegador lo ignora.
+   ============================================================ */
+.field select option,select option{background-color:var(--bg-3);color:var(--txt-1)}
+.field select optgroup,select optgroup{
+  background-color:var(--bg-1);color:var(--txt-3);
+  font-style:normal;font-weight:600;
+}
+select option:checked,select option:hover{background-color:var(--red);color:var(--on-accent)}
+
+/* Las flechitas de subir/bajar de los campos numericos las dibuja el
+   navegador y no se les puede dar estilo: son de otra epoca. Fuera. */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+
+/* El icono del calendario viene negro sobre fondo oscuro: lo invertimos. */
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.55);cursor:pointer}
+input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opacity(1)}
+
+/* ---- Nuestros botones de subir/bajar, en lugar de los del navegador.
+   Los inyecta el JS en cada campo numérico (ver ponerSteppers()).
+   Discretos en reposo; se encienden cuando tocás el campo. ---- */
+.stepper-wrap{display:flex;align-items:center;gap:8px}
+.stepper-wrap > input{flex:1;min-width:0}
+.stepper{display:flex;gap:4px;flex-shrink:0;opacity:.5;transition:opacity var(--trans)}
+.field:hover .stepper,.field:focus-within .stepper{opacity:1}
+.stp{
+  width:27px;height:27px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-1);border:1px solid var(--border);border-radius:8px;
+  color:var(--txt-3);cursor:pointer;transition:all var(--trans);
+}
+.stp svg{width:12px;height:12px;stroke-width:2.6}
+.stp:hover{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.10)}
+.stp:active{transform:scale(.9)}
+/* En pantallas táctiles no hay hover: que se vean siempre y más grandes. */
+@media(hover:none){
+  .stepper{opacity:.85}
+  .stp{width:32px;height:32px}
+}
+.field .unit{font-family:var(--font-mono);font-size:11px;color:var(--txt-4);font-weight:500}
+.field-hint{font-size:11px;color:var(--txt-4);margin-top:6px;line-height:1.45}
+
+/* Salida calculada dentro de un campo (no editable) */
+.field.out{background:var(--bg-1);border-style:dashed}
+.field.out .field-val{
+  font-family:var(--font-mono);font-size:19px;font-weight:700;
+  color:var(--red);font-variant-numeric:tabular-nums;padding:2px 0;
+}
+.field.out .field-val.plain{color:var(--txt-1);font-size:16px}
+
+/* Botones */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 18px;background:var(--red);
+  color:var(--on-accent);border:none;border-radius:var(--radius-sm);
+  font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;cursor:pointer;transition:all var(--trans);
+  box-shadow:var(--shadow-red);
+}
+.btn:hover{transform:translateY(-1px);background:var(--red-2);box-shadow:0 0 24px rgba(47,184,255,.45)}
+.btn:active{transform:translateY(0)}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:transparent;border:1px solid var(--border-2);color:var(--txt-2);box-shadow:none}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.10);transform:none;box-shadow:none}
+.btn-sm{padding:7px 12px;font-size:11px;letter-spacing:.3px}
+
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+
+/* Píldoras de elección rápida */
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pills button{
+  background:var(--bg-1);border:1px solid var(--border);color:var(--txt-3);
+  font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.3px;
+  padding:5px 10px;border-radius:14px;cursor:pointer;transition:all var(--trans);
+}
+.pills button:hover{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.08)}
+.pills button.active{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.12)}
+
+/* ========== RESULTADO PRINCIPAL ========== */
+.result-hero{
+  background:linear-gradient(135deg,rgba(47,184,255,.10),rgba(0,0,0,0) 60%),var(--bg-2);
+  border:1px solid var(--border-2);
+  border-radius:var(--radius);padding:32px 28px;margin-bottom:18px;
+  position:relative;overflow:hidden;
+}
+.result-hero::before{
+  content:"";position:absolute;top:-60px;right:-60px;width:240px;height:240px;
+  background:radial-gradient(circle,var(--red) 0%,transparent 70%);
+  opacity:.14;filter:blur(4px);pointer-events:none;
+}
+.result-hero .r-label{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--txt-3);margin-bottom:8px;position:relative;
+}
+.result-hero .r-time{
+  font-family:var(--font-mono);
+  font-size:clamp(40px,7vw,68px);font-weight:700;letter-spacing:-.02em;line-height:1;
+  position:relative;font-variant-numeric:tabular-nums;
+  color:var(--red);text-shadow:0 0 28px rgba(47,184,255,.35);
+}
+.result-hero .r-time small{font-size:.42em;font-weight:600;color:var(--txt-3);margin-left:6px;text-shadow:none}
+.result-hero .r-sub{margin-top:10px;font-size:14px;color:var(--txt-2);position:relative}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
+.kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px}
+.kpi .k-v{font-family:var(--font-mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .k-v small{font-size:13px;color:var(--txt-3);font-weight:500;margin-left:4px}
+.kpi .k-s{font-size:12px;color:var(--txt-3);margin-top:2px}
+
+.muted{color:var(--txt-3)}
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ========== DÓNDE ESTÁS PARADO (percentil) ========== */
+.perc{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:22px}
+.perc-cifra{flex-shrink:0}
+.perc-num{
+  font-family:var(--font-mono);font-size:clamp(40px,7vw,56px);font-weight:700;
+  line-height:1;color:var(--red);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 26px rgba(47,184,255,.30);
+}
+.perc-num small{font-size:.4em;color:var(--txt-3);font-weight:600;margin-left:3px;text-shadow:none}
+.perc-pie{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--txt-4);margin-top:8px;
+}
+.perc-txt{flex:1;min-width:230px;font-size:14px;color:var(--txt-2);line-height:1.65}
+.perc-txt b{color:var(--txt-1)}
+.perc-etq{
+  display:inline-block;font-family:var(--font-mono);font-size:10.5px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;padding:3px 10px;border-radius:20px;
+  border:1px solid currentColor;margin-bottom:9px;
+}
+.escala-track{
+  position:relative;height:11px;border-radius:8px;
+  background:linear-gradient(90deg,#39405280,#2196d8 60%,var(--red));
+  border:1px solid var(--border);
+}
+.escala-pin{
+  position:absolute;top:50%;width:4px;height:24px;border-radius:3px;
+  background:var(--txt-1);transform:translate(-50%,-50%);
+  box-shadow:0 0 0 3px var(--bg-2),0 0 12px rgba(0,0,0,.6);
+}
+.escala-nums{
+  display:flex;justify-content:space-between;margin-top:8px;
+  font-family:var(--font-mono);font-size:10px;color:var(--txt-4);
+}
+
+/* ========== ZONAS ========== */
+.fase{margin-bottom:26px}
+.fase-head{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding:0 0 10px;margin-bottom:12px;border-bottom:1px solid var(--border);
+}
+.fase-n{
+  font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;padding:3px 9px;border-radius:20px;
+  border:1px solid currentColor;
+}
+.fase-1 .fase-n{color:var(--fase-1)}
+.fase-2 .fase-n{color:var(--fase-2)}
+.fase-3 .fase-n{color:var(--fase-3)}
+.fase-t{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--txt-1)}
+.fase-d{font-size:12.5px;color:var(--txt-3);flex-basis:100%;line-height:1.5}
+
+.zona{
+  background:var(--bg-2);border:1px solid var(--border);
+  border-left:3px solid var(--border-2);
+  border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:10px;
+}
+.fase-1 .zona{border-left-color:var(--fase-1)}
+.fase-2 .zona{border-left-color:var(--fase-2)}
+.fase-3 .zona{border-left-color:var(--fase-3)}
+.z-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.z-id{
+  font-family:var(--font-mono);font-size:12px;font-weight:700;
+  color:var(--txt-4);letter-spacing:.5px;
+}
+.z-nom{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--txt-1)}
+.z-eq{font-size:12px;color:var(--txt-3)}
+.z-vam{
+  margin-left:auto;font-family:var(--font-mono);font-size:12px;font-weight:600;
+  color:var(--txt-3);background:var(--bg-1);border:1px solid var(--border);
+  padding:3px 9px;border-radius:20px;white-space:nowrap;
+}
+.z-datos{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+  gap:10px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.z-dato{min-width:0}
+.z-dl{
+  display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--txt-4);margin-bottom:3px;
+}
+.z-dv{
+  display:block;font-family:var(--font-mono);font-size:15px;font-weight:700;
+  color:var(--txt-1);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.z-dv.hi{color:var(--red)}
+.z-dv small{font-size:11px;font-weight:500;color:var(--txt-4);margin-left:3px}
+.z-ses{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.z-ses-l{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.z-ses-k{
+  flex:0 0 auto;min-width:62px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--txt-4);
+}
+.z-ses-v{flex:1 1 240px;font-size:12.5px;color:var(--txt-2);line-height:1.55}
+.z-ses-v.dim{color:var(--txt-3)}
+
+details.z-mas{margin-top:12px}
+details.z-mas > summary{
+  cursor:pointer;list-style:none;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--txt-4);display:inline-flex;align-items:center;gap:7px;
+  padding:2px 0;transition:color .15s;
+}
+details.z-mas > summary::-webkit-details-marker{display:none}
+details.z-mas > summary::before{
+  content:"+";font-family:var(--font-mono);font-size:13px;font-weight:700;
+  color:var(--accent);line-height:1;
+}
+details.z-mas[open] > summary::before{content:"–"}
+details.z-mas > summary:hover{color:var(--txt-2)}
+details.z-mas .z-mas-body{
+  margin-top:10px;padding-left:15px;border-left:1px solid var(--border);
+  font-size:13px;color:var(--txt-2);line-height:1.65;
+}
+details.z-mas .z-mas-body p{margin-bottom:10px}
+details.z-mas .z-mas-body p:last-child{margin-bottom:0}
+details.z-mas .z-mas-body b{color:var(--txt-1);font-weight:600}
+
+/* ========== TABLA ========== */
+.tabla-wrap{
+  overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg-3);
+}
+table.tabla{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+table.tabla th,table.tabla td{
+  padding:11px 12px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+table.tabla th{
+  background:var(--bg-1);font-weight:600;color:var(--txt-3);
+  font-size:11px;letter-spacing:.4px;text-transform:uppercase;text-align:right;
+}
+table.tabla th:first-child,table.tabla td:first-child{text-align:left}
+table.tabla td{font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--txt-2)}
+table.tabla td:first-child{font-family:var(--font-body);font-weight:600;color:var(--txt-1)}
+table.tabla td.hi{color:var(--red);font-weight:700}
+table.tabla tr:last-child td{border-bottom:none}
+table.tabla tr.destacada td{background:rgba(47,184,255,.06)}
+table.tabla.tabla-ritmos{table-layout:fixed}
+table.tabla.tabla-ritmos th,table.tabla.tabla-ritmos td{white-space:normal}
+/* En pantalla angosta el reparto por porcentaje aprieta los numeros hasta
+   recortarlos. Ahi conviene soltar el ancho fijo y dejar que la tabla scrollee
+   adentro de su caja, que para eso .tabla-wrap tiene overflow-x. */
+@media(max-width:620px){
+  table.tabla.tabla-ritmos{table-layout:auto;min-width:470px}
+  table.tabla.tabla-ritmos th,table.tabla.tabla-ritmos td{white-space:nowrap;padding-left:10px;padding-right:10px}
+}
+table.tabla td .rango{
+  display:block;margin-top:3px;
+  font-family:var(--font-mono);font-size:10.5px;font-weight:400;
+  letter-spacing:.2px;color:var(--txt-4);
+}
+.field-val .rango{
+  display:block;margin-top:3px;
+  font-family:var(--font-mono);font-size:11px;font-weight:400;color:var(--txt-4);
+}
+
+/* ========== AVISOS ========== */
+.notice{
+  border-left:3px solid var(--border-2);background:var(--bg-3);
+  padding:12px 14px;border-radius:6px;font-size:13px;color:var(--txt-2);
+  margin-bottom:14px;line-height:1.6;
+}
+.notice b{color:var(--txt-1)}
+.notice.warn{border-color:var(--yellow);background:rgba(255,157,61,.07)}
+.notice.ok{border-color:var(--green);background:rgba(47,227,155,.07)}
+.notice.info{border-color:var(--blue);background:rgba(165,139,255,.07)}
+.notice:last-child{margin-bottom:0}
+
+/* ========== TEXTO LARGO (protocolo del test) ========== */
+.prosa{font-size:14px;color:var(--txt-2);line-height:1.75;max-width:74ch}
+.prosa p{margin-bottom:12px}
+.prosa b,.prosa strong{color:var(--txt-1);font-weight:600}
+.prosa ul,.prosa ol{margin:0 0 14px 20px}
+.prosa li{margin-bottom:7px}
+.prosa li::marker{color:var(--red)}
+
+/* Pasos numerados del protocolo */
+.pasos{display:flex;flex-direction:column;gap:12px;margin:4px 0 8px}
+.paso{
+  display:grid;grid-template-columns:38px 1fr;gap:14px;align-items:start;
+  background:var(--bg-3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 16px;
+}
+.paso-n{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(47,184,255,.12);border:1px solid var(--red);color:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:14px;font-weight:700;
+}
+.paso-t{font-family:var(--font-head);font-size:14px;font-weight:700;margin-bottom:4px}
+.paso-d{font-size:13px;color:var(--txt-3);line-height:1.6}
+.paso-d b{color:var(--txt-2)}
+
+/* Bloque desplegable (explicaciones que no tienen que invadir) */
+details.mas{
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg-3);margin-top:12px;
+}
+details.mas > summary{
+  cursor:pointer;list-style:none;padding:11px 14px;
+  font-family:var(--font-head);font-size:12.5px;font-weight:600;
+  color:var(--txt-3);display:flex;align-items:center;gap:8px;
+  transition:color var(--trans);
+}
+details.mas > summary::-webkit-details-marker{display:none}
+details.mas > summary::before{
+  content:"+";font-family:var(--font-mono);font-size:14px;color:var(--red);width:12px;
+}
+details.mas[open] > summary::before{content:"–"}
+details.mas > summary:hover{color:var(--txt-1)}
+details.mas .mas-body{
+  padding:0 14px 14px;font-size:13px;color:var(--txt-3);line-height:1.65;
+}
+details.mas .mas-body b{color:var(--txt-2)}
+details.mas .mas-body p{margin-bottom:9px}
+details.mas .mas-body p:last-child{margin-bottom:0}
+
+/* Glosario compacto de fórmulas de FCmáx */
+.formulas{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.formulas div{font-size:12.5px;color:var(--txt-3);line-height:1.55}
+.formulas code{
+  font-family:var(--font-mono);font-size:12px;color:var(--txt-1);
+  background:var(--bg-1);border:1px solid var(--border);
+  padding:1px 6px;border-radius:5px;
+}
+
+.hint{font-size:12px;color:var(--txt-4);line-height:1.55}
+.hidden{display:none !important}
+
+/* ========== MARCA ==========
+   El logo va embebido como data URI y se declara UNA SOLA VEZ acá. */
+.marca-logo{
+  background-image:url('data:image/png;base64,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');
+  background-size:contain;background-repeat:no-repeat;background-position:center;
+  display:inline-block;flex-shrink:0;
+}
+
+/* Firma al pie. Discreta a propósito: online la calculadora va debajo
+   del header del sitio, que ya muestra el logo y el nombre. */
+.footnote{
+  font-size:12px;color:var(--txt-4);margin-top:24px;text-align:center;
+  padding-top:18px;border-top:1px solid var(--border);
+}
+.firma{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;text-align:left}
+.firma-logo{width:28px;height:28px;opacity:.75}
+.firma-txt{display:flex;flex-direction:column;line-height:1.3}
+.firma-nombre{
+  font-family:var(--font-head);font-size:13px;font-weight:300;
+  letter-spacing:.02em;color:var(--txt-3);text-transform:lowercase;
+}
+.firma-nombre b{font-weight:700;color:var(--txt-2)}
+.firma-sitio{font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;color:var(--txt-4)}
+.firma-meta{
+  font-family:var(--font-mono);font-size:11px;color:var(--txt-4);
+  padding-left:12px;border-left:1px solid var(--border);
+}
+@media(max-width:520px){
+  .firma-meta{padding-left:0;border-left:none;flex-basis:100%;text-align:center}
+}
+
+/* Encabezado de la hoja impresa. Invisible en pantalla. */
+.hoja-head{display:none}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--red)}
+
+/* ============================================================
+   IMPRESIÓN — la hoja de zonas
+   En papel va SOLO la tabla de zonas: la que el atleta pega en
+   la heladera o se lleva a la pista.
+
+   El truco es que toda la interfaz está escrita con var(--...),
+   así que damos vuelta los tokens acá adentro y el diseño entero
+   se traduce a papel solo.
+   ============================================================ */
+@media print{
+  .solo-pantalla{display:none!important}
+
+  @page{margin:14mm}
+
+  :root{
+    --bg-1:#ffffff;
+    --bg-2:#ffffff;
+    --bg-3:#ffffff;
+    --border:#ccd0d8;
+    --border-2:#aab0bb;
+    --txt-1:#0f1216;
+    --txt-2:#2b303a;
+    --txt-3:#555c68;
+    --txt-4:#6c737f;
+    /* El neón #2fb8ff sobre papel blanco es ilegible (≈2.2:1).
+       Bajamos a un azul de tinta que llega a 7.45:1. */
+    --red:#0a5a86;
+    --red-2:#0a5a86;
+    --red-3:#0a5a86;
+    --on-accent:#ffffff;
+    --accent-2:#8a1b52;
+    --green:#146b45;
+    --yellow:#8a4b06;
+    --blue:#3d2f8a;
+    /* Fases en tinta oscura, legibles sobre blanco. */
+    --fase-1:#146b45;
+    --fase-2:#8a4b06;
+    --fase-3:#9c1f3d;
+    --shadow:none;
+    --shadow-red:none;
+  }
+
+  *{
+    box-shadow:none !important;
+    text-shadow:none !important;
+    animation:none !important;
+    transition:none !important;
+  }
+  html,body{height:auto !important;min-height:0 !important}
+  body{
+    background:#ffffff !important;
+    color:var(--txt-1) !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .wrap{max-width:none;padding:0}
+  .result-hero{background:#ffffff !important;border:1px solid var(--border-2)}
+  .result-hero::before{display:none !important}
+
+  /* ---- Qué se ve: SOLO las zonas ---- */
+  .tabs{display:none !important}
+  .panel{display:none !important}
+  .panel[data-panel="zonas"]{display:block !important}
+  .tool-head,
+  .tool-head-actions,
+  .btn,
+  details.mas{
+    display:none !important;
+  }
+
+  /* En pantalla el "para qué sirve" va plegado para no tapar los números.
+     En papel no molesta a nadie y encima es lo que se lee después, así que
+     se despliega solo y se esconde el botón. */
+  details.z-mas > summary{display:none !important}
+  details.z-mas .z-mas-body{
+    display:block !important;
+    border-left-color:var(--border-2);
+  }
+
+  /* ---- Marca de la hoja ---- */
+  .hoja-head{
+    display:flex !important;align-items:center;gap:10px;
+    padding-bottom:10px;margin-bottom:16px;
+    border-bottom:1px solid var(--border-2);
+  }
+  /* El logo de pantalla es neón sobre fondo oscuro: sobre papel blanco
+     queda un fantasma lavado. Acá va la misma geometría pintada con la
+     tinta de la hoja. Embebido igual: el archivo tiene que andar sin red. */
+  .hoja-logo{
+    width:30px;height:30px;
+    background-image:url('data:image/png;base64,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') !important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .hoja-marca{
+    font-family:var(--font-head);font-size:15px;font-weight:300;
+    text-transform:lowercase;letter-spacing:.02em;color:var(--txt-1);
+  }
+  .hoja-marca b{font-weight:700}
+  .hoja-sitio{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--txt-3)}
+
+  .firma-logo,.firma-txt{display:none !important}
+  .firma{justify-content:flex-start;margin-top:14px;padding-top:10px;border-top:1px solid var(--border)}
+  .firma-meta{padding-left:0;border-left:none;color:var(--txt-4)}
+
+  /* ---- Prolijidad en papel ---- */
+  .card,.result-hero,.kpi,.zona,.notice,.fase{break-inside:avoid;page-break-inside:avoid}
+  .fase{break-inside:auto;page-break-inside:auto}
+  .card{margin-bottom:12px;padding:14px;border:1px solid var(--border)}
+  .card h2{break-after:avoid;page-break-after:avoid}
+  .fase-head{break-after:avoid;page-break-after:avoid}
+  .zona{border:1px solid var(--border);border-left-width:3px;margin-bottom:8px;padding:10px 12px}
+  .firma{break-inside:avoid;page-break-inside:avoid;page-break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ENCABEZADO DE LA HOJA IMPRESA — solo aparece en el PDF/papel -->
+  <div class="hoja-head">
+    <span class="marca-logo hoja-logo" aria-hidden="true"></span>
+    <span class="hoja-marca"><b>emiliano</b> salas porta</span>
+    <span class="hoja-sitio">emilianosalasporta.cloud</span>
+  </div>
+
+  <!-- ENCABEZADO -->
+  <header class="tool-head">
+    <div>
+      <h1>Calculadora de Zonas</h1>
+      <p>Un test, el resultado cargado acá, y salen los ritmos, las pulsaciones y las zonas de entrenamiento.</p>
+    </div>
+    <div class="tool-head-actions">
+      <button class="btn btn-ghost btn-sm" id="btn-save" title="Guardar datos en este navegador">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset" title="Restaurar valores iniciales">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Reiniciar
+      </button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="vam">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      La VAM
+    </button>
+    <button class="tab" data-tab="zonas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      Zonas
+    </button>
+    <button class="tab" data-tab="ritmos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Ritmos de carrera
+    </button>
+    <button class="tab" data-tab="utiles">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      Utilidades
+    </button>
+    <button class="tab" data-tab="protocolo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Cómo testear
+    </button>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- PANEL: TU VAM                                        -->
+  <!-- ==================================================== -->
+  <div class="panel active" data-panel="vam">
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        1 · De dónde sale la VAM
+      </h2>
+      <p class="card-sub">
+        El de 5 minutos es el de referencia. Los demás se convierten según cuánto duró el esfuerzo.
+      </p>
+
+      <div class="grid grid-3">
+        <div class="field">
+          <div class="field-head"><span class="field-label">Test realizado</span></div>
+          <select id="t-tipo">
+            <optgroup label="Por tiempo (se corre X minutos y se mide la distancia)">
+              <option value="T300" selected>Test de VAM · 5 minutos</option>
+              <option value="T360">Test de 6 minutos</option>
+              <option value="T720">Test de Cooper · 12 minutos</option>
+            </optgroup>
+            <optgroup label="Por distancia (se corre X metros al máximo y se mide el tiempo)">
+              <option value="D1200">1200 metros</option>
+              <option value="D1500">1500 metros</option>
+              <option value="D2000">2000 metros</option>
+              <option value="D3000">3000 metros</option>
+              <option value="D5000">Carrera de 5K</option>
+              <option value="D10000">Carrera de 10K</option>
+              <option value="DX">Otra distancia</option>
+            </optgroup>
+            <optgroup label="Ya está calculada">
+              <option value="VAM">Cargar la VAM directamente</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="field" id="wrap-dist">
+          <div class="field-head">
+            <span class="field-label" id="lbl-dist">Distancia recorrida</span>
+            <span class="unit">metros</span>
+          </div>
+          <input type="number" id="t-dist" min="200" max="30000" step="10" placeholder="1200">
+          <p class="field-hint" id="hint-dist">Lo que marcó el reloj, o las vueltas contadas en pista.</p>
+        </div>
+
+        <div class="field" id="wrap-tiempo">
+          <div class="field-head">
+            <span class="field-label" id="lbl-tiempo">Tiempo</span>
+            <span class="unit">mm:ss</span>
+          </div>
+          <input type="text" class="num" id="t-tiempo" placeholder="5:00" inputmode="numeric">
+          <p class="field-hint" id="hint-tiempo">Se escribe como 5:00, o como 1:12:30 si pasa de una hora.</p>
+        </div>
+
+        <div class="field hidden" id="wrap-vam">
+          <div class="field-head">
+            <span class="field-label">VAM</span>
+            <span class="unit">km/h</span>
+          </div>
+          <input type="number" id="t-vam" min="6" max="26" step="0.1" placeholder="14.4">
+          <p class="field-hint">Si ya viene calculada de otro lado, se carga directamente acá.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">Perfil del corredor</span></div>
+          <select id="t-perfil">
+            <option value="veloz">Orientado a la velocidad</option>
+            <option value="medio" selected>Equilibrado</option>
+            <option value="fondo">Orientado a la resistencia</option>
+          </select>
+          <p class="field-hint">
+            Hay corredores que aguantan mejor lo largo y otros que rinden más en lo corto.
+            Ante la duda, conviene dejarlo en Equilibrado.
+          </p>
+        </div>
+      </div>
+
+      <details class="mas">
+        <summary>Por qué el porcentaje de VAM no es el mismo para todos</summary>
+        <div class="mas-body">
+          <p>
+            Las tablas de siempre dicen cosas como “el 10K se corre al 90 % de la VAM”. Es una simplificación que
+            no puede ser cierta para todos.
+          </p>
+          <p>
+            Dos corredores hacen la misma carrera de 10K. Uno la termina en 38 minutos: estuvo 38 minutos
+            apretando. El otro la termina en 1 hora 5: estuvo casi el doble de tiempo. Y acá está la clave:
+            <b>cuanto más largo es el esfuerzo, más despacio hay que ir</b>. Aguantar media hora y aguantar una
+            hora no son lo mismo, por más que la distancia sea idéntica. Si el 90 % le sirve al primero, para el
+            segundo es un ritmo insostenible.
+          </p>
+          <p>
+            Por eso acá el porcentaje sale de <b>cuánto dura la carrera</b>, y no de cuántos kilómetros tiene.
+            La cuenta arranca en el test de 5 minutos, que por definición es el 100 %. De ahí en adelante el
+            porcentaje va bajando a medida que el esfuerzo se estira, siguiendo la forma que muestran los datos
+            de campo y los estudios sobre qué porción del VO₂ máx se sostiene en cada duración.
+          </p>
+          <p>
+            Donde más se nota es en las distancias cortas. A un corredor rápido, un 1500 le lleva menos de 5
+            minutos: lo corre <b>por encima</b> de su VAM, porque es un esfuerzo más corto que el test. A uno
+            más lento, ese mismo 1500 le lleva más de 5 minutos: lo corre <b>por debajo</b>. Misma distancia,
+            dos corredores, dos porcentajes distintos. Y está bien que así sea.
+          </p>
+          <p>
+            Lo mismo pasa con las zonas. Por eso acá cada zona dice cuánto se aguanta (“lo que se sostiene
+            alrededor de una hora”) en vez de prometer una distancia fija. Para quien corre 5K en 18 minutos,
+            ese ritmo es de VO₂ máx; para quien lo corre en 24, ese mismo 5K es trabajo de umbral. Lo que ordena la intensidad
+            es la duración, no la distancia.
+          </p>
+          <p>
+            El selector de <b>perfil</b> mueve esa curva. Al que entrena mucho volumen el ritmo se le cae menos
+            cuando la carrera se alarga. Al que viene de fuerza y velocidad se le cae más en lo largo, pero
+            rinde más en lo corto.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        2 · Datos personales <span class="hint" style="font-weight:400;text-transform:none">(opcional)</span>
+      </h2>
+      <p class="card-sub">
+        Sin esto las zonas salen igual, pero solo con ritmos. Con la edad y el sexo se agregan las pulsaciones
+        de cada zona y la comparación con la población de referencia.
+      </p>
+
+      <div class="grid grid-4">
+        <div class="field">
+          <div class="field-head"><span class="field-label">Sexo</span></div>
+          <select id="fc-sexo">
+            <option value=""></option>
+            <option value="h">Hombre</option>
+            <option value="m">Mujer</option>
+          </select>
+          <p class="field-hint">Las tablas de referencia son distintas para cada uno.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">Fecha de nacimiento</span></div>
+          <input type="date" id="fc-fnac">
+          <p class="field-hint">O se carga la edad directamente acá al lado.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">Edad</span><span class="unit">años</span></div>
+          <input type="number" id="fc-edad" min="8" max="95" step="1" placeholder="35">
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">Cómo estimarla</span></div>
+          <select id="fc-formula">
+            <option value="tanaka" selected>Tanaka (recomendada)</option>
+            <option value="gellish">Gellish</option>
+            <option value="fox">Fox · 220 − edad</option>
+            <option value="astrand">Åstrand</option>
+            <option value="gulati">Gulati (mujeres)</option>
+            <option value="medida">La medí yo (test real)</option>
+          </select>
+        </div>
+
+        <div class="field" id="wrap-fcmax">
+          <div class="field-head"><span class="field-label">FC máxima</span><span class="unit">ppm</span></div>
+          <input type="number" id="fc-max" min="120" max="230" step="1" placeholder="188">
+          <p class="field-hint" id="hint-fcmax">Sale de la fórmula elegida arriba.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">FC en reposo</span><span class="unit">ppm</span></div>
+          <input type="number" id="fc-rep" min="25" max="110" step="1" placeholder="52">
+          <p class="field-hint">Se toma acostado, recién despierto, antes de levantarse.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">Base de las zonas</span></div>
+          <select id="fc-base">
+            <option value="fcmax" selected>% de la FC máxima</option>
+            <option value="karvonen">% de la FC de reserva (Karvonen)</option>
+          </select>
+          <p class="field-hint" id="hint-base">La de reserva pide la FC en reposo.</p>
+        </div>
+      </div>
+
+      <details class="mas">
+        <summary>Cómo se estima la FC máxima, y cómo se reparten las zonas</summary>
+        <div class="mas-body">
+          <p>
+            Ninguna de estas fórmulas conoce el corazón de nadie en particular. Lo que hacen es acertarle al
+            <b>promedio</b> de mucha gente de la misma edad. La edad, sola, explica apenas un 36 % de cuánto
+            varía la FC máxima entre personas.
+          </p>
+          <p>
+            Ese “se equivocan por 10 o 12 pulsaciones” que se repite en todos lados es el error <b>típico</b>,
+            y cubre a dos de cada tres personas. Para una persona concreta el intervalo real es de alrededor de
+            <b>±20 pulsaciones</b> (entre ±18 y ±24 según la fórmula). En el estudio HERITAGE, con 762 personas,
+            hubo errores individuales de hasta 38 latidos para abajo y 44 para arriba.
+          </p>
+          <p>
+            O sea: sirven para arrancar. El valor propio solo aparece midiéndolo, y conviene hacerlo con
+            <b>banda pectoral</b>: los sensores de muñeca pierden precisión justo cuando el pulso está más alto,
+            que es cuando importa.
+          </p>
+          <div class="formulas">
+            <div><code>208 − 0,7 × edad</code> · <b>Tanaka (2001)</b>. La más usada hoy y de las que menos se equivocan en promedio. Es la que viene puesta.</div>
+            <div><code>207 − 0,7 × edad</code> · <b>Gellish (2007)</b>. Prácticamente calcada a Tanaka, un punto más abajo.</div>
+            <div><code>220 − edad</code> · <b>Fox</b>. La más conocida. Nunca se publicó como ecuación validada: subestima a los mayores y sobreestima a los jóvenes. Está en la lista porque sigue siendo la más difundida.</div>
+            <div><code>216,6 − 0,84 × edad</code> · <b>Åstrand</b>. Cae más rápido con la edad; suele dar el número más alto en gente joven.</div>
+            <div><code>206 − 0,88 × edad</code> · <b>Gulati (2010)</b>. Salió de un estudio con más de 5.000 mujeres, y en ellas suele ajustar mejor que las anteriores.</div>
+          </div>
+          <p style="margin-top:14px"><b>Las dos formas de repartir las zonas de pulso</b></p>
+          <p>
+            <b>Sobre la FC máxima.</b> La cuenta directa: se toma la máxima y se le sacan porcentajes. Es la más
+            simple y la más difundida. Su punto flojo está abajo: como el corazón nunca baja del pulso en
+            reposo, ese arranque que nunca se usa igual entra en la cuenta, y las zonas suaves quedan un poco
+            más altas de lo que se sienten.
+          </p>
+          <p>
+            <b>Sobre la FC de reserva</b> (máxima menos reposo), conocida como <b>método de Karvonen</b>. Reparte
+            los porcentajes sobre el margen real que hay entre el reposo y el techo. Tiene a favor un dato
+            concreto: el porcentaje de FC de reserva coincide casi punto por punto con el porcentaje de
+            <b>consumo de oxígeno de reserva</b> (pendiente 1,00 en 63 personas en bicicleta y 1,03 en 50
+            personas corriendo), cosa que el % de FC máxima no hace. La diferencia se nota sobre todo en las
+            zonas suaves: un mismo 70 % de FC máxima es el 50 % de reserva en alguien sedentario y el 62 % en
+            alguien muy entrenado.
+          </p>
+          <p>
+            Conviene no exagerar la diferencia. La de reserva pide un dato más (el pulso en reposo), y ese número se mueve con
+            el descanso, el estrés y la forma: si está desactualizado, la ventaja se pierde. Y ninguna de las dos
+            arregla el problema de fondo, que es la <b>FC máxima estimada</b>: ahí se juega mucho más error que
+            en la elección del método.
+          </p>
+          <p>
+            Un apunte histórico: cuando en el año 2000 le preguntaron a Martti Karvonen por “su” fórmula, él
+            respondió que nunca la había publicado. El trabajo que se la atribuye es de 1957 y es más chico de
+            lo que sugiere su fama: <b>seis estudiantes de medicina</b> de 20 a 23 años, cuatro semanas de
+            carrera en cinta, con el pulso contado a mano con estetoscopio. No midieron oxígeno ni lactato. Lo
+            que encontraron fue <b>un solo punto</b>: por debajo del 60 % de la reserva no aparecían mejoras.
+            De ahí sale el método, que es sólido. Lo que no sale de ahí son las <i>zonas</i>: en ese paper no
+            hay ninguna, y hablar de “las zonas de Karvonen” es atribuirle algo que nunca escribió.
+          </p>
+          <p>
+            En la práctica: cualquiera de las dos sirve mientras se use <b>siempre la misma</b> y la FC máxima
+            sea real. Y para las series cortas, ninguna: ahí manda el ritmo, que en esta calculadora sale
+            directo del test.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="result-hero">
+      <div class="r-label">Velocidad aeróbica máxima</div>
+      <div class="r-time" id="out-vam">—<small>km/h</small></div>
+      <div class="r-sub" id="out-vam-sub">Falta cargar el test de arriba.</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="k-l">Ritmo a la VAM</div>
+        <div class="k-v" id="out-ritmo">—<small>/km</small></div>
+        <div class="k-s">El del test: no se aguanta más de 5 o 6 minutos</div>
+      </div>
+      <div class="kpi">
+        <div class="k-l">VO₂ máx estimado</div>
+        <div class="k-v" id="out-vo2">—<small>ml/kg/min</small></div>
+        <div class="k-s">Calculado desde la VAM, no medido en laboratorio</div>
+      </div>
+      <div class="kpi" id="kpi-d5">
+        <div class="k-l">En 5 minutos</div>
+        <div class="k-v" id="out-d5">—<small>m</small></div>
+        <div class="k-s">La distancia a batir en el próximo test</div>
+      </div>
+      <div class="kpi">
+        <div class="k-l">FC máxima</div>
+        <div class="k-v" id="out-fcmax">—<small>ppm</small></div>
+        <div class="k-s" id="out-fcmax-sub">Sin cargar</div>
+      </div>
+      <div class="kpi">
+        <div class="k-l">FC de reserva</div>
+        <div class="k-v" id="out-fcres">—<small>ppm</small></div>
+        <div class="k-s">Máxima menos reposo</div>
+      </div>
+    </div>
+
+    <details class="mas" style="margin-bottom:18px">
+      <summary>De dónde sale ese VO₂ máx</summary>
+      <div class="mas-body">
+        <p>
+          Sale de la VAM con la ecuación de <b>Berthon y col. (1997)</b>: VO₂ máx ≈ 3,23 × VAM en km/h. Se eligió
+          esa y no otra por un motivo simple: es la que esos autores sacaron del <b>mismo test de 5 minutos</b>,
+          comparándolo contra VO₂ máx medido en laboratorio con máscara y análisis de gases.
+        </p>
+        <p>
+          Las otras dos ecuaciones clásicas dan más alto: la de <b>Léger y Mercier</b> para pista
+          (≈ 3,5 × VAM, su aproximación lineal, válida entre 8 y 25 km/h) y la de la <b>ACSM</b> para cinta
+          (0,2 × velocidad en m/min, más 3,5). La diferencia entre las tres llega al 6 %, y acá se usa la más
+          conservadora porque es la que está validada contra este test en particular.
+        </p>
+        <p>
+          De todos modos es una <b>estimación</b>, y de precisión limitada: el VO₂ máx se mide con máscara y
+          análisis de gases, no se deduce de un ritmo. El número que sirve para entrenar es la VAM.
+        </p>
+      </div>
+    </details>
+
+    <!-- DÓNDE ESTÁS PARADO — aparece sólo si cargaste edad y sexo -->
+    <div class="card hidden" id="card-perc">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Dónde cae ese número
+      </h2>
+      <p class="card-sub" id="perc-sub"></p>
+
+      <div class="perc">
+        <div class="perc-cifra">
+          <div class="perc-num" id="perc-num">—</div>
+          <div class="perc-pie">Percentil</div>
+        </div>
+        <div class="perc-txt">
+          <span class="perc-etq" id="perc-etq"></span>
+          <div id="perc-frase"></div>
+        </div>
+      </div>
+
+      <div class="escala-track"><span class="escala-pin" id="perc-pin" style="left:50%"></span></div>
+      <div class="escala-nums">
+        <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
+      </div>
+
+      <div class="notice" style="margin-top:18px" id="perc-aviso"></div>
+    </div>
+
+    <div class="notice" id="aviso-vam"></div>
+
+    <div class="row">
+      <button class="btn" id="btn-ir-zonas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Ver mis zonas
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- PANEL: ZONAS                                         -->
+  <!-- ==================================================== -->
+  <div class="panel" data-panel="zonas">
+
+    <div class="card solo-pantalla">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        Las zonas de entrenamiento
+      </h2>
+      <p class="card-sub" id="zonas-sub">Falta cargar el test en la pestaña anterior.</p>
+      <div class="row">
+        <button class="btn btn-ghost btn-sm" id="btn-print">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimir / Guardar en PDF
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-copiar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="btn-copiar-txt">Copiar como texto</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="result-hero" id="zonas-hero">
+      <div class="r-label">Zonas calculadas sobre una VAM de</div>
+      <div class="r-time" id="zonas-vam">—<small>km/h</small></div>
+      <div class="r-sub" id="zonas-hero-sub"></div>
+    </div>
+
+    <div id="zonas-cont"></div>
+
+    <details class="mas solo-pantalla" style="margin-bottom:14px">
+      <summary>De dónde salen estos números</summary>
+      <div class="mas-body">
+        <p>
+          Los <b>ritmos</b> salen del test, con la curva de resistencia explicada en la primera pestaña. De 5K a
+          media maratón están contrastados contra las tablas VDOT de Daniels (quedan dentro del 1 al 2 %), y del
+          maratón para arriba contra una ecuación empírica sacada de <b>7.663 corredores</b> del Maratón y la
+          Media de Valencia (Oficial-Casado y col., <i>Frontiers in Physiology</i> 2026).
+        </p>
+        <p>
+          Los <b>bordes de las zonas</b> no salen de una tabla copiada: están contrastados por tres caminos
+          distintos que dan lo mismo. Por <b>ritmo de carrera</b>, el 10K debería caer alrededor del 86 % de la
+          VAM (el 10K se corre casi exactamente en la velocidad crítica, y la velocidad crítica está medida en
+          86,1 ± 1,5 % de la vVO₂ máx); acá cae entre 87 y 89 %. Por <b>duración</b>, el piso de la zona de
+          umbral se sostiene una hora y el techo unos 24 minutos, que es justo lo medido para el máximo estado
+          estable de lactato (54,7 ± 10,9 min) y para la velocidad crítica (15 a 40 min). Y por <b>pulso</b>, en
+          165 corredores recreativos con análisis de lactato los dos umbrales cayeron en 80,7 ± 4,9 % y
+          90,6 ± 2,5 % de la FC máxima: acá los bordes están en 82 % y 90 %.
+        </p>
+        <p>
+          Cuidado con una trampa que se repite mucho: <b>un porcentaje de umbral no significa nada sin saber
+          sobre qué está calculado</b>. El mismo umbral, en la misma persona, es el 81 % de la velocidad pico de
+          un test de escalones de 3 minutos, el 87 % de una velocidad aeróbica máxima de laboratorio y el 87 %
+          del VO₂ máx. Por eso acá no se importan porcentajes de estudios hechos con otro test, y las zonas se
+          validan contra ritmos de carrera y contra duraciones, que sí son comparables.
+        </p>
+        <p>
+          El <b>lactato</b> figura solo hasta la zona de umbral. Más arriba de la velocidad crítica no existe
+          estado estable: la concentración sube hasta que el esfuerzo se corta, así que ponerle un número sería
+          inventarlo. La escala oficial de <b>Olympiatoppen</b> (Noruega, versión 2 de 2024) deja esas celdas
+          vacías por el mismo motivo. Y aun donde figura, es una referencia de grupo: en corredores, el lactato
+          en el máximo estado estable va de <b>2,1 a 6,2 mmol/L</b> según la persona.
+        </p>
+        <p>
+          El alcance de todo esto: ubica bien a un grupo, no a una persona. Una FC máxima
+          estimada por edad se equivoca alrededor de <b>±20 pulsaciones</b> en alguien concreto, y los
+          porcentajes de arriba se calculan sobre ella. Si hay una FC máxima medida de verdad, conviene cargarla:
+          mejora todo lo demás de golpe. Dos diferencias medidas que vale la pena tener presentes: el primer
+          umbral aparece unos <b>5 puntos de FC máxima más arriba en mujeres</b> que en varones, y en montaña
+          nada de esto está validado (toda la investigación de umbrales está hecha en cinta o en pista).
+        </p>
+      </div>
+    </details>
+
+    <div class="notice warn solo-pantalla">
+      <b>El pulso llega tarde y el ritmo pierde sentido en la montaña.</b> En series cortas el corazón todavía
+      está subiendo cuando la serie ya terminó: ahí manda el ritmo. En cuesta, con calor o con viento, la misma
+      velocidad representa otro esfuerzo: ahí manda el pulso. Las tres columnas están para cruzarse, no para obedecer una
+      sola.
+    </div>
+
+    <div class="notice solo-pantalla">
+      <b>Dos sesiones intensas por semana.</b> Es lo mejor sostenido por la evidencia: en los ensayos que
+      compararon una, dos y tres sesiones semanales, la tercera no aportó nada y sí bajó la adherencia. Las
+      3 o 4 sesiones de umbral que se leen del método noruego no son sesiones intensas y descansan sobre 150 a
+      180 km semanales: la misma sesión que allá es el 6 % del volumen, en un corredor de 60 km es el 18 %.
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- PANEL: RITMOS DE CARRERA                             -->
+  <!-- ==================================================== -->
+  <div class="panel" data-panel="ritmos">
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Qué podrías correr hoy
+      </h2>
+      <p class="card-sub">
+        Equivalencias a partir de la VAM, cada una con su rango probable. Suponen carrera llana, día fresco,
+        piernas descansadas y la distancia entrenada. Para trail y desnivel está la
+        <b>Calculadora de Trail</b>.
+      </p>
+
+      <div class="tabla-wrap">
+        <table class="tabla tabla-ritmos">
+          <colgroup>
+            <col style="width:23%"><col style="width:25%"><col style="width:25%">
+            <col style="width:12%"><col style="width:15%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Distancia</th>
+              <th>Ritmo · min/km</th>
+              <th>Tiempo</th>
+              <th>km/h</th>
+              <th>% de la VAM</th>
+            </tr>
+          </thead>
+          <tbody id="ritmos-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--txt-4)">Falta cargar el test.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Otra distancia</h3>
+      <div class="grid grid-3">
+        <div class="field">
+          <div class="field-head"><span class="field-label">Distancia</span><span class="unit">km</span></div>
+          <input type="number" id="rc-dist" min="0.4" max="100" step="1" placeholder="15">
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Ritmo estimado</span><span class="unit">/km</span></div>
+          <div class="field-val" id="rc-ritmo">—</div>
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Tiempo estimado</span></div>
+          <div class="field-val plain" id="rc-tiempo">—</div>
+        </div>
+      </div>
+      <div class="notice warn" id="rc-nota" style="margin-top:14px;display:none"></div>
+
+      <details class="mas">
+        <summary>Cómo leer esta tabla</summary>
+        <div class="mas-body">
+          <p>
+            <b>El número grande es el centro; el rango de abajo es lo que hay que usar.</b> Para una pasada a
+            ritmo de 10K, cualquier ritmo dentro de esa banda es ritmo de 10K. Buscar el segundo exacto es
+            perseguir una precisión que el método no tiene.
+          </p>
+          <p>
+            <b>De dónde sale el rango.</b> No existe ningún estudio que mida el error de predecir una carrera a
+            partir de un test de campo de 5 minutos, así que estas bandas son un ensamblado de tres cosas que sí
+            están medidas por separado: lo que se mueve el propio test al repetirlo (<b>1 a 2 %</b> en 132
+            corredores, Dabonneville y col. 2003), lo que varía un mismo corredor de una carrera a otra (de
+            <b>1,2 % a 2,6 %</b> según la distancia, y hasta 2,3 veces más en los corredores lentos, Hopkins y
+            Hewson 2001) y el error de otros modelos a esas mismas distancias.
+          </p>
+          <p>
+            <b>Por qué el rango cambia según la distancia.</b> En 800 y 1500 se ensancha porque a esas
+            duraciones pesa la capacidad anaeróbica, que la VAM no mide. De 30K para arriba deja de ser
+            simétrico, porque el error cambia de signo: en 5K estos modelos predicen demasiado lento, y en
+            maratón demasiado rápido. Las predicciones clásicas de maratón salen 10 minutos o más adelantadas
+            para la mitad de los corredores (Vickers y Vertosick 2016), y el 28 % de los varones y el 17 % de
+            las mujeres pierden el ritmo al final, a un costo medio de media hora (2,7 millones de corredores,
+            Smyth 2021). Por eso el borde lento es más ancho que el rápido.
+          </p>
+          <p>
+            <b>Los tiempos suponen que la distancia está entrenada.</b> Se puede tener la VAM para bajar de 3:30
+            en maratón y no llegar: el maratón no lo define la VAM sino cuánto tiempo se sostiene un porcentaje
+            de ella, y cuánto se cae ese porcentaje al final de un esfuerzo largo va del <b>1 % al 31 %</b> según
+            la persona (Hunter y col. 2025). Del maratón para arriba, los tiempos de acá ya están calibrados
+            contra lo que corrieron <b>7.663 personas</b> en Valencia, así que traen adentro parte del castigo
+            real de la distancia.
+          </p>
+          <p>
+            <b>Por qué no hay 50K.</b> Estaba y se sacó. No existe ninguna validación publicada de predicción de
+            ultradistancia a partir de un test corto: lo mejor disponible predice 100 km desde un maratón
+            reciente, un predictor mucho mejor, y aun así se queda con un error del 13 al 14 % (Coquart 2023).
+            Y los determinantes cambian con la distancia: a 50 km todavía manda lo aeróbico, a 80 km sobrevive
+            solo la velocidad pico y a 160 km ya no predice ninguna variable fisiológica (Coates y col. 2021).
+          </p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- PANEL: UTILIDADES                                    -->
+  <!-- ==================================================== -->
+  <div class="panel" data-panel="utiles">
+
+    <!-- RITMO / TIEMPO / DISTANCIA -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Ritmo · tiempo · distancia
+      </h2>
+      <p class="card-sub">
+        Se completan <b>dos</b> y sale el tercero. Cuánto lleva hacer 18 km a 5:20, cuántos kilómetros entran
+        en una hora y media a ritmo suave, a qué ritmo salieron 12 km en 58 minutos.
+      </p>
+
+      <div class="grid grid-3">
+        <div class="field">
+          <div class="field-head"><span class="field-label">Distancia</span><span class="unit">km</span></div>
+          <input type="number" id="u-dist" min="0" step="1" placeholder="10">
+        </div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Ritmo</span><span class="unit">min:seg /km</span></div>
+          <input type="text" class="num" id="u-ritmo" placeholder="5:20" inputmode="numeric">
+        </div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Tiempo</span><span class="unit">h:mm:ss</span></div>
+          <input type="text" class="num" id="u-tiempo" placeholder="53:20" inputmode="numeric">
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn btn-ghost btn-sm" id="u-limpiar">Limpiar</button>
+        <span class="hint" id="u-msg">Se deja vacío el que se quiere calcular.</span>
+      </div>
+      <div class="notice" id="u-extra" style="margin-top:14px;display:none"></div>
+    </div>
+
+    <!-- DESNIVEL -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 20 10 8 14 14 21 4"/></svg>
+        Desnivel equivalente
+      </h2>
+      <p class="card-sub">
+        Para que una sesión tenga la misma <b>dureza por kilómetro</b> que la carrera objetivo. Se cargan los
+        datos de la carrera, la distancia de la sesión, y sale el desnivel que hay que buscar.
+      </p>
+
+      <div class="grid grid-2">
+        <div>
+          <h3 style="margin-top:0">La carrera objetivo</h3>
+          <div class="grid grid-2">
+            <div class="field">
+              <div class="field-head"><span class="field-label">Distancia</span><span class="unit">km</span></div>
+              <input type="number" id="d-obj-km" min="0.5" step="1" placeholder="30">
+            </div>
+            <div class="field">
+              <div class="field-head"><span class="field-label">Desnivel +</span><span class="unit">m</span></div>
+              <input type="number" id="d-obj-dp" min="0" step="50" placeholder="900">
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 style="margin-top:0">La sesión</h3>
+          <div class="grid grid-2">
+            <div class="field">
+              <div class="field-head"><span class="field-label">Distancia</span><span class="unit">km</span></div>
+              <input type="number" id="d-ses-km" min="0.5" step="1" placeholder="10">
+            </div>
+            <div class="field">
+              <div class="field-head"><span class="field-label">Qué se busca</span></div>
+              <select id="d-intencion">
+                <option value="0.7">Más suave que la carrera (70 %)</option>
+                <option value="1" selected>Igualar la carrera (100 %)</option>
+                <option value="1.3">Sobrecargar (130 %)</option>
+                <option value="1.6">Sobrecargar fuerte (160 %)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:16px">
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Densidad del objetivo</span><span class="unit">m/km</span></div>
+          <div class="field-val plain" id="d-densidad">—</div>
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Pendiente media</span><span class="unit">%</span></div>
+          <div class="field-val plain" id="d-pendiente">—</div>
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">D+ para la sesión</span><span class="unit">m</span></div>
+          <div class="field-val" id="d-objetivo">—</div>
+        </div>
+      </div>
+      <p class="hint" id="d-nota" style="margin-top:12px"></p>
+    </div>
+
+    <!-- FECHAS -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Cuánto falta
+      </h2>
+      <p class="card-sub">
+        De acá al objetivo: días, semanas y meses. Lo que importa son las semanas, porque el plan se arma en
+        semanas.
+      </p>
+
+      <div class="grid grid-2">
+        <div class="field">
+          <div class="field-head"><span class="field-label">Desde</span></div>
+          <input type="date" id="f-ini">
+          <p class="field-hint">Arranca hoy salvo que se cambie.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Hasta</span></div>
+          <input type="date" id="f-fin">
+          <p class="field-hint">La fecha de la carrera, del test, de lo que corresponda.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-4" style="margin-top:16px">
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Días</span></div>
+          <div class="field-val" id="f-dias">—</div>
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Semanas</span></div>
+          <div class="field-val plain" id="f-semanas">—</div>
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Meses</span></div>
+          <div class="field-val plain" id="f-meses">—</div>
+        </div>
+        <div class="field out">
+          <div class="field-head"><span class="field-label">Semanas útiles</span></div>
+          <div class="field-val plain" id="f-utiles">—</div>
+        </div>
+      </div>
+      <p class="hint" id="f-nota" style="margin-top:12px"></p>
+    </div>
+
+    <!-- CONVERSOR -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        Kilómetros y millas
+      </h2>
+      <p class="card-sub">
+        Para cuando aparece un plan o una carrera en millas. Se escribe en cualquiera de los dos campos y el
+        otro se acomoda solo.
+      </p>
+
+      <div class="grid grid-2">
+        <div class="field">
+          <div class="field-head"><span class="field-label">Distancia</span><span class="unit">km</span></div>
+          <input type="number" id="c-km" step="1" placeholder="10">
+        </div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Distancia</span><span class="unit">millas</span></div>
+          <input type="number" id="c-mi" step="1" placeholder="6.21">
+        </div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Ritmo</span><span class="unit">min /km</span></div>
+          <input type="text" class="num" id="c-rkm" placeholder="5:00" inputmode="numeric">
+        </div>
+        <div class="field">
+          <div class="field-head"><span class="field-label">Ritmo</span><span class="unit">min /milla</span></div>
+          <input type="text" class="num" id="c-rmi" placeholder="8:03" inputmode="numeric">
+        </div>
+      </div>
+      <p class="hint" style="margin-top:12px">
+        1 milla = 1,60934 km. Las de siempre: 5K = 3,11 mi · 10K = 6,21 mi · 21,097 K = 13,11 mi ·
+        42,195 K = 26,22 mi · 50 mi = 80,5 km · 100 mi = 160,9 km.
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- PANEL: CÓMO TESTEAR                                  -->
+  <!-- ==================================================== -->
+  <div class="panel" data-panel="protocolo">
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Qué es la VAM y por qué vale la pena medirla
+      </h2>
+      <div class="prosa">
+        <p>
+          Por encima de la VAM no se consume más oxígeno: no queda margen. La diferencia se cubre con un
+          sistema que no usa oxígeno y que <b>se agota rápido</b>. Por eso la VAM se sostiene cinco o seis
+          minutos, y no mucho más.
+        </p>
+        <p>
+          Sirve porque es <b>un solo número que ordena todo lo demás</b>, y porque es <b>gratis</b>: no hace
+          falta laboratorio ni tiras de lactato. Alcanza con una pista o un tramo llano medido, un reloj y
+          cinco minutos de esfuerzo máximo.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        El protocolo, según el test
+      </h2>
+      <p class="card-sub">
+        Los cuatro comparten el mismo esquema y cambian en dos cosas: el bloque previo y la estrategia de ritmo.
+        Se abre el que corresponda. El de 5 minutos es el de referencia, porque es el único que fija la
+        <b>duración</b>: una misma distancia no le lleva el mismo tiempo a dos corredores distintos.
+      </p>
+      <p class="card-sub">
+        Sirve cualquier esfuerzo máximo y parejo de 4 a 15 minutos, y la calculadora corrige por la duración.
+        Una <b>carrera reciente de 5K o 10K</b> corrida al máximo también sirve y evita repetir el sufrimiento:
+        se carga en el selector de la primera pestaña, sin protocolo aparte.
+      </p>
+
+      <details class="mas">
+        <summary>Test de VAM · 5 minutos</summary>
+        <div class="mas-body">
+          <p>Cinco minutos corriendo la máxima distancia posible.</p>
+          <div class="pasos">
+        <div class="paso">
+          <span class="paso-n">1</span>
+          <div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">2</span>
+          <div>
+            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">3</span>
+          <div>
+            <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
+            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">4</span>
+          <div>
+            <div class="paso-t">Un bloque al ritmo del test · 1 × 200 metros</div>
+            <div class="paso-d">Al ritmo previsto para el test, no más rápido. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">5</span>
+          <div>
+            <div class="paso-t">Pausa · 2 a 3 minutos</div>
+            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">6</span>
+          <div>
+            <div class="paso-t">El test · 5 minutos a la máxima distancia posible</div>
+            <div class="paso-d">Los primeros 15 a 20 segundos son para llegar al ritmo; de ahí en adelante, lo más parejo posible. Se busca el ritmo más alto que se crea sostenible durante todo el test, y se sostiene. El último minuto tiene que costar; el primero, no tanto.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">7</span>
+          <div>
+            <div class="paso-t">Anotar · los metros recorridos</div>
+            <div class="paso-d">Con pulsómetro, conviene anotar también la FC más alta registrada: en un test bien hecho queda muy cerca de la FC máxima real.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">8</span>
+          <div>
+            <div class="paso-t">Vuelta a la calma · 5 a 10 minutos</div>
+            <div class="paso-d">Trote muy suave o caminata.</div>
+          </div>
+        </div>
+          </div>
+          <p class="hint" style="margin-top:12px">Para quién: para todos. Es el único que le pide lo mismo a un corredor de 3:30 el kilómetro y a uno de 6:30.</p>
+        </div>
+      </details>
+
+      <details class="mas">
+        <summary>1200 o 1500 metros</summary>
+        <div class="mas-body">
+          <p>La alternativa más práctica cuando hay pista pero no forma cómoda de cronometrar cinco minutos exactos.</p>
+          <div class="pasos">
+        <div class="paso">
+          <span class="paso-n">1</span>
+          <div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">2</span>
+          <div>
+            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">3</span>
+          <div>
+            <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
+            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">4</span>
+          <div>
+            <div class="paso-t">Un bloque al ritmo del test · 1 × 200 metros</div>
+            <div class="paso-d">Al ritmo previsto para el test, no más rápido. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">5</span>
+          <div>
+            <div class="paso-t">Pausa · 2 a 3 minutos</div>
+            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">6</span>
+          <div>
+            <div class="paso-t">El test · la distancia elegida al máximo</div>
+            <div class="paso-d">Los primeros 15 a 20 segundos son para llegar al ritmo; de ahí en adelante, lo más parejo posible. Se busca el ritmo más alto que se crea sostenible durante todo el test, y se sostiene. El último minuto tiene que costar; el primero, no tanto.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">7</span>
+          <div>
+            <div class="paso-t">Anotar · el tiempo</div>
+            <div class="paso-d">Con pulsómetro, conviene anotar también la FC más alta registrada: en un test bien hecho queda muy cerca de la FC máxima real.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">8</span>
+          <div>
+            <div class="paso-t">Vuelta a la calma · 5 a 10 minutos</div>
+            <div class="paso-d">Trote muy suave o caminata.</div>
+          </div>
+        </div>
+          </div>
+          <p class="hint" style="margin-top:12px">Cuál elegir: la revisión más amplia disponible recomienda <b>1200 a 1400 m</b> para quien recién empieza o viene de la velocidad, y <b>1500 a 2000 m</b> para quien ya tiene rodaje de fondo. El motivo es el mismo de siempre: lo que importa es que el esfuerzo dure alrededor de cinco minutos.</p>
+        </div>
+      </details>
+
+      <details class="mas">
+        <summary>3000 metros</summary>
+        <div class="mas-body">
+          <p>Más largo, más difícil de dosificar, pero muy fiel y fácil de repetir.</p>
+          <div class="pasos">
+        <div class="paso">
+          <span class="paso-n">1</span>
+          <div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">2</span>
+          <div>
+            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">3</span>
+          <div>
+            <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
+            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">4</span>
+          <div>
+            <div class="paso-t">Un bloque al ritmo del test · 2 a 3 × 250 metros</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">5</span>
+          <div>
+            <div class="paso-t">Pausa · 2 a 3 minutos</div>
+            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">6</span>
+          <div>
+            <div class="paso-t">El test · 3000 metros al máximo</div>
+            <div class="paso-d">Ritmo parejo desde el arranque: los primeros 400 metros, no más de un 2 a 3 % por encima del ritmo objetivo. Cuanto más largo el esfuerzo, más caro sale el error de dosificación.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">7</span>
+          <div>
+            <div class="paso-t">Anotar · el tiempo</div>
+            <div class="paso-d">Con pulsómetro, conviene anotar también la FC más alta registrada: en un test bien hecho queda muy cerca de la FC máxima real.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">8</span>
+          <div>
+            <div class="paso-t">Vuelta a la calma · 5 a 10 minutos</div>
+            <div class="paso-d">Trote muy suave o caminata.</div>
+          </div>
+        </div>
+          </div>
+          <p class="hint" style="margin-top:12px">Aviso: si los 3000 llevan más de 15 minutos, el esfuerzo ya arrastra demasiada resistencia y deja de medir bien la VAM. En ese caso conviene el de 5 minutos.</p>
+        </div>
+      </details>
+
+      <details class="mas">
+        <summary>Test de Cooper · 12 minutos</summary>
+        <div class="mas-body">
+          <p>Clásico, y mucha gente ya lo tiene hecho. A esa duración se cuela bastante resistencia además de potencia aeróbica.</p>
+          <div class="pasos">
+        <div class="paso">
+          <span class="paso-n">1</span>
+          <div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">2</span>
+          <div>
+            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">3</span>
+          <div>
+            <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
+            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">4</span>
+          <div>
+            <div class="paso-t">Un bloque al ritmo del test · 2 a 3 × 250 metros</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">5</span>
+          <div>
+            <div class="paso-t">Pausa · 2 a 3 minutos</div>
+            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">6</span>
+          <div>
+            <div class="paso-t">El test · 12 minutos a la máxima distancia posible</div>
+            <div class="paso-d">Ritmo parejo de punta a punta. En doce minutos el error que más pesa no es fisiológico sino de dosificación.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">7</span>
+          <div>
+            <div class="paso-t">Anotar · los metros recorridos</div>
+            <div class="paso-d">Con pulsómetro, conviene anotar también la FC más alta registrada: en un test bien hecho queda muy cerca de la FC máxima real.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">8</span>
+          <div>
+            <div class="paso-t">Vuelta a la calma · 5 a 10 minutos</div>
+            <div class="paso-d">Trote muy suave o caminata.</div>
+          </div>
+        </div>
+          </div>
+          <p class="hint" style="margin-top:12px">Aviso: doce minutos exponen mucho más al calor y al viento que cinco. Y aunque se lo asocie al VO₂ máx, lo que mide es velocidad aeróbica máxima, que es justamente lo que sirve para prescribir.</p>
+        </div>
+      </details>
+
+      <details class="mas">
+        <summary>Qué de todo esto está probado y qué es costumbre</summary>
+        <div class="mas-body">
+          <p>
+            <b>El paso 4 es el único con ensayo directo en corredores.</b> Doscientos metros a ritmo de carrera
+            mejoraron el 800 m alrededor de un 1 % frente a hacer solo progresivos (11 mediofondistas, Ingham y
+            col. 2013), y 3 × 250 m al ritmo del test mejoraron el 5000 m en 6,4 segundos frente a los mismos
+            250 hechos suaves, con 10 de 13 corredores mejorando (Alves y col. 2023).
+          </p>
+          <p>
+            <b>Los progresivos son costumbre.</b> No existe ningún ensayo que compare hacerlos contra no
+            hacerlos antes de un test de fondo. Están porque preparan el gesto y no cuestan nada, pero conviene
+            saber que el efecto que se les atribuye lo produce en realidad el paso 4.
+          </p>
+          <p>
+            <b>Calentar más no es calentar mejor.</b> Un calentamiento de cincuenta minutos rindió menos que uno
+            de quince (Tomaras y MacIntosh 2011), y en un esfuerzo de veinte minutos el calentamiento no cambió
+            nada, ni siquiera comparado con no calentar (Barranco-Gil y col. 2020). Cuanto más largo el test,
+            menos pesa la entrada en calor.
+          </p>
+          <p>
+            <b>El estiramiento estático.</b> Sesenta segundos o más por grupo muscular cuestan alrededor de un
+            4,6 % de rendimiento; menos de sesenta, un 1,1 % (revisión de Behm y col. 2016). Y dentro de una
+            entrada en calor dinámica completa, 5 o 30 segundos no afectaron nada (Blazevich y col. 2018). No
+            hay que demonizarlo: simplemente, antes de un test no aporta.
+          </p>
+          <p>
+            <b>La pausa del paso 5 no tiene ensayo detrás.</b> Nadie comparó duraciones de pausa entre la entrada
+            en calor y un test de fondo. Los 2 a 3 minutos son criterio práctico. Lo que sí se sabe es que el
+            margen es ancho: los dos ensayos que midieron el efecto del paso 4 dejaron pasar 18 y 20 minutos
+            hasta el esfuerzo, y el beneficio seguía estando.
+          </p>
+          <p>
+            <b>Salir fuerte para “llegar antes al VO₂ máx”</b> está demostrado en esfuerzos de 2 a 3 minutos, no
+            de 5 (Turnes y col. 2014; Abbiss y Laursen 2008). En un test de cinco minutos, la salida agresiva es
+            la forma más común de arruinarlo.
+          </p>
+          <p>
+            <b>La vuelta a la calma.</b> Lo único demostrado es que acelera el aclaramiento de lactato en
+            sangre. No reduce el dolor muscular de los días siguientes ni mejora de forma confiable el
+            rendimiento del día después (revisión de Van Hooren y Peake 2018). Está por transición, no por
+            recuperación.
+          </p>
+          <p>
+            <b>Y una aclaración sobre el “RAMP”</b>, que se cita en todos lados como el calentamiento probado:
+            no lo está. Es un marco de organización publicado en 2007 en una revista de práctica profesional,
+            sin datos originales y sin ningún ensayo que lo compare contra otro esquema. Sus piezas sueltas sí
+            tienen respaldo; el conjunto, no.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Dónde, cuándo y con qué
+      </h2>
+      <div class="prosa">
+        <ul>
+          <li><b>Dónde:</b> pista de atletismo, o un tramo llano y medido donde no haya que frenar. Sin semáforos, sin cruces y sin curvas cerradas.</li>
+          <li><b>Cuándo:</b> con las piernas descansadas y con un día fácil o de descanso antes. Al final de una semana dura, lo que se mide es el cansancio.</li>
+          <li><b>Con qué:</b> reloj con GPS o, mejor, las vueltas contadas en pista. Con GPS conviene evitar los lugares con árboles altos o edificios, porque acumula error.</li>
+        </ul>
+      </div>
+
+      <details class="mas">
+        <summary>Las condiciones que invalidan un test, con números</summary>
+        <div class="mas-body">
+          <p>
+            <b>Temperatura.</b> El óptimo para fondo está cerca de los <b>11 °C</b>. Por cada 5 °C de más, un
+            corredor popular pierde entre un 1,5 y un 3,2 %, y un corredor de élite bastante menos: el castigo
+            crece a medida que baja el nivel (siete maratones y hasta 36 años de datos, Ely y col. 2007). Por
+            encima de 25 °C el resultado ya no se puede comparar con otro test.
+          </p>
+          <p>
+            <b>Viento.</b> El costo de vencer el aire crece con el <b>cuadrado</b> de la velocidad del viento
+            (Pugh 1970), y el viento de cola devuelve aproximadamente la mitad de lo que saca el de frente
+            (Davies 1980). Por eso una vuelta completa a la pista con viento no se compensa: siempre queda
+            saldo negativo. Con viento fuerte no hay test.
+          </p>
+          <p>
+            <b>Cinta.</b> Hace falta un <b>1 % de pendiente</b> para igualar el costo energético de correr al
+            aire libre en llano (Jones y Doust 1996). En cinta plana la VAM sale inflada, y con ella salen
+            rápidos todos los ritmos que se calculen después.
+          </p>
+          <p>
+            <b>Altitud.</b> El consumo máximo de oxígeno cae alrededor de un <b>6,3 % por cada 1000 metros</b>,
+            y de forma lineal ya desde los 300 (Wehrlin y Hallén 2006). No existe un umbral por debajo del cual
+            no cuente.
+          </p>
+          <p>
+            <b>Superficie.</b> Siempre la misma. Los factores de corrección que circulan para pasar de asfalto a
+            tierra o a tartán no salen de ningún estudio: lo único bien medido son los extremos, como la arena
+            blanda, que cuesta 1,6 veces más que una superficie dura.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Cada cuánto repetirlo
+      </h2>
+      <div class="prosa">
+        <ul>
+          <li><b>Cada 8 a 12 semanas.</b> Es el tiempo que necesita el cuerpo para cambiar más de lo que se mueve el propio test.</li>
+          <li><b>Solo un cambio mayor al 5 % en velocidad cuenta como real.</b> Por debajo de eso no se distingue del ruido de la medición.</li>
+          <li><b>Mismo lugar, misma hora, mismas zapatillas, misma cafeína.</b> Si cambia el escenario, la comparación no significa nada.</li>
+        </ul>
+      </div>
+
+      <details class="mas">
+        <summary>Por qué esas tres reglas</summary>
+        <div class="mas-body">
+          <p>
+            <b>Los dos primeros tests salen bajos.</b> Con cuatro intentos repetidos, el tercero y el cuarto
+            dieron más que el primero y el segundo, y la variabilidad cayó del 3,7 % al 2,4 % (Tong y col.
+            2001). El primer test de la vida es una referencia, no una marca.
+          </p>
+          <p>
+            <b>De ahí sale el 5 %.</b> Con esa variabilidad, un cambio menor no se puede distinguir del ruido
+            del propio test, por más que el número se mueva.
+          </p>
+          <p>
+            <b>Y de ahí sale lo del calzado.</b> Las zapatillas de placa de carbono cuestan entre un 2,6 y un
+            4 % menos de energía que una de competición común (Hoogkamer y col. 2018; Barnes y Kilding 2019):
+            más de lo que suele mejorar la VAM en dos meses de entrenamiento. Con la cafeína pasa parecido, de
+            3 a 6 mg por kilo mejoran entre un 2 y un 3 % (Southward y col. 2018). Cambiar cualquiera de las
+            dos entre test y test alcanza para inventar una mejora que no existió.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Los errores que arruinan un test
+      </h2>
+      <div class="prosa">
+        <ul>
+          <li><b>Salir demasiado rápido.</b> El error más común y el más costoso. Baja el resultado y deja la sensación de estar peor de lo que se está.</li>
+          <li><b>Testear cansado.</b> Después de una semana dura, lo que se mide es la fatiga.</li>
+          <li><b>Confiar en el GPS a ciegas.</b> En pista se cuentan vueltas. En calle, se mide el circuito una vez y se usa siempre ese.</li>
+          <li><b>Tomar el primer test como marca.</b> Sin dos tests previos de práctica, el segundo casi siempre sale mejor que el primero aunque no se haya entrenado nada.</li>
+        </ul>
+        <p>
+          Y una más, la más importante: <b>el test no es el entrenamiento</b>. Es una medición puntual. Si un
+          día sale mal, antes de rehacer el plan entero conviene mirar cómo venía el sueño, la comida y la carga
+          de esa semana.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        Lo que la VAM no es
+      </h2>
+      <div class="prosa">
+        <p>
+          <b>No es el VO₂ máx.</b> Están emparentados, pero no son lo mismo: dos personas con el mismo VO₂ máx
+          pueden tener VAM distintas según lo económicas que sean corriendo. En el propio test de 5 minutos, la
+          velocidad alcanzada explica alrededor del <b>35 %</b> de lo que varía el VO₂ máx entre personas (Tong y
+          col. 2001). De hecho la VAM es <i>más útil</i>, porque ya trae adentro la economía de carrera. El VO₂ máx que estima esta calculadora es un valor
+          orientativo, no un diagnóstico.
+        </p>
+        <p>
+          <b>No es el techo del corredor.</b> Con una VAM modesta se puede rendir muy bien en ultra, porque ahí
+          pesa más cuánto tiempo se sostiene un porcentaje bajo que cuán alto es el máximo.
+        </p>
+        <p>
+          <b>No sirve igual en montaña.</b> Apenas hay pendiente, la velocidad deja de reflejar el esfuerzo. En
+          trail las zonas se manejan mejor por pulso y por sensación, y para estimar tiempos está la
+          <b>Calculadora de Trail</b>, que sí tiene en cuenta el desnivel.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIRMA — el motor escribe el sello en #foot-stamp, ese id no se toca. -->
+  <div class="footnote firma">
+    <span class="marca-logo firma-logo" aria-hidden="true"></span>
+    <span class="firma-txt">
+      <span class="firma-nombre"><b>emiliano</b> salas porta</span>
+      <span class="firma-sitio">emilianosalasporta.cloud</span>
+    </span>
+    <span class="firma-meta">Calculadora de Zonas v1.0 · <span id="foot-stamp"></span></span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CALCULADORA DE ZONAS — Motor + UI
+   Todo el modelo cuelga de un solo número: la VAM.
+   ============================================================ */
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+
+// ============================================================
+// 1 · LA CURVA DE RESISTENCIA
+// ------------------------------------------------------------
+// Qué porcentaje de la VAM se sostiene según CUÁNTO DURA el
+// esfuerzo (no según qué distancia sea). El ancla es el test de
+// 5 minutos: a los 300 s, por definición, estás al 100 %.
+//
+// Los puntos salen de cruzar tres cosas: la utilización
+// fraccional del VO2 máx que reporta la literatura por duración,
+// las equivalencias clásicas de las tablas de VAM, y el
+// contraste contra tablas de rendimiento conocidas (un corredor
+// de 20:00 en 5K tiene que dar ~41:30 en 10K, ~1:33 en 21K).
+//
+// Entre puntos se interpola en escala logarítmica de tiempo,
+// que es como se comporta la fatiga.
+// ============================================================
+const CURVA = [
+  [  60, 110.0],
+  [ 120, 110.0],
+  [ 180, 105.5],
+  [ 240, 102.5],
+  [ 300, 100.0],   // <- el test de VAM
+  [ 420,  97.0],
+  [ 600,  94.5],
+  [ 900,  92.5],
+  [1200,  91.0],
+  [1800,  89.0],
+  [2700,  86.5],
+  [3600,  85.0],   // una hora: coincide con el umbral clásico (85-88 % de la vVO2max)
+  [5400,  82.5],
+  [7200,  81.0],
+  /* De acá para abajo la curva se dobla más fuerte. No es un capricho: es lo que
+     pasa de verdad pasadas las dos horas, cuando al motor se le suma el problema
+     del combustible y del desgaste (lo que la literatura reciente llama
+     "durabilidad"). Estos puntos NO son estimados: salen de la ecuación empírica
+     de 7.663 corredores del Maratón y la Media de Valencia
+     (Oficial-Casado y col., Front Physiol 2026;16, DOI 10.3389/fphys.2025.1718298).
+     Antes de esto la calculadora predecía maratones un 4,4 % más rápidos de lo
+     que esa gente corrió en la realidad. */
+  [9000,  78.6],
+  [10800, 76.6],
+  [14400, 74.0],
+  [18000, 72.3],
+  [21600, 70.7],
+  /* Más de 6 horas ya es extrapolación: no hay datos de campo detrás. Sirve para
+     ubicarse, no para planificar un ultra al segundo. */
+  [28800, 68.6],
+  [43200, 65.8],
+  [57600, 62.5],
+  [86400, 58.5],
+];
+
+// El perfil inclina la curva. Quien entrena volumen sostiene un
+// porcentaje más alto en lo largo; quien viene de velocidad
+// rinde más arriba en lo corto y se cae antes en lo largo.
+const PERFILES = {
+  veloz: { largo: 1.15, corto: 1.20, nombre: "orientado a la velocidad" },
+  medio: { largo: 1.00, corto: 1.00, nombre: "equilibrado" },
+  fondo: { largo: 0.87, corto: 0.80, nombre: "orientado a la resistencia" },
+};
+
+/** % de la VAM sostenible durante `t` segundos, para un perfil dado. */
+function pctVam(t, perfil){
+  t = Math.max(30, Math.min(172800, t));
+  const p = PERFILES[perfil] || PERFILES.medio;
+
+  // Interpolación log-lineal sobre la tabla de arriba.
+  let base;
+  if(t <= CURVA[0][0]) base = CURVA[0][1];
+  else if(t >= CURVA[CURVA.length-1][0]) base = CURVA[CURVA.length-1][1];
+  else {
+    for(let i=0;i<CURVA.length-1;i++){
+      const [t1,p1] = CURVA[i], [t2,p2] = CURVA[i+1];
+      if(t >= t1 && t <= t2){
+        const k = (Math.log(t)-Math.log(t1)) / (Math.log(t2)-Math.log(t1));
+        base = p1 + k*(p2-p1);
+        break;
+      }
+    }
+  }
+
+  // Inclinamos respecto del 100 %: el déficit (largo) o el
+  // excedente (corto) se estiran o se achican según el perfil.
+  if(base < 100) return 100 - (100-base)*p.largo;
+  if(base > 100) return 100 + (base-100)*p.corto;
+  return 100;
+}
+
+/** VAM (km/h) a partir de un test: distancia en metros, tiempo en segundos. */
+function vamDesdeTest(metros, segundos, perfil){
+  if(!(metros > 0) || !(segundos > 0)) return null;
+  const vTest = metros / segundos * 3.6;          // km/h del test
+  const f = pctVam(segundos, perfil) / 100;
+  return vTest / f;
+}
+
+/** Dada la VAM, ¿qué tiempo sale en `km`? Se resuelve iterando:
+    la velocidad depende del tiempo y el tiempo de la velocidad. */
+function tiempoDeCarrera(km, vam, perfil){
+  if(!(km > 0) || !(vam > 0)) return null;
+  let t = km / vam * 3600;                         // arranque: a la VAM pelada
+  for(let i=0;i<40;i++){
+    const v = vam * pctVam(t, perfil) / 100;
+    const tNuevo = km / v * 3600;
+    if(Math.abs(tNuevo - t) < 0.05){ t = tNuevo; break; }
+    t = t + (tNuevo - t) * 0.7;                    // relajación: converge sin oscilar
+  }
+  const v = vam * pctVam(t, perfil) / 100;
+  return { seg: t, kmh: v, pct: pctVam(t, perfil) };
+}
+
+// ============================================================
+// 2 · LAS ZONAS
+// ------------------------------------------------------------
+// Modelo trifásico (Skinner y McLellan, Res Q Exerc Sport
+// 1980;51(1):234-248): FASE I por debajo del primer umbral,
+// FASE II entre los dos umbrales, FASE III por encima.
+//
+// El corte de arriba NO es el VT2 de un test incremental sino la
+// VELOCIDAD CRÍTICA. La diferencia no es cosmética: en corredores,
+// el VT2 queda un 17 % más rápido que el máximo estado estable de
+// lactato (15,8 vs 13,5 km/h en Cerezuela-Espejo y col., Front
+// Physiol 2018;9:1320). Tomar un VT2 de laboratorio como "ritmo
+// de umbral" propone un ritmo que no se sostiene. La velocidad
+// crítica es el marco que la fisiología actual prefiere para ese
+// borde (Poole y col., J Physiol 2021;599(3):737-767).
+//
+// Los rangos de %VAM caen donde caen los ritmos de carrera: el
+// maratón en tempo, el 10K en umbral y el 5K en VO2 máx (la media
+// cae en uno u otro según el nivel, que es lo correcto: el umbral
+// corresponde a una distancia cada vez más larga a medida que sube
+// el nivel del corredor). El pulso es orientativo y va detrás.
+// ============================================================
+const FASES = [
+  {
+    n: 1, clase: "fase-1", titulo: "Fase I · Aeróbica",
+    desc: "Por debajo del primer umbral. El lactato se mantiene estable y el esfuerzo puede sostenerse durante horas. Concentra la mayor parte del volumen semanal: en fondistas de clase mundial, el 80 % del kilometraje o más.",
+  },
+  {
+    n: 2, clase: "fase-2", titulo: "Fase II · Aeróbica-anaeróbica",
+    desc: "Entre los dos umbrales. El lactato se eleva pero alcanza un equilibrio. Es la franja del trabajo específico de fondo y termina en la velocidad crítica, el último punto en el que el organismo llega a un estado estable.",
+  },
+  {
+    n: 3, clase: "fase-3", titulo: "Fase III · Inestabilidad metabólica",
+    desc: "Por encima de la velocidad crítica. Ya no hay equilibrio posible: el lactato asciende hasta que el esfuerzo se interrumpe. Requiere dosis bajas y ubicación precisa.",
+  },
+];
+
+/* CINCO ZONAS, dos por fase salvo la última. Es el reparto más usado en
+   carrera (en una encuesta a 778 practicantes y entrenadores, el 47 % usa
+   cinco zonas y el 27 % tres: Seiler-Viken y col., Sci Rep 2025;15:34367) y
+   es el mismo que usaba el material propio de Emiliano.
+
+   NO MOVER ESTOS BORDES SIN LEER ESTO PRIMERO. Están validados por tres
+   caminos independientes que dan lo mismo:
+
+   1) Por ritmo de carrera. En 60 corredores recreativos el 10K se corre al
+      99,9 % de la velocidad crítica y el 5K al 107,5 % (Antonio y col., Int J
+      Sports Med 2025;46(1):51-58). Y la velocidad crítica está medida en
+      86,1 ± 1,5 % de la vVO2máx (Billat y col., Arch Physiol Biochem
+      1998;106(1):38-45). O sea que el 10K debería caer cerca del 86 % de la
+      VAM: acá cae entre 87 y 89 %.
+
+   2) Por duración. Invirtiendo la curva, el piso del umbral (85 %) se sostiene
+      una hora y el techo (90 %) unos 24 min. Medido: el MLSS aguanta
+      54,7 ± 10,9 min (Grossl y col., APNM 2012;37(6):1047-1053) y la velocidad
+      crítica de 15 a 40 min (Jones y col., Physiol Rep 2019;7(10):e14098;
+      de Lucas y col., J Sports Sci Med 2012;11(1):89-94).
+
+   3) Por pulso. En 165 corredores recreativos con análisis de lactato, el
+      primer umbral cayó en 80,7 ± 4,9 % de la FC máxima y el segundo en
+      90,6 ± 2,5 % (Nuuttila y col., Eur J Appl Physiol 2025;125:2161-2171).
+      Acá los bordes son 82 % (Z2/Z3) y 90 % (Z3/Z4).
+
+   Y coinciden con el material propio: la planilla de Emiliano daba umbral
+   anaeróbico 85-90 % de la VAM y VO2 máx desde 90 %, idénticos a estos.
+
+   OJO CON EL DENOMINADOR, que es donde se equivoca todo el mundo. Un umbral
+   expresado como porcentaje de la velocidad pico de un test de rampa NO es
+   comparable con un porcentaje de la VAM de un test de campo de 5 min: el
+   mismo MLSS es el 69-96 % del VO2 máx pero el 44-71 % de la potencia pico de
+   la rampa (Iannetta y col., MSSE 2020;52(2):466-473). Antes de importar un
+   porcentaje de un paper, hay que mirar contra qué está calculado.
+
+   Los campos "para" y "como" van dentro de un desplegable: la calculadora es
+   para calcular, y el texto no tiene que tapar los números. */
+const ZONAS = [
+  {
+    id:"Z1", fase:1, nombre:"Regenerativo", eq:"trote suave",
+    vam:[45,62], fcmax:[50,68], fcr:[40,57], rpe:"1 a 2", lac:"< 1",
+    sesiones:{
+      aca:"Trote de recuperación · vuelta a la calma · cruzado suave.",
+      cruza:"Ninguna distancia de competencia cae acá: es zona de entrenamiento, no de carrera.",
+    },
+    para:"<b>Objetivo.</b> Sumar volumen aeróbico con un costo de fatiga mínimo.<br><br>" +
+         "Sobre el efecto en la recuperación conviene ser preciso. La recuperación activa acelera el aclaramiento de lactato en sangre, pero las revisiones sistemáticas recientes no encuentran un efecto consistente sobre el rendimiento del día siguiente ni sobre el dolor muscular. Lo que sí permite es correr entre sesiones exigentes sin comprometer la próxima.",
+    como:"<b>Métodos.</b> Carrera continua suave, entrenamiento cruzado de baja intensidad.<br>" +
+         "<b>Duración.</b> De 30 minutos a 1 hora como sesión propia; de 10 a 20 minutos como vuelta a la calma. Se habla sin ningún esfuerzo.",
+  },
+  {
+    id:"Z2", fase:1, nombre:"Endurance", eq:"rodaje y tirada larga",
+    vam:[62,76], fcmax:[68,82], fcr:[57,74], rpe:"3 a 5", lac:"1 a 2",
+    sesiones:{
+      aca:"Rodaje · tirada larga · continuo variable.",
+      cruza:"Se reparte con Z3: el maratón y el 30K cambian de zona según el nivel. Con una VAM por debajo de 17,5 km/h, el ritmo de maratón cae acá.",
+    },
+    para:"<b>Objetivo.</b> Construir la base aeróbica y sostener el volumen semanal.<br><br>" +
+         "De las adaptaciones de esta intensidad, la que tiene mejor respaldo comparativo es la <b>densidad capilar</b>: en la revisión más amplia disponible (5.973 participantes), el trabajo continuo fue el único método que la aumentó de forma consistente. El contenido mitocondrial también sube, aunque ahí no se encontró ventaja sobre la alta intensidad.<br><br>" +
+         "Las sesiones largas agregan un segundo estímulo, propio de la duración. Pasada la hora y media, la economía de carrera y la velocidad de umbral se deterioran de forma medible (−4,2 % y −3,0 % a los 90 minutos en maratonistas entrenados, con la caída acelerándose en la segunda hora). Entrenar ahí desarrolla la resistencia a ese deterioro. El dato está medido en llano; en montaña no se midió.",
+    como:"<b>Métodos.</b> Continuo uniforme extensivo, continuo variable, tirada larga.<br>" +
+         "<b>Duración.</b> De 40 minutos a 2 horas en rodaje; hasta 2 h 45 en preparación de maratón. Los planes de maratón de nivel subélite convergen en una tirada máxima de 30 a 32 km, con independencia del volumen semanal.<br>" +
+         "<b>Reparto.</b> Alrededor del 80 % del volumen semanal o más.",
+  },
+  {
+    id:"Z3", fase:2, nombre:"Tempo", eq:"de ritmo de maratón a ritmo de media",
+    vam:[76,85], fcmax:[82,90], fcr:[74,86], rpe:"5 a 7", lac:"2 a 3",
+    sesiones:{
+      aca:"Tempo continuo · carrera progresiva · bloques a ritmo de competencia.",
+      cruza:"Se reparte con Z2: el maratón y el 30K. Se reparte con Z4: la media maratón y el 15K.",
+    },
+    para:"<b>Objetivo.</b> Acumular trabajo de calidad sostenible, entre los dos umbrales.<br><br>" +
+         "La mitad baja coincide con el ritmo de maratón de la mayoría de los corredores. Su valor ahí es la <b>especificidad</b>: calibrar el ritmo, ensayar el avituallamiento y tolerar el tiempo en carrera. No hay ensayos controlados que aíslen esta intensidad como estímulo fisiológico.<br><br>" +
+         "La mitad alta se acerca al ritmo de media maratón y permite acumular carga con un costo de recuperación menor que el del umbral pleno. Es la franja que en el ciclismo se difundió como <i>sweet spot</i>: el término viene de la práctica de entrenadores y no hay estudios en corredores que lo respalden como zona óptima.",
+    como:"<b>Métodos.</b> Continuo uniforme intensivo, carrera progresiva, bloques a ritmo de competencia, interválico extensivo.<br>" +
+         "<b>Duración.</b> A ritmo de maratón, hasta 110 minutos o 29 km, continuo o dentro de una tirada larga. En la parte alta, de 2 a 4 bloques de 10 a 15 minutos con 2 a 3 minutos de trote.",
+  },
+  {
+    id:"Z4", fase:2, nombre:"Umbral anaeróbico", eq:"lo que se sostiene entre media hora y una hora",
+    vam:[85,90], fcmax:[90,94], fcr:[86,91], rpe:"7 a 8", lac:"3 a 4,5",
+    sesiones:{
+      aca:"Series largas de umbral · fartlek · ritmo de 10K.",
+      cruza:"Se reparte con Z3: la media maratón y el 15K. Se reparte con Z5: el 5K, que con una VAM por debajo de 14 km/h es trabajo de umbral y por encima es VO₂ máx.",
+    },
+    para:"<b>Objetivo.</b> Desplazar el punto a partir del cual el lactato deja de estabilizarse.<br><br>" +
+         "Ese punto marca el techo de lo sostenible: por debajo, la producción y la remoción de lactato se equilibran y el esfuerzo se puede prolongar; por encima, la acumulación es progresiva y el ritmo se cae. En los estudios de rendimiento, la velocidad de umbral predice la marca en fondo mejor que el consumo máximo de oxígeno.<br><br>" +
+         "De ahí no se sigue que convenga acumular umbral. Los ensayos que compararon distribuciones de intensidad no muestran que sumar trabajo de umbral a costa del volumen suave mejore el rendimiento, y en un caso lo empeoró.",
+    como:"<b>Métodos.</b> Series largas, fartlek, continuo uniforme intensivo, carrera a ritmo de competencia.<br>" +
+         "<b>Duración.</b> De 20 a 40 minutos de trabajo efectivo. El único ensayo controlado que comparó formatos halló que 4 × 8 minutos produce más mejora que 4 × 16 y que 4 × 4. La pausa habitual es de 1 minuto de trote por cada 5 de trabajo.",
+  },
+  {
+    id:"Z5", fase:3, nombre:"VO₂ máx y velocidad", eq:"series largas y trabajo por encima de la VAM",
+    vam:[90,115], fcmax:[94,100], fcr:[91,100], rpe:"9 a 10", lac:null,
+    sesiones:{
+      aca:"Series de 3 a 5 min · series cortas · velocidad · 1500 y 3000 m.",
+      cruza:"Se reparte con Z4: el 5K y, en corredores muy rápidos, el 10K.",
+    },
+    para:"<b>Objetivo.</b> Elevar el consumo máximo de oxígeno y, por encima de la VAM, la economía de carrera.<br><br>" +
+         "El criterio que se usa para dosificar el estímulo aeróbico es el <b>tiempo acumulado por encima del 90 % del consumo máximo</b>, y los protocolos que funcionan alcanzan entre 5 y 8 minutos por sesión. Es un marcador intermedio aceptado, no un desenlace validado: no hay ensayos bien controlados que demuestren que esa sea la intensidad óptima en corredores ya entrenados.<br><br>" +
+         "Por encima de la VAM el estímulo pasa a ser neuromuscular, y ahí la evidencia es más firme. El trabajo de alta velocidad y la fuerza pesada mejoran la <b>economía de carrera</b> entre un 2 y un 8 % en corredores entrenados, con varios metaanálisis coincidentes.",
+    como:"<b>Métodos.</b> Series largas de 3 a 5 minutos con pausa de duración similar, series medias y cortas, entrenamientos piramidales.<br>" +
+         "<b>Duración.</b> De 12 a 30 minutos de trabajo. Los bloques de 30 segundos acumulan menos tiempo por encima del 90 % que los de 3 minutos, pese a correrse más rápido. Para el trabajo por encima de la VAM, hasta 10 repeticiones de 30 segundos con 3 minutos y medio de pausa.<br>" +
+         "<b>Frecuencia.</b> Dos sesiones intensas por semana como máximo.",
+  },
+];
+
+// Distancias de la tabla de ritmos de carrera.
+const DISTANCIAS = [
+  { km:0.8,    n:"800 m" },
+  { km:1.5,    n:"1500 m" },
+  { km:3,      n:"3000 m" },
+  { km:5,      n:"5K",   destacada:true },
+  { km:10,     n:"10K",  destacada:true },
+  { km:15,     n:"15K" },
+  { km:21.0975,n:"21K · media maratón", destacada:true },
+  { km:30,     n:"30K" },
+  { km:42.195, n:"42K · maratón", destacada:true },
+];
+
+/* Banda de incertidumbre de cada estimación, en fracción del TIEMPO.
+   [rápido, lento]. Ver el comentario de arriba del archivo de trabajo: es un
+   ensamblado de tres fuentes, no una medición directa, y así se dice en
+   pantalla. De 30K para arriba es asimétrica a propósito. */
+function bandaDe(km){
+  if(km < 3)     return [0.08, 0.08];
+  if(km <= 10)   return [0.05, 0.05];
+  if(km <= 21.5) return [0.06, 0.06];
+  if(km <= 45)   return [0.04, 0.10];
+  return null;                          // más allá del maratón no hay con qué
+}
+
+// ============================================================
+// 3 · FORMATO Y LECTURA DE NÚMEROS
+// ============================================================
+
+/** "5:00" · "1:12:30" · "300" (segundos sueltos) -> segundos. */
+function leerTiempo(txt){
+  if(txt == null) return null;
+  const s = String(txt).trim().replace(/,/g,".");
+  if(!s) return null;
+  if(!/^[\d:.\s]+$/.test(s)) return null;
+  const partes = s.split(":").map((p)=>p.trim());
+  if(partes.some((p)=>p === "" || isNaN(Number(p)))) return null;
+  const n = partes.map(Number);
+  let seg;
+  if(n.length === 1) seg = n[0];                          // segundos sueltos
+  else if(n.length === 2) seg = n[0]*60 + n[1];           // mm:ss
+  else if(n.length === 3) seg = n[0]*3600 + n[1]*60 + n[2];
+  else return null;
+  return seg > 0 ? seg : null;
+}
+
+/** Segundos -> "mm:ss" o "h:mm:ss". */
+function fmtTiempo(seg){
+  if(seg == null || !isFinite(seg) || seg <= 0) return "—";
+  const t = Math.round(seg);
+  const h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60;
+  const dd = (x)=>String(x).padStart(2,"0");
+  return h > 0 ? `${h}:${dd(m)}:${dd(s)}` : `${m}:${dd(s)}`;
+}
+
+/** Lee un RITMO. Distinto de leerTiempo: aca un numero suelto son MINUTOS,
+    no segundos. Nadie corre a 5 segundos el kilometro, pero mucha gente
+    escribe "5" o "5.5" queriendo decir 5:00 y 5:30. */
+function leerRitmo(txt){
+  if(txt == null) return null;
+  const s = String(txt).trim().replace(/,/g,".");
+  if(!s) return null;
+  if(!/^[\d:.\s]+$/.test(s)) return null;
+  if(s.indexOf(":") === -1){
+    const min = Number(s);
+    if(!isFinite(min) || min <= 0) return null;
+    return min*60;
+  }
+  return leerTiempo(s);
+}
+
+/** Segundos por km -> "m:ss". */
+function fmtRitmo(segKm){
+  if(segKm == null || !isFinite(segKm) || segKm <= 0) return "—";
+  const t = Math.round(segKm);
+  return `${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`;
+}
+
+const ritmoDe = (kmh) => (kmh > 0 ? 3600/kmh : null);
+const num = (el) => { const v = parseFloat(String(el.value).replace(",", ".")); return isFinite(v) ? v : null; };
+const fmt1 = (x) => x.toLocaleString("es-AR", { minimumFractionDigits:1, maximumFractionDigits:1 });
+const fmt2 = (x) => x.toLocaleString("es-AR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+// ============================================================
+// 4 · FRECUENCIA CARDÍACA
+// ============================================================
+const FORMULAS_FC = {
+  tanaka:  { calc:(e)=>208 - 0.7*e,    txt:"Tanaka · 208 − 0,7 × edad" },
+  gellish: { calc:(e)=>207 - 0.7*e,    txt:"Gellish · 207 − 0,7 × edad" },
+  fox:     { calc:(e)=>220 - e,        txt:"Fox · 220 − edad" },
+  astrand: { calc:(e)=>216.6 - 0.84*e, txt:"Åstrand · 216,6 − 0,84 × edad" },
+  gulati:  { calc:(e)=>206 - 0.88*e,   txt:"Gulati · 206 − 0,88 × edad" },
+};
+
+// ============================================================
+// 4bis · DÓNDE ESTÁS PARADO
+// ------------------------------------------------------------
+// Tabla de referencia de VO2 máx por edad y sexo del registro
+// FRIEND (Fitness Registry and the Importance of Exercise National
+// Database): Kaminsky LA, Arena R, Myers J, Mayo Clin Proc
+// 2015;90(11):1515-1523, tabla 3. Son 7.783 tests máximos en cinta
+// con máscara y análisis de gases (VO2 máx MEDIDO, no estimado),
+// en 8 laboratorios de EE.UU., adultos de 20 a 79 años.
+//
+// OJO, esto se confundió una vez y conviene dejarlo escrito: NO es
+// la tabla del Cooper Institute. La del Cooper Clinic es la otra
+// columna del mismo paper y usa VO2 máx PREDICHO desde el test de
+// Balke. Los números de acá son los de FRIEND.
+//
+// OJO con lo que significa: es POBLACIÓN GENERAL, no corredores.
+// Entre gente que entrena, estos percentiles se corren para
+// arriba. Eso está dicho en pantalla, no lo escondemos.
+//
+// Cada fila es el centro de su franja de edad (20-29 -> 24,5) y
+// los siete números son los percentiles 5, 10, 25, 50, 75, 90 y 95.
+// ============================================================
+const PERCENTILES = [5, 10, 25, 50, 75, 90, 95];
+const NORMAS_VO2 = {
+  h: {
+    24.5: [29.0, 32.1, 40.1, 48.0, 55.2, 61.8, 66.3],
+    34.5: [27.2, 30.2, 35.9, 42.4, 49.2, 56.5, 59.8],
+    44.5: [24.2, 26.8, 31.9, 37.8, 45.0, 52.1, 55.6],
+    54.5: [20.9, 22.8, 27.1, 32.6, 39.7, 45.6, 50.7],
+    64.5: [17.4, 19.8, 23.7, 28.2, 34.5, 40.3, 43.0],
+    74.5: [16.3, 17.1, 20.4, 24.4, 30.4, 36.6, 39.7],
+  },
+  m: {
+    24.5: [21.7, 23.9, 30.5, 37.6, 44.7, 51.3, 56.0],
+    34.5: [19.0, 20.9, 25.3, 30.2, 36.1, 41.4, 45.8],
+    44.5: [17.0, 18.8, 22.1, 26.7, 32.4, 38.4, 41.7],
+    54.5: [16.0, 17.3, 19.9, 23.4, 27.6, 32.0, 35.9],
+    64.5: [13.4, 14.6, 17.2, 20.0, 23.8, 27.0, 29.4],
+    74.5: [13.1, 13.6, 15.6, 18.3, 20.8, 23.1, 24.1],
+  },
+};
+
+/** En qué percentil cae `vo2` para esa edad y ese sexo. */
+function percentilVO2(sexo, edad, vo2){
+  const tabla = NORMAS_VO2[sexo];
+  if(!tabla || !edad || !vo2) return null;
+
+  const centros = Object.keys(tabla).map(Number).sort((a,b)=>a-b);
+  const eMin = centros[0], eMax = centros[centros.length-1];
+  const fueraDeTabla = edad < 20 || edad > 79;
+  const e = Math.max(eMin, Math.min(eMax, edad));
+
+  // Interpolamos los siete cortes entre las dos franjas vecinas: así el
+  // resultado no pega un salto el día que cumplís años.
+  let lo = eMin, hi = eMax;
+  for(let i=0;i<centros.length-1;i++){
+    if(e >= centros[i] && e <= centros[i+1]){ lo = centros[i]; hi = centros[i+1]; break; }
+  }
+  const k = hi === lo ? 0 : (e - lo)/(hi - lo);
+  const cortes = tabla[lo].map((v,i)=> v + k*(tabla[hi][i] - v));
+
+  // Y ubicamos el VO2 entre esos cortes.
+  let pct, tope = null;
+  if(vo2 <= cortes[0]){
+    pct = Math.max(1, Math.round(5 * vo2 / cortes[0]));
+    tope = "abajo";
+  } else if(vo2 >= cortes[cortes.length-1]){
+    pct = 95;
+    tope = "arriba";
+  } else {
+    for(let i=0;i<cortes.length-1;i++){
+      if(vo2 >= cortes[i] && vo2 <= cortes[i+1]){
+        const f = (vo2 - cortes[i])/(cortes[i+1] - cortes[i]);
+        pct = Math.round(PERCENTILES[i] + f*(PERCENTILES[i+1] - PERCENTILES[i]));
+        break;
+      }
+    }
+  }
+  return { pct, tope, fueraDeTabla, mediana: cortes[3] };
+}
+
+/** Etiqueta y color para un percentil. Sin latigazos: el que está abajo
+    está empezando, no está mal. */
+function etiquetaPercentil(p){
+  if(p >= 90) return { t:"Superior",         c:"var(--fase-1)" };
+  if(p >= 70) return { t:"Excelente",        c:"var(--fase-1)" };
+  if(p >= 50) return { t:"Bueno",            c:"var(--fase-2)" };
+  if(p >= 30) return { t:"En el promedio",   c:"var(--fase-2)" };
+  return            { t:"Punto de partida", c:"var(--fase-3)" };
+}
+
+/** VO2 máx estimado desde la VAM.
+    Ecuación de Berthon y col. (1997): VO2máx = 3,23 × VAM(km/h). Se eligió esa
+    porque los autores la derivaron del MISMO test de 5 minutos, contrastado
+    contra VO2 máx medido en cinta con máscara y análisis de gases. Ya trae
+    adentro que cinco minutos a fondo se corren un poco por encima de lo
+    puramente aeróbico.
+    Vive en una sola función a propósito: antes estaba copiada en dos lugares y
+    al corregir uno el otro quedó calculando distinto. */
+function vo2maxDe(vam){
+  return vam > 0 ? 3.23 * vam : null;
+}
+
+/** Pulsaciones de un porcentaje de zona, según la base elegida. */
+function ppm(pct, fcMax, fcRep, base){
+  if(!fcMax) return null;
+  if(base === "karvonen" && fcRep) return Math.round(fcRep + pct/100*(fcMax - fcRep));
+  return Math.round(pct/100 * fcMax);
+}
+
+// ============================================================
+// 5 · ESTADO Y CÁLCULO PRINCIPAL
+// ============================================================
+let VAM = null;      // km/h
+let PERFIL = "medio";
+let FCMAX = null;
+let FCREP = null;
+let BASE_FC = "fcmax";
+let EDAD = null;
+let SEXO = "";       // "h" | "m" | "" (sin decir)
+
+/** Lee los campos del test y devuelve { metros, segundos } o null. */
+function leerTest(){
+  const tipo = $("t-tipo").value;
+  if(tipo === "VAM") return null;
+  if(tipo.charAt(0) === "T"){
+    const seg = Number(tipo.slice(1));
+    const m = num($("t-dist"));
+    return m ? { metros:m, segundos:seg } : null;
+  }
+  const seg = leerTiempo($("t-tiempo").value);
+  const m = tipo === "DX" ? num($("t-dist")) : Number(tipo.slice(1));
+  return (m && seg) ? { metros:m, segundos:seg } : null;
+}
+
+/** Muestra u oculta los campos según el tipo de test elegido. */
+function ajustarCamposTest(){
+  const tipo = $("t-tipo").value;
+  const porTiempo = tipo.charAt(0) === "T";
+  const directo = tipo === "VAM";
+  const otra = tipo === "DX";
+
+  $("wrap-vam").classList.toggle("hidden", !directo);
+  $("wrap-dist").classList.toggle("hidden", directo || (!porTiempo && !otra));
+  $("wrap-tiempo").classList.toggle("hidden", directo || porTiempo);
+
+  if(porTiempo){
+    const min = Number(tipo.slice(1))/60;
+    $("lbl-dist").textContent = "Distancia recorrida";
+    $("hint-dist").textContent = `Los metros recorridos en esos ${fmt1(min).replace(",0","")} minutos.`;
+  } else if(otra){
+    $("lbl-dist").textContent = "Distancia del test";
+    $("hint-dist").textContent = "En metros. Sirve cualquier esfuerzo máximo y parejo de 4 a 15 minutos.";
+  }
+}
+
+function calcularFC(){
+  // Edad: la fecha de nacimiento manda si está cargada.
+  const fnac = $("fc-fnac").value;
+  if(fnac){
+    const d = new Date(fnac + "T00:00:00");
+    if(!isNaN(d)){
+      const hoy = new Date();
+      let e = hoy.getFullYear() - d.getFullYear();
+      const m = hoy.getMonth() - d.getMonth();
+      if(m < 0 || (m === 0 && hoy.getDate() < d.getDate())) e--;
+      if(e > 0 && e < 100 && String(e) !== $("fc-edad").value) $("fc-edad").value = e;
+    }
+  }
+
+  const edad = num($("fc-edad"));
+  EDAD = edad;
+  SEXO = $("fc-sexo").value;
+  const formula = $("fc-formula").value;
+  const medida = formula === "medida";
+
+  $("wrap-fcmax").classList.toggle("disabled", !medida && !!edad);
+  $("hint-fcmax").textContent = medida
+    ? "El número visto en un esfuerzo máximo real. Es el que vale."
+    : (edad ? FORMULAS_FC[formula].txt : "Falta la edad, o elegir la opción de FC máxima medida.");
+
+  if(!medida && edad) $("fc-max").value = Math.round(FORMULAS_FC[formula].calc(edad));
+
+  FCMAX = num($("fc-max"));
+  FCREP = num($("fc-rep"));
+
+  /* Karvonen no es una fórmula de FC máxima: es el método que reparte las
+     zonas sobre la FC de RESERVA (máxima − reposo). Sin la FC en reposo no
+     se puede calcular, así que caemos a %FCmáx y lo decimos con todas las
+     letras: antes esto quedaba escondido y no se entendía qué habilitaba qué. */
+  BASE_FC = $("fc-base").value;
+  const pedido = BASE_FC;
+  if(pedido === "karvonen" && !FCREP) BASE_FC = "fcmax";
+
+  let nota;
+  if(pedido === "karvonen" && !FCREP){
+    nota = "Falta la FC en reposo (el campo de al lado) para poder usar la FC de reserva. Por ahora las zonas van por % de la FC máxima.";
+  } else if(BASE_FC === "karvonen"){
+    nota = `Sobre la FC de reserva: ${Math.round(FCMAX)} menos ${Math.round(FCREP)} = <b>${Math.round(FCMAX-FCREP)} ppm</b> de margen real.`;
+  } else if(FCREP){
+    nota = "La cuenta directa sobre la máxima. Con la FC en reposo ya cargada, también se puede repartir sobre la FC de reserva.";
+  } else {
+    nota = "La cuenta directa sobre la máxima. Cargando la FC en reposo se habilita la otra opción, la de FC de reserva.";
+  }
+  $("hint-base").innerHTML = nota;
+}
+
+function calcular(){
+  PERFIL = $("t-perfil").value;
+  ajustarCamposTest();
+  calcularFC();
+
+  // --- VAM ---
+  if($("t-tipo").value === "VAM"){
+    VAM = num($("t-vam"));
+  } else {
+    const test = leerTest();
+    VAM = test ? vamDesdeTest(test.metros, test.segundos, PERFIL) : null;
+  }
+  if(VAM && (VAM < 5 || VAM > 30)) VAM = null;
+
+  pintarVam();
+  pintarPercentil();
+  pintarZonas();
+  pintarRitmos();
+}
+
+// ============================================================
+// 6 · PINTAR
+// ============================================================
+function pintarVam(){
+  const aviso = $("aviso-vam");
+
+  if(!VAM){
+    $("out-vam").innerHTML = '—<small>km/h</small>';
+    $("out-vam-sub").textContent = "Falta cargar el test de arriba.";
+    ["out-ritmo","out-vo2","out-d5","out-fcmax","out-fcres"].forEach((id)=>{
+      const small = $(id).querySelector("small");
+      $(id).innerHTML = "—" + (small ? small.outerHTML : "");
+    });
+    $("out-fcmax-sub").textContent = "Sin cargar";
+    aviso.className = "notice";
+    aviso.textContent = "Todavía falta el dato del test. El paso a paso está en la pestaña Cómo testear.";
+    return;
+  }
+
+  const rit = ritmoDe(VAM);
+  const vo2 = vo2maxDe(VAM);
+  const d5 = Math.round(VAM*1000/60*5);
+
+  /* Si el test QUE CARGÓ ya fue el de 5 minutos, decirle "equivale a recorrer
+     1200 m en 5 minutos" es repetirle lo que acaba de escribir. Esa traducción
+     sólo aporta cuando vino de otro test (un 1500, un 3000, una carrera). */
+  const esTest5 = $("t-tipo").value === "T300";
+  $("out-vam").innerHTML = fmt1(VAM) + '<small>km/h</small>';
+  $("out-vam-sub").innerHTML =
+    `Ritmo <b>${fmtRitmo(rit)} min/km</b> · perfil ${PERFILES[PERFIL].nombre}` +
+    (esTest5 ? "." : ` · equivale a recorrer <b>${d5} m</b> en un test de 5 minutos.`);
+  $("out-ritmo").innerHTML = fmtRitmo(rit) + '<small>/km</small>';
+  $("out-vo2").innerHTML = Math.round(vo2) + '<small>ml/kg/min</small>';
+  $("out-d5").innerHTML = d5 + '<small>m</small>';
+  // Misma razón: el recuadro "En 5 minutos" sobra si el test fue ese.
+  $("kpi-d5").classList.toggle("hidden", esTest5);
+
+  if(FCMAX){
+    $("out-fcmax").innerHTML = Math.round(FCMAX) + '<small>ppm</small>';
+    $("out-fcmax-sub").textContent = $("fc-formula").value === "medida" ? "Medida en test" : "Estimada";
+    $("out-fcres").innerHTML = FCREP
+      ? Math.round(FCMAX-FCREP) + '<small>ppm</small>'
+      : '—<small>ppm</small>';
+  } else {
+    $("out-fcmax").innerHTML = '—<small>ppm</small>';
+    $("out-fcmax-sub").textContent = "Sin cargar";
+    $("out-fcres").innerHTML = '—<small>ppm</small>';
+  }
+
+  // Aviso según la calidad del dato cargado.
+  const test = $("t-tipo").value === "VAM" ? null : leerTest();
+  if(!test){
+    aviso.className = "notice ok";
+    aviso.innerHTML = "VAM cargada a mano. Conviene volver a testear cada 8 a 12 semanas: el valor pierde vigencia.";
+  } else if(test.segundos < 200 || test.segundos > 1100){
+    /* Una carrera real no es un test mal hecho: el esfuerzo es genuino y va
+       bien dosificado. Merece otro texto, no el mismo reto. */
+    const esCarrera = $("t-tipo").value === "D5000" || $("t-tipo").value === "D10000";
+    aviso.className = esCarrera ? "notice" : "notice warn";
+    aviso.innerHTML = esCarrera
+      ? "Convertido desde una carrera. Es un buen punto de partida, porque el esfuerzo es real y va bien " +
+        "administrado. Con la salvedad de siempre: cuanto más larga la carrera, más pesa la resistencia y " +
+        "menos la potencia aeróbica, así que para seguir la VAM en el tiempo conviene el test de 5 minutos."
+      : "<b>Atención con este test.</b> Los esfuerzos de menos de 4 minutos o de más de 18 arrastran mucho de " +
+        "otra cosa (potencia anaeróbica en uno, resistencia pura en el otro) y la conversión pierde precisión. " +
+        "Sirve como referencia, pero el test de 5 minutos es el que manda.";
+  } else {
+    aviso.className = "notice ok";
+    aviso.innerHTML =
+      `Convertido desde un esfuerzo de <b>${fmtTiempo(test.segundos)}</b> sostenido al ` +
+      `<b>${fmt1(pctVam(test.segundos, PERFIL))} %</b> de la VAM. ` +
+      "Conviene repetir el mismo test, en el mismo lugar, cada 8 a 12 semanas.";
+  }
+}
+
+/** La tarjeta "Dónde estás parado". Se muestra sólo si hay con qué comparar. */
+function pintarPercentil(){
+  const card = $("card-perc");
+  const vo2 = vo2maxDe(VAM);
+  const r = percentilVO2(SEXO, EDAD, vo2);
+
+  if(!r){
+    card.classList.add("hidden");
+    return;
+  }
+  card.classList.remove("hidden");
+
+  const etq = etiquetaPercentil(r.pct);
+  const edadRedonda = Math.max(20, Math.min(79, Math.round(EDAD)));
+  const decada = Math.floor(edadRedonda/10)*10;
+  const franja = `${decada} a ${decada+9} años`;
+  // Sin artículo: cada frase de abajo le pone el suyo, que no es el mismo
+  // ("de cada 100 hombres" pero "del 95 % de los hombres").
+  const quienes = SEXO === "h" ? "hombres" : "mujeres";
+
+  $("perc-num").innerHTML = r.tope === "arriba" ? '95<small>+</small>' : String(r.pct);
+  $("perc-pin").style.left = Math.max(2, Math.min(98, r.pct)) + "%";
+  $("perc-etq").textContent = etq.t;
+  $("perc-etq").style.color = etq.c;
+  $("perc-sub").innerHTML =
+    `El VO₂ máx estimado es de <b>${Math.round(vo2)} ml/kg/min</b>. Así queda al lado del resto de la población.`;
+
+  let frase;
+  if(r.tope === "arriba"){
+    frase = `Queda <b>por encima del 95 %</b> de los ${quienes} de ${franja}. La tabla no llega más arriba: ` +
+            `a este nivel la referencia útil es el cronómetro, no la comparación.`;
+  } else {
+    frase = `Es mejor que el de <b>${r.pct} de cada 100</b> ${quienes} de ${franja}. ` +
+            `La mitad de ese grupo anda por los ${Math.round(r.mediana)} ml/kg/min.`;
+  }
+  if(r.fueraDeTabla){
+    frase += ` <span class="muted">(La tabla va de 20 a 79 años, así que la comparación toma el extremo más cercano.)</span>`;
+  }
+  $("perc-frase").innerHTML = frase;
+
+  $("perc-aviso").innerHTML =
+    "<b>La comparación es contra población general, no contra corredores.</b> La tabla sale de 7.783 tests de " +
+    "laboratorio en cinta, con máscara y análisis de gases, hechos a adultos comunes de 20 a 79 años en " +
+    "Estados Unidos (registro FRIEND, Kaminsky y col., 2015). Son valores <b>medidos</b>; el de acá es una " +
+    "estimación a partir del test, así que la comparación ubica pero no dictamina. Y entre gente que entrena " +
+    "todas las semanas estos percentiles se corren mucho para arriba: un 85 acá es lo normal en un grupo de " +
+    "running.";
+}
+
+function pintarZonas(){
+  const cont = $("zonas-cont");
+  const hero = $("zonas-hero");
+  const sub = $("zonas-sub");
+
+  if(!VAM){
+    cont.innerHTML = '<div class="notice">Con el test cargado en la pestaña <b>La VAM</b>, las zonas aparecen acá.</div>';
+    $("zonas-vam").innerHTML = '—<small>km/h</small>';
+    $("zonas-hero-sub").textContent = "";
+    sub.textContent = "Falta cargar el test en la pestaña anterior.";
+    hero.style.display = "none";
+    return;
+  }
+  hero.style.display = "";
+  $("zonas-vam").innerHTML = fmt1(VAM) + '<small>km/h</small>';
+
+  const baseTxt = BASE_FC === "karvonen"
+    ? `pulso por FC de reserva (Karvonen), sobre ${Math.round(FCMAX)} de máxima y ${Math.round(FCREP)} en reposo`
+    : (FCMAX ? `pulso sobre una FC máxima de ${Math.round(FCMAX)} ppm` : "sin datos de pulso cargados");
+  $("zonas-hero-sub").innerHTML =
+    `Ritmo a la VAM <b>${fmtRitmo(ritmoDe(VAM))} min/km</b> · ${baseTxt}.`;
+  sub.innerHTML = `Calculadas sobre una VAM de <b>${fmt1(VAM)} km/h</b> (${fmtRitmo(ritmoDe(VAM))} min/km).`;
+
+  let html = "";
+  for(const fase of FASES){
+    html += `<div class="fase ${fase.clase}">
+      <div class="fase-head">
+        <span class="fase-n">Fase ${fase.n}</span>
+        <span class="fase-t">${fase.titulo.split("· ")[1]}</span>
+        <span class="fase-d">${fase.desc}</span>
+      </div>`;
+
+    for(const z of ZONAS.filter((x)=>x.fase === fase.n)){
+      const vLo = VAM * z.vam[0]/100, vHi = VAM * z.vam[1]/100;
+      const rLo = fmtRitmo(ritmoDe(vHi)), rHi = fmtRitmo(ritmoDe(vLo));  // más rápido primero
+      const rangoFc = BASE_FC === "karvonen" ? z.fcr : z.fcmax;
+
+      let fcTxt = "—";
+      if(rangoFc && FCMAX){
+        const a = ppm(rangoFc[0], FCMAX, FCREP, BASE_FC);
+        const b = ppm(rangoFc[1], FCMAX, FCREP, BASE_FC);
+        fcTxt = `${a} – ${b}`;
+      } else if(!rangoFc){
+        fcTxt = "no aplica";
+      }
+      const pctFcTxt = rangoFc ? `${rangoFc[0]} – ${rangoFc[1]} %` : "no aplica";
+
+      /* Las zonas de los extremos no tienen piso ni techo real: mostrarlas
+         como "45 – 62 %" inventa un límite que no existe. */
+      let etiqueta;
+      if(z.vam[0] <= 45) etiqueta = `hasta ${z.vam[1]} % VAM`;
+      else if(z.vam[1] >= 115) etiqueta = `más de ${z.vam[0]} % VAM`;
+      else etiqueta = `${z.vam[0]} – ${z.vam[1]} % VAM`;
+
+      html += `<div class="zona">
+        <div class="z-head">
+          <span class="z-id">${z.id}</span>
+          <span class="z-nom">${z.nombre}</span>
+          <span class="z-eq">${z.eq}</span>
+          <span class="z-vam">${etiqueta}</span>
+        </div>
+        <div class="z-datos">
+          <div class="z-dato"><span class="z-dl">Ritmo min/km</span><span class="z-dv hi">${rLo} – ${rHi}</span></div>
+          <div class="z-dato"><span class="z-dl">Velocidad km/h</span><span class="z-dv">${fmt1(vLo)} – ${fmt1(vHi)}</span></div>
+          <div class="z-dato"><span class="z-dl">Pulso ppm</span><span class="z-dv">${fcTxt}</span></div>
+          <div class="z-dato"><span class="z-dl">${BASE_FC === "karvonen" ? "% FC reserva" : "% FC máx"}</span><span class="z-dv">${pctFcTxt}</span></div>
+          <div class="z-dato"><span class="z-dl">RPE 0-10</span><span class="z-dv">${z.rpe}</span></div>
+          <div class="z-dato"><span class="z-dl">Lactato mmol/L</span><span class="z-dv">${z.lac || "no aplica"}</span></div>
+        </div>
+        <div class="z-ses">
+          <div class="z-ses-l"><span class="z-ses-k">Acá caen</span><span class="z-ses-v">${z.sesiones.aca}</span></div>
+          <div class="z-ses-l"><span class="z-ses-k">Bordes</span><span class="z-ses-v dim">${z.sesiones.cruza}</span></div>
+        </div>
+        <details class="z-mas">
+          <summary>Para qué sirve y cómo se entrena</summary>
+          <div class="z-mas-body">
+            <p>${z.para}</p>
+            <p>${z.como}</p>
+          </div>
+        </details>
+      </div>`;
+    }
+    html += "</div>";
+  }
+  cont.innerHTML = html;
+}
+
+function pintarRitmos(){
+  const body = $("ritmos-body");
+  if(!VAM){
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--txt-4)">Falta cargar el test.</td></tr>';
+    $("rc-ritmo").textContent = "—";
+    $("rc-tiempo").textContent = "—";
+    return;
+  }
+
+  body.innerHTML = DISTANCIAS.map((d)=>{
+    const r = tiempoDeCarrera(d.km, VAM, PERFIL);
+    const b = bandaDe(d.km);
+    const seg = r.seg, segKm = seg/d.km;
+    const rango = (v)=>b ? [v*(1-b[0]), v*(1+b[1])] : null;
+    const rRit = rango(segKm), rTie = rango(seg);
+    return `<tr class="${d.destacada ? "destacada" : ""}">
+      <td>${d.n}</td>
+      <td class="hi">${fmtRitmo(segKm)}${rRit ? `<span class="rango">${fmtRitmo(rRit[0])} a ${fmtRitmo(rRit[1])}</span>` : ""}</td>
+      <td>${fmtTiempo(seg)}${rTie ? `<span class="rango">${fmtTiempo(rTie[0])} a ${fmtTiempo(rTie[1])}</span>` : ""}</td>
+      <td>${fmt1(r.kmh)}</td>
+      <td>${fmt1(r.pct)} %</td>
+    </tr>`;
+  }).join("");
+
+  const km = num($("rc-dist"));
+  const nota = $("rc-nota");
+  if(km && km > 0.2 && km <= 100){
+    const r = tiempoDeCarrera(km, VAM, PERFIL);
+    const b = bandaDe(km);
+    const segKm = r.seg/km;
+    $("rc-ritmo").innerHTML = fmtRitmo(segKm) +
+      (b ? `<span class="rango">${fmtRitmo(segKm*(1-b[0]))} a ${fmtRitmo(segKm*(1+b[1]))}</span>` : "");
+    $("rc-tiempo").innerHTML = fmtTiempo(r.seg) +
+      (b ? `<span class="rango">${fmtTiempo(r.seg*(1-b[0]))} a ${fmtTiempo(r.seg*(1+b[1]))}</span>` : "");
+    /* Más allá del maratón la cuenta es extrapolación y hay que decirlo: no
+       existe validación publicada de predicción de ultra desde un test corto. */
+    nota.style.display = b ? "none" : "";
+    if(!b) nota.innerHTML =
+      "Más allá del maratón esto es una <b>extrapolación</b>. No hay ninguna validación publicada de " +
+      "predicción de ultradistancia a partir de un test corto: lo mejor disponible predice 100 km desde un " +
+      "maratón reciente, con un error del 13 al 14 %. Sirve para ubicarse, no como ritmo objetivo.";
+  } else {
+    $("rc-ritmo").innerHTML = "—";
+    $("rc-tiempo").innerHTML = "—";
+    nota.style.display = "none";
+  }
+}
+
+// ============================================================
+// 7 · UTILIDADES
+// ============================================================
+
+/* --- Ritmo / tiempo / distancia: se completa el que falta --- */
+let uUltimo = [];   // orden en que se fueron tocando los campos
+function calcularRTD(cambiado){
+  const dEl = $("u-dist"), rEl = $("u-ritmo"), tEl = $("u-tiempo");
+  if(cambiado){
+    uUltimo = uUltimo.filter((x)=>x !== cambiado);
+    uUltimo.push(cambiado);
+    if(uUltimo.length > 2) uUltimo.shift();
+  }
+
+  const d = num(dEl);
+  const r = leerRitmo(rEl.value);
+  const t = leerTiempo(tEl.value);
+  const msg = $("u-msg"), extra = $("u-extra");
+
+  // El campo a calcular es el que NO está entre los dos últimos tocados.
+  const objetivo = ["u-dist","u-ritmo","u-tiempo"].find((id)=>!uUltimo.includes(id)) || null;
+
+  let ok = false;
+  if(objetivo === "u-tiempo" && d && r){ tEl.value = fmtTiempo(d*r); ok = true; }
+  else if(objetivo === "u-dist" && t && r){ dEl.value = (t/r).toFixed(2); ok = true; }
+  else if(objetivo === "u-ritmo" && d && t && d > 0){ rEl.value = fmtRitmo(t/d); ok = true; }
+
+  if(ok){
+    const dd = num(dEl), rr = leerRitmo(rEl.value), tt = leerTiempo(tEl.value);
+    msg.textContent = "";
+    extra.style.display = "";
+    let txt = `<b>${fmt2(dd)} km</b> a <b>${fmtRitmo(rr)} min/km</b> son <b>${fmtTiempo(tt)}</b> · ` +
+              `${fmt1(3600/rr)} km/h · ${fmt2(dd/1.60934)} millas · ${fmtRitmo(rr*1.60934)} min/milla.`;
+    if(VAM) txt += ` Es el <b>${fmt1(3600/rr/VAM*100)} %</b> de la VAM.`;
+    extra.innerHTML = txt;
+  } else {
+    msg.textContent = "Se deja vacío el que se quiere calcular.";
+    extra.style.display = "none";
+  }
+}
+
+/* --- Desnivel equivalente --- */
+function calcularDesnivel(){
+  const okm = num($("d-obj-km")), odp = num($("d-obj-dp"));
+  const skm = num($("d-ses-km"));
+  const facCrudo = parseFloat($("d-intencion").value);
+  const fac = isFinite(facCrudo) ? facCrudo : 1;   // sin factor valido, se iguala la carrera
+  const nota = $("d-nota");
+
+  if(!okm || okm <= 0 || odp == null || odp < 0){
+    $("d-densidad").textContent = "—";
+    $("d-pendiente").textContent = "—";
+    $("d-objetivo").textContent = "—";
+    nota.textContent = "Faltan la distancia y el desnivel de la carrera objetivo.";
+    return;
+  }
+
+  const densidad = odp / okm;                 // metros de D+ por km
+  // Pendiente media de subida: el D+ se reparte sobre la mitad del recorrido
+  // (la otra mitad, a grandes rasgos, es bajada o llano).
+  const pendiente = odp / (okm*1000/2) * 100;
+
+  $("d-densidad").textContent = Math.round(densidad);
+  $("d-pendiente").textContent = fmt1(pendiente);
+
+  if(skm && skm > 0){
+    const dpSesion = Math.round(densidad * skm * fac);
+    $("d-objetivo").textContent = dpSesion;
+    const pct = Math.round(fac*100);
+    nota.innerHTML =
+      `Para que <b>${fmt1(skm)} km</b> tengan el ${pct} % de la dureza por kilómetro de una carrera de ` +
+      `<b>${fmt1(okm)} km con ${Math.round(odp)} m de D+</b>, hay que buscar <b>${dpSesion} m</b> de desnivel ` +
+      `positivo.` +
+      (dpSesion >= 100 ? ` Equivale a subir ${Math.round(dpSesion/50)} veces una cuesta de 50 m.` : "");
+  } else {
+    $("d-objetivo").textContent = "—";
+    nota.innerHTML =
+      `La carrera tiene <b>${Math.round(densidad)} m de D+ por kilómetro</b>. ` +
+      `Falta la distancia de la sesión para saber cuánto desnivel buscar.`;
+  }
+}
+
+/* --- Fechas --- */
+function calcularFechas(){
+  const a = $("f-ini").value, b = $("f-fin").value;
+  const nota = $("f-nota");
+  if(!a || !b){
+    ["f-dias","f-semanas","f-meses","f-utiles"].forEach((id)=>{ $(id).textContent = "—"; });
+    nota.textContent = "Faltan las dos fechas.";
+    return;
+  }
+  const d1 = new Date(a + "T00:00:00"), d2 = new Date(b + "T00:00:00");
+  if(isNaN(d1) || isNaN(d2)) return;
+
+  const dias = Math.round((d2 - d1) / 86400000);
+  const signo = dias < 0 ? -1 : 1;
+  const abs = Math.abs(dias);
+
+  const sem = Math.floor(abs/7), rest = abs % 7;
+  /* Meses de calendario, como los cuenta la gente (no dividiendo por 30).
+     Se cuenta siempre de la fecha temprana a la tardia: si se hace al reves,
+     el ajuste por el dia del mes resta cuando tendria que sumar. */
+  const [pri, seg] = dias < 0 ? [d2, d1] : [d1, d2];
+  let meses = (seg.getFullYear()-pri.getFullYear())*12 + (seg.getMonth()-pri.getMonth());
+  if(seg.getDate() < pri.getDate()) meses--;
+  meses = Math.max(0, meses);
+
+  $("f-dias").textContent = signo < 0 ? "−" + abs : abs;
+  $("f-semanas").textContent = rest ? `${sem} y ${rest} d` : String(sem);
+  $("f-meses").textContent = String(meses);
+
+  // Semanas útiles: las de trabajo real, sacando el afinamiento previo
+  // a la carrera (2 semanas si hay margen, 1 si es corto).
+  const taper = abs >= 56 ? 2 : (abs >= 28 ? 1 : 0);
+  const utiles = Math.max(0, sem - taper);
+  // Mirando al pasado no hay nada que planificar: el campo no aplica.
+  $("f-utiles").textContent = dias > 0 ? String(utiles) : "—";
+
+  if(dias < 0){
+    nota.innerHTML = `La segunda fecha es <b>anterior</b> a la primera: pasaron <b>${abs} días</b> (${sem} semanas).`;
+  } else if(abs === 0){
+    nota.textContent = "Es hoy.";
+  } else {
+    const plural = (x, uno, varios) => x + " " + (x === 1 ? uno : varios);
+    let t = `${abs === 1 ? "Falta" : "Faltan"} <b>${plural(abs,"día","días")}</b> = <b>${plural(sem,"semana","semanas")}` +
+            `${rest ? " y " + plural(rest,"día","días") : ""}</b>.`;
+    if(taper) t += ` Descontando ${taper} semana${taper>1?"s":""} de afinamiento, quedan <b>${utiles} semanas de trabajo real</b>.`;
+    if(abs >= 112) t += " Alcanza para un ciclo completo: base, específico y puesta a punto.";
+    else if(abs >= 56) t += " Alcanza para una preparación específica, no para construir base desde cero.";
+    else if(abs >= 21) t += " Es poco para producir cambios de fondo: conviene afinar y llegar entero.";
+    else t += " Recta final: la forma ya está hecha, queda administrarla.";
+    nota.innerHTML = t;
+  }
+}
+
+/* --- Conversor km / millas --- */
+const MI = 1.60934;
+let convBloqueado = false;
+function conv(desde){
+  if(convBloqueado) return;
+  convBloqueado = true;
+  const km = num($("c-km")), mi = num($("c-mi"));
+  const rkm = leerRitmo($("c-rkm").value), rmi = leerRitmo($("c-rmi").value);
+
+  if(desde === "km") $("c-mi").value = km != null ? +(km/MI).toFixed(2) : "";
+  if(desde === "mi") $("c-km").value = mi != null ? +(mi*MI).toFixed(2) : "";
+  if(desde === "rkm") $("c-rmi").value = rkm != null ? fmtRitmo(rkm*MI) : "";
+  if(desde === "rmi") $("c-rkm").value = rmi != null ? fmtRitmo(rmi/MI) : "";
+  convBloqueado = false;
+}
+
+// ============================================================
+// 8 · GUARDAR / RESTAURAR
+// ============================================================
+const LS_KEY = "ea-zonas-calc-v1";
+const CAMPOS = ["t-tipo","t-dist","t-tiempo","t-vam","t-perfil",
+                "fc-sexo","fc-fnac","fc-edad","fc-formula","fc-max","fc-rep","fc-base",
+                "d-obj-km","d-obj-dp","d-ses-km","d-intencion"];
+
+function guardar(){
+  try{
+    const estado = {};
+    CAMPOS.forEach((id)=>{ estado[id] = $(id).value; });
+    localStorage.setItem(LS_KEY, JSON.stringify(estado));
+    avisoBoton($("btn-save"), "Guardado");
+  }catch(e){ avisoBoton($("btn-save"), "No se pudo"); }
+}
+
+function restaurar(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const estado = JSON.parse(raw);
+    CAMPOS.forEach((id)=>{ if(estado[id] != null && estado[id] !== "") $(id).value = estado[id]; });
+  }catch(e){ /* si el guardado está roto, arrancamos limpio */ }
+}
+
+function reiniciar(){
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  CAMPOS.forEach((id)=>{
+    const el = $(id);
+    if(el.tagName === "SELECT") el.selectedIndex = 0;
+    else el.value = "";
+  });
+  $("t-perfil").value = "medio";
+  $("fc-formula").value = "tanaka";
+  $("fc-base").value = "fcmax";
+  $("d-intencion").value = "1";
+  ["u-dist","u-ritmo","u-tiempo","c-km","c-mi","c-rkm","c-rmi","rc-dist","f-ini","f-fin"].forEach((id)=>{ $(id).value = ""; });
+  uUltimo = [];
+  ponerFechasPorDefecto();
+  calcular(); calcularRTD(); calcularDesnivel(); calcularFechas();
+}
+
+/** Cambia el texto de un botón un segundo, para confirmar la acción. */
+function avisoBoton(btn, txt){
+  const nodo = btn.childNodes[btn.childNodes.length-1];
+  const previo = nodo.textContent;
+  nodo.textContent = " " + txt;
+  setTimeout(()=>{ nodo.textContent = previo; }, 1400);
+}
+
+/** Zonas en texto plano, para pegar en el cuaderno o mandar por mensaje. */
+function zonasComoTexto(){
+  if(!VAM) return "";
+  const L = [];
+  L.push("ZONAS DE ENTRENAMIENTO");
+  L.push(`VAM ${fmt1(VAM)} km/h (${fmtRitmo(ritmoDe(VAM))} min/km) · perfil ${PERFILES[PERFIL].nombre}`);
+  if(FCMAX) L.push(`FC máx ${Math.round(FCMAX)} ppm${FCREP ? " · FC reposo " + Math.round(FCREP) + " ppm" : ""}`);
+  L.push("");
+  for(const fase of FASES){
+    L.push(fase.titulo.toUpperCase());
+    for(const z of ZONAS.filter((x)=>x.fase === fase.n)){
+      const vLo = VAM*z.vam[0]/100, vHi = VAM*z.vam[1]/100;
+      const rangoFc = BASE_FC === "karvonen" ? z.fcr : z.fcmax;
+      let fc = "";
+      if(rangoFc && FCMAX) fc = ` · ${ppm(rangoFc[0],FCMAX,FCREP,BASE_FC)}-${ppm(rangoFc[1],FCMAX,FCREP,BASE_FC)} ppm`;
+      L.push(`${z.id} ${z.nombre}: ${fmtRitmo(ritmoDe(vHi))}-${fmtRitmo(ritmoDe(vLo))} min/km${fc} · RPE ${z.rpe}`);
+    }
+    L.push("");
+  }
+  L.push("emilianosalasporta.cloud");
+  return L.join("\n");
+}
+
+function copiarZonas(){
+  const txt = zonasComoTexto();
+  const etiqueta = $("btn-copiar-txt");
+  if(!txt){ etiqueta.textContent = "Falta cargar el test"; setTimeout(()=>{etiqueta.textContent="Copiar como texto";},1800); return; }
+  const listo = ()=>{ etiqueta.textContent = "Copiado"; setTimeout(()=>{etiqueta.textContent="Copiar como texto";},1600); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(listo, copiaAMano);
+  } else copiaAMano();
+
+  function copiaAMano(){
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); listo(); }catch(e){ etiqueta.textContent = "No se pudo copiar"; }
+    document.body.removeChild(ta);
+  }
+}
+
+/* ------------------------------------------------------------
+   Botones de subir/bajar propios.
+   Los del navegador son feos y no se les puede dar estilo, así que
+   los apagamos por CSS y ponemos estos. Se inyectan solos en cada
+   campo numérico: si mañana agrego un campo, ya los tiene.
+   ------------------------------------------------------------ */
+const ICONO_MENOS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+const ICONO_MAS   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+function ponerSteppers(){
+  document.querySelectorAll(".field > input[type=number]").forEach((inp)=>{
+    const envoltorio = document.createElement("span");
+    envoltorio.className = "stepper-wrap";
+    inp.parentNode.insertBefore(envoltorio, inp);
+    envoltorio.appendChild(inp);
+
+    const st = document.createElement("span");
+    st.className = "stepper";
+    st.innerHTML =
+      `<button type="button" class="stp" data-paso="-1" tabindex="-1" aria-label="Bajar">${ICONO_MENOS}</button>` +
+      `<button type="button" class="stp" data-paso="1" tabindex="-1" aria-label="Subir">${ICONO_MAS}</button>`;
+    envoltorio.appendChild(st);
+
+    st.addEventListener("click",(ev)=>{
+      const btn = ev.target.closest(".stp");
+      if(!btn) return;
+      const paso = parseFloat(inp.step) || 1;
+      const min = inp.min === "" ? -Infinity : parseFloat(inp.min);
+      const max = inp.max === "" ? Infinity : parseFloat(inp.max);
+
+      let v = parseFloat(String(inp.value).replace(",", "."));
+      if(!isFinite(v)){
+        // Campo vacío: el primer clic arranca desde el mínimo o desde cero.
+        v = isFinite(min) && min > 0 ? min : 0;
+      } else {
+        v = v + Number(btn.dataset.paso)*paso;
+      }
+      v = Math.min(max, Math.max(min, v));
+
+      // Redondeamos al paso: si no, 0,1 + 0,2 escribe 0.30000000000000004.
+      const dec = (String(paso).split(".")[1] || "").length;
+      inp.value = dec ? v.toFixed(dec) : String(Math.round(v));
+
+      inp.dispatchEvent(new Event("input", { bubbles:true }));
+      inp.dispatchEvent(new Event("change", { bubbles:true }));
+    });
+  });
+}
+
+function ponerFechasPorDefecto(){
+  if(!$("f-ini").value){
+    /* toISOString() pasa a UTC: de noche, en Argentina, escribia el dia
+       siguiente. La fecha local se arma a mano. */
+    const h = new Date();
+    const dd = (x)=>String(x).padStart(2,"0");
+    $("f-ini").value = `${h.getFullYear()}-${dd(h.getMonth()+1)}-${dd(h.getDate())}`;
+  }
+}
+
+// ============================================================
+// 9 · ARRANQUE
+// ============================================================
+document.querySelectorAll(".tab").forEach((tab)=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach((t)=>t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach((p)=>p.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelector(`.panel[data-panel="${tab.dataset.tab}"]`).classList.add("active");
+  });
+});
+
+function irA(nombre){
+  document.querySelector(`.tab[data-tab="${nombre}"]`).click();
+  /* scrollIntoView, no scrollTo: adentro del marco de la web el que tiene que
+     moverse es el scroll del padre, y este es el único que lo logra. */
+  document.querySelector(".tabs").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+$("btn-ir-zonas").addEventListener("click", ()=>irA("zonas"));
+$("btn-print").addEventListener("click", ()=>window.print());
+$("btn-copiar").addEventListener("click", copiarZonas);
+$("btn-save").addEventListener("click", guardar);
+$("btn-reset").addEventListener("click", reiniciar);
+
+["t-tipo","t-dist","t-tiempo","t-vam","t-perfil",
+ "fc-sexo","fc-fnac","fc-edad","fc-formula","fc-max","fc-rep","fc-base"].forEach((id)=>{
+  $(id).addEventListener("input", calcular);
+  $(id).addEventListener("change", calcular);
+});
+$("rc-dist").addEventListener("input", pintarRitmos);
+
+["u-dist","u-ritmo","u-tiempo"].forEach((id)=>{
+  $(id).addEventListener("input", ()=>calcularRTD(id));
+});
+$("u-limpiar").addEventListener("click", ()=>{
+  ["u-dist","u-ritmo","u-tiempo"].forEach((id)=>{ $(id).value = ""; });
+  uUltimo = []; calcularRTD();
+});
+
+["d-obj-km","d-obj-dp","d-ses-km","d-intencion"].forEach((id)=>{
+  $(id).addEventListener("input", calcularDesnivel);
+  $(id).addEventListener("change", calcularDesnivel);
+});
+["f-ini","f-fin"].forEach((id)=>{ $(id).addEventListener("input", calcularFechas); });
+
+$("c-km").addEventListener("input", ()=>conv("km"));
+$("c-mi").addEventListener("input", ()=>conv("mi"));
+$("c-rkm").addEventListener("input", ()=>conv("rkm"));
+$("c-rmi").addEventListener("input", ()=>conv("rmi"));
+
+ponerSteppers();
+restaurar();
+ponerFechasPorDefecto();
+calcular();
+calcularRTD();
+calcularDesnivel();
+calcularFechas();
+$("foot-stamp").textContent = "actualizado " + new Date().toLocaleDateString("es-AR");
+</script>
+
+<script>
+/* Le avisa a la web qué alto tiene, para que el marco se ajuste solo.
+   Si abrís este archivo suelto (sin internet), esto no hace nada. */
+(function () {
+  if (window.parent === window) return;
+
+  /* Embebida: soltamos el alto atado a la pantalla. `html,body{height:100%}` y
+     `body{min-height:100vh}` sirven cuando abrís el archivo suelto, pero acá
+     adentro 100vh ES el alto del marco: el documento copiaría ese alto y se lo
+     reportaría de vuelta al padre, trabándolo para siempre. */
+  var soltar = document.createElement('style');
+  soltar.textContent = 'html,body{height:auto!important;min-height:0!important}';
+  document.head.appendChild(soltar);
+
+  var ultimo = -1;
+  var medir = function () {
+    var b = document.body;
+    return Math.ceil(b.getBoundingClientRect().height + b.offsetTop);
+  };
+  var enviar = function (forzar) {
+    var alto = medir();
+    if (!forzar && alto === ultimo) return;
+    ultimo = alto;
+    window.parent.postMessage({ tipo: 'alto-herramienta', alto: alto }, '*');
+  };
+  window.addEventListener('load', function () { enviar(true); });
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () { enviar(false); }).observe(document.body);
+  }
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.tipo === 'pedir-alto') enviar(true);
+  });
+})();
+</script>
+</body>
+</html>

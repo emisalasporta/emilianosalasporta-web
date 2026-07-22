@@ -104,6 +104,66 @@ code, kbd, samp {
 
 ::selection { background: var(--accent); color: var(--on-accent); }
 
+/* ============================================================
+   Controles de formulario — reglas GLOBALES
+   Todo lo que sea <select>, <option> o <input type=number> del
+   sitio pasa por acá. Si mañana aparece un formulario nuevo,
+   ya nace legible y sin los controles viejos de Windows.
+
+   El desplegable abierto lo dibuja el SISTEMA OPERATIVO, no
+   nosotros: el CSS de la página casi no lo toca. Lo único que
+   el navegador sí escucha es `color-scheme`, que le dice "esta
+   página es oscura, dibujá los controles nativos en oscuro".
+   Sin eso, Windows pinta la lista en claro y las etiquetas de
+   grupo quedan azul sobre azul: ilegibles.
+   ============================================================ */
+select, option, optgroup, input, textarea, button {
+  color-scheme: dark;
+  font-family: inherit;
+}
+/* Y por si algún navegador igual ignora color-scheme, dejamos
+   los colores puestos a mano — incluidos los <optgroup>, que
+   son los que se rompían. */
+option {
+  background-color: var(--surface-2, #181b26);
+  color: var(--text, #e7ecf3);
+}
+optgroup {
+  background-color: var(--bg, #0a0b10);
+  color: var(--muted, #8a93a6);
+  font-style: normal;
+  font-weight: 600;
+}
+option:checked,
+option:hover {
+  background-color: var(--accent, #2fb8ff);
+  color: var(--on-accent, #062229);
+}
+
+/* Las flechitas de subir/bajar de los campos numéricos las dibuja
+   el navegador y no hay forma de darles estilo: son de otra época.
+   Las apagamos en todos lados. Donde hace falta poder sumar y
+   restar, ponemos nuestros propios botones. */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+/* El ícono del calendario de <input type=date> viene negro sobre
+   fondo oscuro. Lo invertimos para que se vea. */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.55);
+  cursor: pointer;
+}
+input[type='date']::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) opacity(1);
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
