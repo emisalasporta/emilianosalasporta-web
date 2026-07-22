@@ -29,7 +29,7 @@ export const HERRAMIENTAS: Herramienta[] = [
     slug: 'calculadora-zonas',
     title: 'Calculadora de Zonas',
     summary:
-      'Un test de VAM de cinco minutos, cargado acá, y salen los ritmos, las pulsaciones y las zonas de entrenamiento.',
+      'Un test de campo o una carrera reciente, cargados acá, y salen las zonas de entrenamiento con su ritmo, su pulso y su esfuerzo percibido.',
     /* Texto de Emiliano. Va en varios párrafos: la página los separa sola. */
     description: `La VAM (velocidad aeróbica máxima) es la velocidad mínima a la que se alcanza el máximo consumo de oxígeno que el cuerpo puede procesar.
 
