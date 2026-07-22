@@ -480,13 +480,16 @@ table.tabla.tabla-ritmos th,table.tabla.tabla-ritmos td{white-space:normal}
    recortarlos. Ahi conviene soltar el ancho fijo y dejar que la tabla scrollee
    adentro de su caja, que para eso .tabla-wrap tiene overflow-x. */
 @media(max-width:620px){
-  table.tabla.tabla-ritmos{table-layout:auto;min-width:470px}
+  table.tabla.tabla-ritmos{table-layout:auto;min-width:520px}
   table.tabla.tabla-ritmos th,table.tabla.tabla-ritmos td{white-space:nowrap;padding-left:10px;padding-right:10px}
 }
 table.tabla td .rango{
   display:block;margin-top:3px;
   font-family:var(--font-mono);font-size:10.5px;font-weight:400;
   letter-spacing:.2px;color:var(--txt-4);
+}
+table.tabla td .rango.zc{
+  font-family:var(--font-body);font-size:10.5px;letter-spacing:0;color:var(--txt-3);
 }
 .field-val .rango{
   display:block;margin-top:3px;
@@ -1233,8 +1236,8 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <div class="tabla-wrap">
         <table class="tabla tabla-ritmos">
           <colgroup>
-            <col style="width:23%"><col style="width:25%"><col style="width:25%">
-            <col style="width:12%"><col style="width:15%">
+            <col style="width:22%"><col style="width:24%"><col style="width:24%">
+            <col style="width:11%"><col style="width:19%">
           </colgroup>
           <thead>
             <tr>
@@ -1242,7 +1245,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
               <th>Ritmo · min/km</th>
               <th>Tiempo</th>
               <th>km/h</th>
-              <th>% de la VAM</th>
+              <th>% VAM · zona</th>
             </tr>
           </thead>
           <tbody id="ritmos-body">
@@ -1271,6 +1274,19 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <details class="mas">
         <summary>Cómo leer esta tabla</summary>
         <div class="mas-body">
+          <p>
+            <b>La columna de la zona es la que sirve para entrenar.</b> Un <i>ritmo de 10K</i> no es una
+            intensidad fija: es la que a cada corredor le toca según lo que le <b>dure</b> su 10K. Por eso la
+            misma pasada de 1000 metros a ritmo de 10K no entrena exactamente lo mismo en dos personas de
+            nivel distinto, y por eso la tabla dice en qué zona cae cada ritmo. Si lo que se busca es una
+            adaptación concreta, conviene prescribir por zona; si lo que se prepara es una carrera, por ritmo
+            de carrera.
+          </p>
+          <p>
+            <b>Cuando el rango cruza a la zona de al lado.</b> Los bordes entre zonas no son paredes. Si el
+            centro cae cerca de uno, el extremo lento del rango puede quedar del otro lado. La referencia es
+            el centro; el rango es para no volverse loco persiguiendo el segundo exacto.
+          </p>
           <p>
             <b>El número grande es el centro; el rango de abajo es el margen razonable.</b> Para una pasada a
             ritmo de 10K, cualquier ritmo dentro de esa banda es ritmo de 10K. Buscar el segundo exacto es
@@ -1982,6 +1998,22 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     </div>
   </div>
 
+  <!-- QUÉ CAMBIÓ — para que el que tiene una copia descargada lo note. -->
+  <details class="mas solo-pantalla" style="margin-bottom:18px">
+    <summary>Qué cambió en esta versión</summary>
+    <div class="mas-body">
+      <p>
+        <b>v1.1 · 22-07-2026.</b> Cada ritmo de carrera dice ahora en qué zona cae, y viene con su rango.
+        Se sumó el protocolo de cada test, desplegable. Se sacó el 50K, que no tiene validación publicada.
+        Se corrigió el porcentaje de la VAM que la pantalla le atribuía al 10K, que era falso para dos de
+        cada tres corredores. Arreglos en las utilidades.
+      </p>
+      <p>
+        <b>v1.0 · 07-2026.</b> Primera versión publicada.
+      </p>
+    </div>
+  </details>
+
   <!-- FIRMA — el motor escribe el sello en #foot-stamp, ese id no se toca. -->
   <div class="footnote firma">
     <span class="marca-logo firma-logo" aria-hidden="true"></span>
@@ -1989,7 +2021,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <span class="firma-nombre"><b>emiliano</b> salas porta</span>
       <span class="firma-sitio">emilianosalasporta.cloud</span>
     </span>
-    <span class="firma-meta">Calculadora de Zonas v1.0 · <span id="foot-stamp"></span></span>
+    <span class="firma-meta">Calculadora de Zonas <span id="foot-stamp"></span></span>
   </div>
 </div>
 
@@ -2001,6 +2033,14 @@ details.mas .mas-body p:last-child{margin-bottom:0}
 "use strict";
 
 const $ = (id) => document.getElementById(id);
+
+/* Versión de la herramienta. Sale en el pie y también en el papel, así el que
+   se guardó una copia puede darse cuenta de que la suya quedó vieja.
+   VA A MANO A PROPÓSITO: antes acá había un `new Date()`, o sea que el archivo
+   descargado mostraba siempre la fecha del día en que lo abrías y parecía
+   recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
+   una línea en el desplegable "Qué cambió". */
+const VERSION = { n:"1.1", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
@@ -2283,6 +2323,21 @@ const ZONAS = [
          "<b>Frecuencia.</b> Dos sesiones intensas por semana como máximo.",
   },
 ];
+
+/* Etiqueta corta de cada zona, para que entre en la columna de la tabla. */
+const ZONA_CORTA = { Z1:"regenerativo", Z2:"endurance", Z3:"tempo", Z4:"umbral", Z5:"VO₂ máx" };
+
+/** ¿En qué zona cae un porcentaje de la VAM?
+    Sirve para etiquetar los ritmos de carrera, y esa etiqueta es la que
+    contesta la pregunta práctica: una pasada "a ritmo de 10K" NO es la misma
+    intensidad para todo el mundo, porque el 10K no le dura lo mismo a todos.
+    Con la curva de hoy el 10K cae en Z4 de punta a punta del rango de VAM,
+    pero el 5K cambia de zona según el nivel y el maratón también. */
+function zonaDePct(pct){
+  if(!(pct > 0)) return null;
+  for(const z of ZONAS){ if(pct >= z.vam[0] && pct < z.vam[1]) return z; }
+  return pct < ZONAS[0].vam[0] ? ZONAS[0] : ZONAS[ZONAS.length-1];
+}
 
 // Distancias de la tabla de ritmos de carrera.
 const DISTANCIAS = [
@@ -2833,6 +2888,12 @@ function pintarRitmos(){
     return;
   }
 
+  /* La etiqueta de zona que va debajo del porcentaje. */
+  const zEtq = (pct)=>{
+    const z = zonaDePct(pct);
+    return z ? `<span class="rango zc">${z.id} · ${ZONA_CORTA[z.id]}</span>` : "";
+  };
+
   body.innerHTML = DISTANCIAS.map((d)=>{
     const r = tiempoDeCarrera(d.km, VAM, PERFIL);
     const b = bandaDe(d.km);
@@ -2844,7 +2905,7 @@ function pintarRitmos(){
       <td class="hi">${fmtRitmo(segKm)}${rRit ? `<span class="rango">${fmtRitmo(rRit[0])} a ${fmtRitmo(rRit[1])}</span>` : ""}</td>
       <td>${fmtTiempo(seg)}${rTie ? `<span class="rango">${fmtTiempo(rTie[0])} a ${fmtTiempo(rTie[1])}</span>` : ""}</td>
       <td>${fmt1(r.kmh)}</td>
-      <td>${fmt1(r.pct)} %</td>
+      <td>${fmt1(r.pct)} %${zEtq(r.pct)}</td>
     </tr>`;
   }).join("");
 
@@ -2855,7 +2916,8 @@ function pintarRitmos(){
     const b = bandaDe(km);
     const segKm = r.seg/km;
     $("rc-ritmo").innerHTML = fmtRitmo(segKm) +
-      (b ? `<span class="rango">${fmtRitmo(segKm*(1-b[0]))} a ${fmtRitmo(segKm*(1+b[1]))}</span>` : "");
+      (b ? `<span class="rango">${fmtRitmo(segKm*(1-b[0]))} a ${fmtRitmo(segKm*(1+b[1]))}</span>` : "") +
+      zEtq(r.pct);
     $("rc-tiempo").innerHTML = fmtTiempo(r.seg) +
       (b ? `<span class="rango">${fmtTiempo(r.seg*(1-b[0]))} a ${fmtTiempo(r.seg*(1+b[1]))}</span>` : "");
     /* Más allá del maratón la cuenta es extrapolación y hay que decirlo: no
@@ -3231,7 +3293,7 @@ calcular();
 calcularRTD();
 calcularDesnivel();
 calcularFechas();
-$("foot-stamp").textContent = "actualizado " + new Date().toLocaleDateString("es-AR");
+$("foot-stamp").textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 </script>
 
 <script>

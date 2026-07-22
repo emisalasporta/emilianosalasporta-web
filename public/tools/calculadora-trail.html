@@ -1030,7 +1030,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
       <div class="marca-nombre"><b>emiliano</b> salas porta</div>
       <div class="marca-sitio">emilianosalasporta.cloud</div>
     </div>
-    <div class="marca-meta">Calculadora de Trail v1.0 · <span id="foot-stamp"></span></div>
+    <div class="marca-meta">Calculadora de Trail <span id="foot-stamp"></span></div>
   </div>
 </div>
 
@@ -1838,6 +1838,20 @@ function init(){
   recompute(false);
 }
 init();
+</script>
+
+<script>
+/* Sello de versión. Va acá afuera y NO adentro del motor porque el motor no se
+   toca. El motor escribe en #foot-stamp un "actualizado <fecha de hoy>" que
+   sale de `new Date()`: eso hacía que un archivo descargado hace meses se
+   mostrara recién actualizado cada vez que se abría. Esto corre después y lo
+   pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
+   valores. */
+(function(){
+  var VERSION = { n:"1.0", fecha:"21-07-2026" };
+  var el = document.getElementById("foot-stamp");
+  if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
+})();
 </script>
 
 <script>
