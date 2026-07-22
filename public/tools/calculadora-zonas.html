@@ -851,8 +851,9 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             <option value="fondo">Orientado a la resistencia</option>
           </select>
           <p class="field-hint">
-            Hay corredores que aguantan mejor lo largo y otros que rinden más en lo corto.
-            Ante la duda, conviene dejarlo en Equilibrado.
+            Hay corredores que aguantan mejor lo largo y otros que rinden más en lo corto. Con el test de
+            5 minutos esto no cambia la VAM ni las zonas: mueve los ritmos de carrera. Ante la duda,
+            conviene dejarlo en Equilibrado.
           </p>
         </div>
       </div>
@@ -893,6 +894,28 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             El selector de <b>perfil</b> mueve esa curva. Al que entrena mucho volumen el ritmo se le cae menos
             cuando la carrera se alarga. Al que viene de fuerza y velocidad se le cae más en lo largo, pero
             rinde más en lo corto.
+          </p>
+          <p>
+            <b>La bisagra está en los 5 minutos de duración, no en la distancia</b>, y eso trae una consecuencia
+            que sorprende. Con una VAM de 14,4, la única fila de la tabla que dura menos de 5 minutos es el 800.
+            El 1500 ya lleva 6:23, o sea que cae del lado largo. Por eso, al elegir “orientado a la velocidad”,
+            salen ritmos más lentos en casi todas las filas: no es un castigo, es lo que significa caerse más
+            en lo largo. Con una VAM de 20,4 el 1500 dura 4:20 y ahí la ventaja se da vuelta.
+          </p>
+          <p>
+            <b>Con el test de 5 minutos el perfil no cambia la VAM ni las zonas.</b> No puede: ese test es, por
+            definición, el 100 %. Lo que mueve son los ritmos de carrera, que es donde la curva se estira. Con
+            el test de Cooper, con un test por distancia o con una carrera como dato de entrada, el perfil sí
+            cambia la VAM, y entonces se mueve todo lo demás con ella, zonas incluidas.
+          </p>
+          <p>
+            <b>Conviene elegirlo con un dato, no por intuición.</b> Es el control con más palanca de toda la
+            calculadora: entre un extremo y el otro, el pronóstico de maratón se abre alrededor de un
+            <b>11 %</b>, más de lo que abre el margen de error de la propia estimación. La forma honesta de
+            elegirlo es con una carrera reciente de otra distancia: se prueba con cuál de los tres perfiles la
+            calculadora reproduce ese resultado, y ese es el perfil. Sin ese dato, Equilibrado. Cuánto inclina
+            la curva cada tipo de corredor es un criterio razonable, no una medición: no hay una tabla publicada
+            de eso.
           </p>
         </div>
       </details>
@@ -2003,6 +2026,11 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.2 · 22-07-2026.</b> Se explica qué hace y qué no hace el selector de perfil: con el test de
+        5 minutos no mueve la VAM ni las zonas, la ventaja de cada perfil se da vuelta a los 5 minutos de
+        duración, y conviene elegirlo comparando contra una carrera reciente en vez de a ojo.
+      </p>
+      <p>
         <b>v1.1 · 22-07-2026.</b> Cada ritmo de carrera dice ahora en qué zona cae, y viene con su rango.
         Se sumó el protocolo de cada test, desplegable. Se sacó el 50K, que no tiene validación publicada.
         Se corrigió el porcentaje de la VAM que la pantalla le atribuía al 10K, que era falso para dos de
@@ -2040,7 +2068,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.1", fecha:"22-07-2026" };
+const VERSION = { n:"1.2", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
