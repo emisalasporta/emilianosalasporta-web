@@ -10,6 +10,33 @@ export const SITE = {
   domain: 'https://emilianosalasporta.cloud',
 };
 
+/* ===========================================================================
+   MEDICIÓN DE VISITAS — Cloudflare Web Analytics
+   ---------------------------------------------------------------------------
+   Acá va el token que da Cloudflare. Mientras esté vacío, el sitio no carga
+   NINGÚN script de medición: queda exactamente como está hoy.
+
+   Cómo se consigue (se puede desde el celular, son cuatro toques):
+     1. Entrar a dash.cloudflare.com con la cuenta de siempre.
+     2. Menú de la izquierda: Analytics & Logs → Web Analytics.
+     3. "Add a site" y escribir  emilianosalasporta.cloud
+     4. Cloudflare devuelve un bloque de código. Adentro dice
+        data-cf-beacon='{"token": "abc123..."}'. Ese "abc123..." es lo único
+        que hace falta: se pega acá abajo entre las comillas.
+
+   Se eligió esta y no Google Analytics por un motivo concreto: no usa cookies,
+   así que el sitio no necesita el cartel de consentimiento. A cambio da menos
+   detalle (visitas, páginas, de dónde vienen y país; nada de embudos).
+
+   Ojo con dos cosas, para que los números no sorprendan:
+     - Es el único pedido a un servidor ajeno que hace el sitio. Todo lo demás
+       (tipografías incluidas) viaja con la página.
+     - Como cualquier medición por JavaScript, los bloqueadores de publicidad
+       la frenan. El número real de visitas siempre es algo mayor que el que
+       muestra el panel.
+   =========================================================================== */
+export const CF_ANALYTICS_TOKEN = '';
+
 export const CATEGORIAS = {
   entrenamiento: 'Entrenamiento',
   nutricion: 'Nutrición',

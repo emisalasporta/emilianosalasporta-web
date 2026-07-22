@@ -18,6 +18,12 @@ import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { CF_ANALYTICS_TOKEN } from '../consts';
+
+/* La medición solo se carga si hay token Y si es el sitio publicado. En el
+   servidor local (`npm run dev`) queda apagada: si no, cada vez que Emiliano
+   abre la web para revisar algo se cuenta como visita y los números mienten. */
+const medir = Boolean(CF_ANALYTICS_TOKEN) && import.meta.env.PROD;
 
 const {
   title,
@@ -69,5 +75,16 @@ const ogImage = new URL(image, Astro.site).href;
       <slot />
     </main>
     <Footer />
+
+    {/* Cuenta las visitas sin cookies (por eso el sitio no necesita cartel de
+        consentimiento). Va último y con `defer`: no retrasa nada de lo que se
+        ve. El token no es un secreto, viaja en el HTML a la vista de todos. */}
+    {medir && (
+      <script
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={JSON.stringify({ token: CF_ANALYTICS_TOKEN })}
+      />
+    )}
   </body>
 </html>
