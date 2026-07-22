@@ -511,13 +511,6 @@ table.tabla td .rango.zc{
 /* ========== TEXTO LARGO (protocolo del test) ========== */
 .prosa{font-size:14px;color:var(--txt-2);line-height:1.75;max-width:74ch}
 .prosa p{margin-bottom:12px}
-/* Texto de apertura a dos columnas en pantalla ancha. El tope de 74ch de
-   .prosa es una medida de lectura y no se saca; lo que se hace es repartir el
-   texto para que no quede media tarjeta vacía a la derecha. */
-@media(min-width:900px){
-  .prosa.prosa-ancha{max-width:none;columns:2;column-gap:36px}
-  .prosa.prosa-ancha p{break-inside:avoid;margin-top:0}
-}
 .prosa b,.prosa strong{color:var(--txt-1);font-weight:600}
 .prosa ul,.prosa ol{margin:0 0 14px 20px}
 .prosa li{margin-bottom:7px}
@@ -809,6 +802,8 @@ details.mas .mas-body p:last-child{margin-bottom:0}
               <option value="T300" selected>Test de VAM · 5 minutos</option>
               <option value="T360">Test de 6 minutos</option>
               <option value="T720">Test de Cooper · 12 minutos</option>
+              <option value="T1200">20 minutos · esfuerzo de umbral</option>
+              <option value="T1800">30 minutos · esfuerzo de umbral</option>
             </optgroup>
             <optgroup label="Por distancia (se corre X metros al máximo y se mide el tiempo)">
               <option value="D1200">1200 metros</option>
@@ -1594,28 +1589,25 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <div class="card">
       <h2>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        Qué mide un test, y por qué vale la pena hacerlo
+        Qué test hacer, y por qué cualquiera de estos sirve
       </h2>
-      <div class="prosa prosa-ancha">
-        <p>
-          Todos estos tests miden lo mismo: la <b>velocidad más alta que se sostiene cuando el consumo de
-          oxígeno ya llegó a su techo</b>. Por encima de ese punto no se consume más oxígeno, no queda margen,
-          y la diferencia la cubre un sistema que no usa oxígeno y <b>se agota rápido</b>. Por eso ese ritmo
-          dura cinco o seis minutos, y no mucho más.
-        </p>
-        <p>
-          A ese número se lo llama <b>VAM</b>, velocidad aeróbica máxima, y acá cumple un solo papel: es el
-          <b>puente</b> que traduce lo que se corrió a las zonas de entrenamiento. No hace falta hacer el test
-          de cinco minutos para tenerlo. Sirve igual un test en pista, un 5K, un 10K o cualquier distancia
-          llana corrida a fondo, porque la cuenta se ajusta por <b>cuánto duró</b> el esfuerzo y no por cuántos
-          kilómetros tenía.
-        </p>
-        <p>
-          Y vale la pena porque es <b>un solo número que ordena todo lo demás</b>, y porque es <b>gratis</b>:
-          no hace falta laboratorio ni tiras de lactato. Alcanza con un tramo llano medido, un reloj y un
-          esfuerzo máximo.
-        </p>
-      </div>
+      <p class="card-sub">
+        Para armar las zonas hace falta un solo dato: <b>a qué ritmo se corre cuando el esfuerzo se lleva al
+        máximo, y cuánto duró</b>. Con eso alcanza, y por eso no hay un único test obligatorio.
+      </p>
+      <p class="card-sub">
+        Hay dos familias, y las dos entran. Un <b>esfuerzo corto</b>, de 4 a 15 minutos, se acerca al techo del
+        consumo de oxígeno: mide la potencia aeróbica. Un <b>esfuerzo de umbral</b>, de 20 a 60 minutos, ya no
+        mide el techo sino <b>cuánto de ese techo se sostiene</b>, y ahí entran el test de 20 o 30 minutos y una
+        carrera de 10K. Sirven las dos porque la calculadora corrige por la <b>duración</b> del esfuerzo y no
+        por la distancia que tenía.
+      </p>
+      <p class="card-sub">
+        Por dentro, todo se traduce a un mismo número de referencia, la <b>VAM</b> o velocidad aeróbica máxima,
+        que es lo que después reparte las cinco zonas. No es el objetivo de la herramienta, es el puente. Y no
+        hace falta laboratorio ni tiras de lactato: alcanza con un tramo llano medido, un reloj y un esfuerzo
+        máximo.
+      </p>
     </div>
 
     <div class="card">
@@ -1624,14 +1616,14 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         El protocolo, según el test
       </h2>
       <p class="card-sub">
-        Los cuatro comparten el mismo esquema y cambian en dos cosas: el bloque previo y la estrategia de ritmo.
-        Se abre el que corresponda. El de 5 minutos es el de referencia, porque es el único que fija la
-        <b>duración</b>: una misma distancia no le lleva el mismo tiempo a dos corredores distintos.
+        Todos comparten el mismo esquema y cambian en dos cosas: el bloque previo y la estrategia de ritmo.
+        Se abre el que corresponda. Los de <b>tiempo fijo</b> son los más comparables entre personas, porque
+        fijan la duración: una misma distancia no le lleva el mismo tiempo a dos corredores distintos.
       </p>
       <p class="card-sub">
-        Sirve cualquier esfuerzo máximo y parejo de 4 a 15 minutos, y la calculadora corrige por la duración.
-        Una <b>carrera reciente de 5K o 10K</b> corrida al máximo también sirve y evita repetir el sufrimiento:
-        se carga en el selector de la primera pestaña, sin protocolo aparte.
+        Y si hay una <b>carrera reciente</b> corrida al máximo, no hace falta repetir el sufrimiento: se carga
+        y listo. Abajo están el protocolo del 5K, el del 10K y las condiciones que tiene que cumplir una
+        carrera vieja para servir como dato.
       </p>
 
       <details class="mas">
@@ -1895,6 +1887,75 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         </div>
           </div>
           <p class="hint" style="margin-top:12px">Aviso: doce minutos exponen mucho más al calor y al viento que cinco. Y aunque se lo asocie al VO₂ máx, lo que mide es velocidad aeróbica máxima, que es justamente lo que sirve para prescribir.</p>
+        </div>
+      </details>
+
+      <details class="mas">
+        <summary>Test de umbral · 20 o 30 minutos</summary>
+        <div class="mas-body">
+          <p>
+            El test de umbral clásico de campo. Al durar tanto ya no mide el techo del consumo de oxígeno sino
+            cuánto de ese techo se sostiene, que es justo lo que define las zonas del medio. Exige menos
+            velocidad y más cabeza: el error acá es salir rápido y morir a mitad de camino.
+          </p>
+          <div class="pasos">
+        <div class="paso">
+          <span class="paso-n">1</span>
+          <div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">2</span>
+          <div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">3</span>
+          <div>
+            <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">4</span>
+          <div>
+            <div class="paso-t">Un bloque al ritmo del test · 2 a 3 × 400 metros</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">5</span>
+          <div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">6</span>
+          <div>
+            <div class="paso-t">El test · 20 o 30 minutos a la máxima distancia posible</div>
+            <div class="paso-d">En solitario, sin nadie que marque el ritmo. Parejo de punta a punta: a esta duración, salir un 5 % rápido no se recupera después. Si el ritmo se cae en la segunda mitad, el test no sirve y se repite otro día.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">7</span>
+          <div>
+            <div class="paso-t">Anotar · los metros recorridos</div>
+            <div class="paso-d">Si se hizo en pista, contando vueltas. El GPS a esta distancia acumula error.</div>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso-n">8</span>
+          <div>
+            <div class="paso-t">Vuelta a la calma · 5 a 10 minutos</div>
+            <div class="paso-d">Trote muy suave o caminata.</div>
+          </div>
+        </div>
+          </div>
         </div>
       </details>
 
@@ -2293,6 +2354,12 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.8 · 22-07-2026.</b> Se suman los <b>tests de umbral</b> de 20 y 30 minutos, con su protocolo, y
+        queda explicado que sirven las dos familias de esfuerzo: el corto, que mide la potencia aeróbica, y el
+        de umbral, que mide cuánto de esa potencia se sostiene. Se corrigen textos que habían quedado viejos y
+        el bloque de apertura de la pestaña de protocolos.
+      </p>
+      <p>
         <b>v1.7 · 22-07-2026.</b> Pasa a llamarse <b>Calculadora de Zonas de Entrenamiento</b>, y la
         presentación dice lo que entrega en vez de de dónde sale el número. La dirección web no cambia.
       </p>
@@ -2363,7 +2430,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.7", fecha:"22-07-2026" };
+const VERSION = { n:"1.8", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
@@ -2957,7 +3024,7 @@ function ajustarCamposTest(){
     $("hint-dist").textContent = `Los metros recorridos en esos ${fmt1(min).replace(",0","")} minutos.`;
   } else if(otra){
     $("lbl-dist").textContent = "Distancia del test";
-    $("hint-dist").textContent = "En metros. Sirve cualquier esfuerzo máximo y parejo de 4 a 15 minutos.";
+    $("hint-dist").textContent = "En metros. Sirve cualquier esfuerzo máximo y parejo, de 4 minutos a una hora.";
   }
 }
 
