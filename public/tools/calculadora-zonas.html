@@ -184,7 +184,7 @@ body{
 .grid-2{grid-template-columns:repeat(2,1fr)}
 .grid-3,.grid-4{display:flex;flex-wrap:wrap;align-items:stretch}
 .grid-3 > *{flex:1 1 calc(33.333% - 11px);min-width:210px}
-.grid-4 > *{flex:1 1 calc(25% - 12px);min-width:195px}
+.grid-4 > *{flex:1 1 calc(25% - 12px);min-width:170px}
 @media(max-width:880px){
   .grid-2{grid-template-columns:1fr}
   .grid-3 > *,.grid-4 > *{flex-basis:100%}
@@ -326,8 +326,11 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 .result-hero .r-time small{font-size:.42em;font-weight:600;color:var(--txt-3);margin-left:6px;text-shadow:none}
 .result-hero .r-sub{margin-top:10px;font-size:14px;color:var(--txt-2);position:relative}
 
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:18px}
-.kpi{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
+/* Mismo patrón flex que .grid-3 y .grid-4: la última fila se estira y nunca
+   queda una tarjeta sola con huecos al lado. Con auto-fit, los 5 KPI quedaban
+   4+1 entre 740 y 917 px. */
+.kpi-grid{display:flex;flex-wrap:wrap;align-items:stretch;gap:12px;margin-bottom:18px}
+.kpi{flex:1 1 calc(20% - 10px);min-width:165px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
 .kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px}
 .kpi .k-v{font-family:var(--font-mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
 .kpi .k-v small{font-size:13px;color:var(--txt-3);font-weight:500;margin-left:4px}
@@ -408,10 +411,15 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
   color:var(--txt-3);background:var(--bg-1);border:1px solid var(--border);
   padding:3px 9px;border-radius:20px;white-space:nowrap;
 }
+/* Reparto fijo: los datos de cada zona son SEIS, y con auto-fit quedaban 5+1
+   (o 4+2) según el ancho, o sea una celda huérfana en las cinco tarjetas a la
+   vez. 2, 3 y 6 son los únicos repartos que dividen exacto. */
 .z-datos{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+  display:grid;grid-template-columns:repeat(2,1fr);
   gap:10px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
 }
+@media(min-width:480px){.z-datos{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:820px){.z-datos{grid-template-columns:repeat(6,1fr)}}
 .z-dato{min-width:0}
 .z-dl{
   display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.6px;
@@ -443,7 +451,7 @@ details.z-mas > summary{
 details.z-mas > summary::-webkit-details-marker{display:none}
 details.z-mas > summary::before{
   content:"+";font-family:var(--font-mono);font-size:13px;font-weight:700;
-  color:var(--accent);line-height:1;
+  color:var(--red);line-height:1;
 }
 details.z-mas[open] > summary::before{content:"–"}
 details.z-mas > summary:hover{color:var(--txt-2)}
@@ -495,6 +503,12 @@ table.tabla td .rango.zc{
   display:block;margin-top:3px;
   font-family:var(--font-mono);font-size:11px;font-weight:400;color:var(--txt-4);
 }
+/* La etiqueta de zona de "Otra distancia" usa la misma clase que la de la
+   tabla, pero aquella regla exige estar dentro de una celda. Sin esto, la
+   misma etiqueta salía en dos tipografías distintas. */
+.field-val .rango.zc{
+  font-family:var(--font-body);font-size:11px;letter-spacing:0;color:var(--txt-3);
+}
 
 /* ========== AVISOS ========== */
 .notice{
@@ -509,7 +523,10 @@ table.tabla td .rango.zc{
 .notice:last-child{margin-bottom:0}
 
 /* ========== TEXTO LARGO (protocolo del test) ========== */
-.prosa{font-size:14px;color:var(--txt-2);line-height:1.75;max-width:74ch}
+/* Sin tope de ancho: .prosa convive en la misma tarjeta con .card-sub y con
+   .mas-body, que van a ancho completo. Con el tope quedaban dos medidas de
+   lectura distintas adentro de la misma caja y media tarjeta vacía. */
+.prosa{font-size:14px;color:var(--txt-2);line-height:1.75}
 .prosa p{margin-bottom:12px}
 .prosa b,.prosa strong{color:var(--txt-1);font-weight:600}
 .prosa ul,.prosa ol{margin:0 0 14px 20px}
@@ -759,7 +776,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
   <div class="tabs" role="tablist">
     <button class="tab active" data-tab="vam">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Tu test
+      El test
     </button>
     <button class="tab" data-tab="zonas">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
@@ -787,7 +804,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <div class="card">
       <h2>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        1 · Qué esfuerzo hiciste
+        1 · El esfuerzo realizado
       </h2>
       <p class="card-sub">
         Sirve cualquier esfuerzo llevado al máximo: un test en pista, una carrera reciente, o una distancia
@@ -799,7 +816,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
           <div class="field-head"><span class="field-label">Test realizado</span></div>
           <select id="t-tipo">
             <optgroup label="Por tiempo (se corre X minutos y se mide la distancia)">
-              <option value="T300" selected>Test de VAM · 5 minutos</option>
+              <option value="T300" selected>Test de 5 minutos</option>
               <option value="T360">Test de 6 minutos</option>
               <option value="T720">Test de Cooper · 12 minutos</option>
               <option value="T1200">20 minutos · esfuerzo de umbral</option>
@@ -965,7 +982,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             <option value="fox">Fox · 220 − edad</option>
             <option value="astrand">Åstrand</option>
             <option value="gulati">Gulati (mujeres)</option>
-            <option value="medida">La medí yo (test real)</option>
+            <option value="medida">Medida en test</option>
           </select>
         </div>
 
@@ -1110,7 +1127,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <div class="kpi">
         <div class="k-l">Ritmo a la VAM</div>
         <div class="k-v" id="out-ritmo">—<small>/km</small></div>
-        <div class="k-s">El del test: no se aguanta más de 5 o 6 minutos</div>
+        <div class="k-s">No se aguanta más de 5 o 6 minutos</div>
       </div>
       <div class="kpi">
         <div class="k-l">VO₂ máx estimado</div>
@@ -1120,7 +1137,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <div class="kpi" id="kpi-d5">
         <div class="k-l">En 5 minutos</div>
         <div class="k-v" id="out-d5">—<small>m</small></div>
-        <div class="k-s">La distancia a batir en el próximo test</div>
+        <div class="k-s">Referencia para comparar tests de distinta duración</div>
       </div>
       <div class="kpi">
         <div class="k-l">FC máxima</div>
@@ -1150,7 +1167,8 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         </p>
         <p>
           De todos modos es una <b>estimación</b>, y de precisión limitada: el VO₂ máx se mide con máscara y
-          análisis de gases, no se deduce de un ritmo. El número que sirve para entrenar es la VAM.
+          análisis de gases, no se deduce de un ritmo. Para entrenar no hace falta ese número: las zonas
+          salen de la VAM.
         </p>
       </div>
     </details>
@@ -1187,7 +1205,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <div class="row">
       <button class="btn" id="btn-ir-zonas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        Ver mis zonas
+        Ver las zonas
       </button>
     </div>
   </div>
@@ -1294,7 +1312,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <div class="card">
       <h2>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Qué podrías correr hoy
+        Qué se puede correr hoy
       </h2>
       <p class="card-sub">
         Equivalencias a partir de la VAM, cada una con su rango probable. Suponen carrera llana, día fresco,
@@ -1352,14 +1370,14 @@ details.mas .mas-body p:last-child{margin-bottom:0}
             de carrera.
           </p>
           <p>
-            <b>Cuando el rango cruza a la zona de al lado.</b> Los bordes entre zonas no son paredes. Si el
-            centro cae cerca de uno, el extremo lento del rango puede quedar del otro lado. La referencia es
-            el centro; el rango es para no volverse loco persiguiendo el segundo exacto.
-          </p>
-          <p>
             <b>El número grande es el centro; el rango de abajo es el margen razonable.</b> Para una pasada a
             ritmo de 10K, cualquier ritmo dentro de esa banda es ritmo de 10K. Buscar el segundo exacto es
             perseguir una precisión que el método no tiene.
+          </p>
+          <p>
+            <b>Cuando el rango cruza a la zona de al lado.</b> Los bordes entre zonas no son paredes. Si el
+            centro cae cerca de uno, el extremo lento del rango puede quedar del otro lado. En ese caso la
+            referencia sigue siendo el centro.
           </p>
           <p>
             <b>Qué cubre ese rango.</b> Es el error <b>típico</b>, el que abarca a dos de cada tres corredores,
@@ -1489,7 +1507,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
           <div class="field-val plain" id="d-densidad">—</div>
         </div>
         <div class="field out">
-          <div class="field-head"><span class="field-label">Pendiente media</span><span class="unit">%</span></div>
+          <div class="field-head"><span class="field-label">Pendiente de subida</span><span class="unit">%</span></div>
           <div class="field-val plain" id="d-pendiente">—</div>
         </div>
         <div class="field out">
@@ -1621,13 +1639,13 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         fijan la duración: una misma distancia no le lleva el mismo tiempo a dos corredores distintos.
       </p>
       <p class="card-sub">
-        Y si hay una <b>carrera reciente</b> corrida al máximo, no hace falta repetir el sufrimiento: se carga
-        y listo. Abajo están el protocolo del 5K, el del 10K y las condiciones que tiene que cumplir una
+        Y si hay una <b>carrera reciente</b> corrida al máximo, no hace falta salir a testear: se carga esa
+        carrera. Abajo están el protocolo del 5K, el del 10K y las condiciones que tiene que cumplir una
         carrera vieja para servir como dato.
       </p>
 
       <details class="mas">
-        <summary>Test de VAM · 5 minutos</summary>
+        <summary>Test de 5 o 6 minutos</summary>
         <div class="mas-body">
           <p>Cinco minutos corriendo la máxima distancia posible.</p>
           <div class="pasos">
@@ -1669,7 +1687,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">6</span>
           <div>
-            <div class="paso-t">El test · 5 minutos a la máxima distancia posible</div>
+            <div class="paso-t">El test · 5 o 6 minutos a la máxima distancia posible</div>
             <div class="paso-d">Los primeros 15 a 20 segundos son para llegar al ritmo; de ahí en adelante, lo más parejo posible. Se busca el ritmo más alto que se crea sostenible durante todo el test, y se sostiene. El último minuto tiene que costar; el primero, no tanto.</div>
           </div>
         </div>
@@ -1693,7 +1711,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       </details>
 
       <details class="mas">
-        <summary>1200 o 1500 metros</summary>
+        <summary>1200, 1500 o 2000 metros</summary>
         <div class="mas-body">
           <p>La alternativa más práctica cuando hay pista pero no forma cómoda de cronometrar cinco minutos exactos.</p>
           <div class="pasos">
@@ -2032,8 +2050,9 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="mas-body">
           <p>
             A esta duración ya pesa bastante la resistencia además de la potencia aeróbica, y la calculadora lo
-            tiene en cuenta. La entrada en calor va más corta que en un test breve: el esfuerzo arranca a una
-            intensidad más baja y hay tiempo de entrar en ritmo dentro de la propia carrera.
+            tiene en cuenta. La entrada en calor cambia de reparto respecto de un test breve: el trote previo
+            se acorta y el bloque a ritmo se alarga, porque el esfuerzo arranca a una intensidad más baja y
+            conviene dejarla instalada antes de largar.
           </p>
           <div class="pasos">
         <div class="paso">
@@ -2311,8 +2330,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <div class="prosa">
         <ul>
           <li><b>Salir demasiado rápido.</b> El error más común y el más costoso. Baja el resultado y deja la sensación de estar peor de lo que se está.</li>
-          <li><b>Testear cansado.</b> Después de una semana dura, lo que se mide es la fatiga.</li>
-          <li><b>Confiar en el GPS a ciegas.</b> En pista se cuentan vueltas. En calle, se mide el circuito una vez y se usa siempre ese.</li>
+          <li><b>Cambiar el circuito entre test y test.</b> El recorrido se mide una vez y se usa siempre el mismo; si cambia, la comparación no significa nada.</li>
           <li><b>Tomar el primer test como marca.</b> Sin dos tests previos de práctica, el segundo casi siempre sale mejor que el primero aunque no se haya entrenado nada.</li>
         </ul>
         <p>
@@ -2354,6 +2372,12 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.9 · 22-07-2026.</b> Repaso de punta a punta. Lo más importante: elegir un test de umbral ya no
+        devuelve un aviso de advertencia, que era el resto de cuando esto era “la calculadora del test de 5
+        minutos”. Se recalcularon los cortes de zona que publican las tarjetas, que estaban tomados de un solo
+        perfil. Y se corrigieron grillas que dejaban una tarjeta suelta al final de la fila.
+      </p>
+      <p>
         <b>v1.8 · 22-07-2026.</b> Se suman los <b>tests de umbral</b> de 20 y 30 minutos, con su protocolo, y
         queda explicado que sirven las dos familias de esfuerzo: el corto, que mide la potencia aeróbica, y el
         de umbral, que mide cuánto de esa potencia se sostiene. Se corrigen textos que habían quedado viejos y
@@ -2382,7 +2406,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         y varones.
       </p>
       <p>
-        <b>v1.3 · 22-07-2026.</b> La primera pestaña deja de llamarse “La VAM” y pasa a ser “Tu test”: la
+        <b>v1.3 · 22-07-2026.</b> La primera pestaña deja de llamarse “La VAM” y pasa a ser “El test”: la
         calculadora siempre aceptó cualquier esfuerzo máximo, incluida una carrera y una distancia suelta, pero
         el nombre lo escondía. Se suman los protocolos de 5K y de 10K, y una guía para usar una carrera que ya
         se corrió.
@@ -2430,7 +2454,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.8", fecha:"22-07-2026" };
+const VERSION = { n:"1.9", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
@@ -2663,34 +2687,33 @@ const ZONAS = [
     vam:[62,76], fcmax:[68,82], fcr:[57,74], rpe:"3 a 5", lac:"1 a 2",
     sesiones:{
       aca:"Rodaje · tirada larga · continuo variable.",
-      cruza:"Se reparte con Z3: el maratón y el 30K cambian de zona según el nivel. Con una VAM por debajo de 17,5 km/h, el ritmo de maratón cae acá.",
+      cruza:"Se reparte con Z3: el maratón y el 30K cambian de zona según el nivel y el perfil. Con perfil equilibrado el ritmo de maratón cae acá por debajo de 17,3 km/h de VAM; con perfil orientado a la resistencia el corte baja a 11,3 y con perfil orientado a la velocidad sube a 23,3.",
     },
     para:"<b>Objetivo.</b> Construir la base aeróbica y sostener el volumen semanal.<br><br>" +
          "De las adaptaciones de esta intensidad, la que tiene mejor respaldo comparativo es la <b>densidad capilar</b>: en la revisión más amplia disponible (5.973 participantes), el trabajo continuo fue el único método que la aumentó de forma consistente. El contenido mitocondrial también sube, aunque ahí no se encontró ventaja sobre la alta intensidad.<br><br>" +
          "Las sesiones largas agregan un segundo estímulo, propio de la duración. Pasada la hora y media, la economía de carrera y la velocidad de umbral se deterioran de forma medible (−4,2 % y −3,0 % a los 90 minutos en maratonistas entrenados, con la caída acelerándose en la segunda hora). Entrenar ahí desarrolla la resistencia a ese deterioro. El dato está medido en llano; en montaña no se midió.",
     como:"<b>Métodos.</b> Continuo uniforme extensivo, continuo variable, tirada larga.<br>" +
-         "<b>Duración.</b> De 40 minutos a 2 horas en rodaje; hasta 2 h 45 en preparación de maratón. Los planes de maratón de nivel subélite convergen en una tirada máxima de 30 a 32 km, con independencia del volumen semanal.<br>" +
-         "<b>Reparto.</b> Alrededor del 80 % del volumen semanal o más.",
+         "<b>Duración.</b> De 40 minutos a 2 horas en rodaje; hasta 2 h 45 en preparación de maratón. Los planes de maratón de nivel subélite convergen en una tirada máxima de 30 a 32 km, con independencia del volumen semanal.",
   },
   {
     id:"Z3", fase:2, nombre:"Tempo", eq:"de ritmo de maratón a ritmo de media",
     vam:[76,85], fcmax:[82,90], fcr:[74,86], rpe:"5 a 7", lac:"2 a 3",
     sesiones:{
       aca:"Tempo continuo · carrera progresiva · bloques a ritmo de competencia.",
-      cruza:"Se reparte con Z2: el maratón y el 30K. Se reparte con Z4: la media maratón y el 15K.",
+      cruza:"Se reparte con Z2: el maratón y el 30K. Se reparte con Z4: la media maratón, el 15K y el 10K, que con perfil equilibrado cae acá por debajo de 11,8 km/h de VAM.",
     },
     para:"<b>Objetivo.</b> Acumular trabajo de calidad sostenible, entre los dos umbrales.<br><br>" +
-         "La mitad baja coincide con el ritmo de maratón de la mayoría de los corredores. Su valor ahí es la <b>especificidad</b>: calibrar el ritmo, ensayar el avituallamiento y tolerar el tiempo en carrera. No hay ensayos controlados que aíslen esta intensidad como estímulo fisiológico.<br><br>" +
+         "La mitad baja limita con el ritmo de maratón. Su valor ahí es la <b>especificidad</b>: calibrar el ritmo, ensayar el avituallamiento y tolerar el tiempo en carrera. No hay ensayos controlados que aíslen esta intensidad como estímulo fisiológico.<br><br>" +
          "La mitad alta se acerca al ritmo de media maratón y permite acumular carga con un costo de recuperación menor que el del umbral pleno. Es la franja que en el ciclismo se difundió como <i>sweet spot</i>: el término viene de la práctica de entrenadores y no hay estudios en corredores que lo respalden como zona óptima.",
     como:"<b>Métodos.</b> Continuo uniforme intensivo, carrera progresiva, bloques a ritmo de competencia, interválico extensivo.<br>" +
          "<b>Duración.</b> A ritmo de maratón, hasta 110 minutos o 29 km, continuo o dentro de una tirada larga. En la parte alta, de 2 a 4 bloques de 10 a 15 minutos con 2 a 3 minutos de trote.",
   },
   {
-    id:"Z4", fase:2, nombre:"Umbral anaeróbico", eq:"lo que se sostiene entre media hora y una hora",
+    id:"Z4", fase:2, nombre:"Umbral anaeróbico", eq:"lo que se sostiene de poco menos de media hora a una hora",
     vam:[85,90], fcmax:[90,94], fcr:[86,91], rpe:"7 a 8", lac:"3 a 4,5",
     sesiones:{
       aca:"Series largas de umbral · fartlek · ritmo de 10K.",
-      cruza:"Se reparte con Z3: la media maratón y el 15K. Se reparte con Z5: el 5K, que con una VAM por debajo de 14 km/h es trabajo de umbral y por encima es VO₂ máx.",
+      cruza:"Se reparte con Z3: la media maratón, el 15K y, en corredores lentos, el 10K. Se reparte con Z5: el 5K, que por debajo del corte es trabajo de umbral y por encima es VO₂ máx. Ese corte va de 10,3 km/h de VAM con perfil orientado a la resistencia a 17,7 con perfil orientado a la velocidad, y queda en 13,6 con perfil equilibrado.",
     },
     para:"<b>Objetivo.</b> Desplazar el punto a partir del cual el lactato deja de estabilizarse.<br><br>" +
          "Ese punto marca el techo de lo sostenible: por debajo, la producción y la remoción de lactato se equilibran y el esfuerzo se puede prolongar; por encima, la acumulación es progresiva y el ritmo se cae. En los estudios de rendimiento, la velocidad de umbral predice la marca en fondo mejor que el consumo máximo de oxígeno.<br><br>" +
@@ -2721,8 +2744,11 @@ const ZONA_CORTA = { Z1:"regenerativo", Z2:"endurance", Z3:"tempo", Z4:"umbral",
     Sirve para etiquetar los ritmos de carrera, y esa etiqueta es la que
     contesta la pregunta práctica: una pasada "a ritmo de 10K" NO es la misma
     intensidad para todo el mundo, porque el 10K no le dura lo mismo a todos.
-    Con la curva de hoy el 10K cae en Z4 de punta a punta del rango de VAM,
-    pero el 5K cambia de zona según el nivel y el maratón también. */
+    Con la curva de hoy el 10K cae en Z4 en la mayoría de los casos (72 % del
+    barrido de VAM 10 a 22 por los tres perfiles), pero baja a Z3 en el corredor
+    lento (24 %) y sube a Z5 en el muy rápido (4 %). El 5K y el maratón también
+    cambian de zona según el nivel. Si se toca la curva, estos porcentajes y los
+    cortes que publican los campos `cruza` se recalculan. */
 function zonaDePct(pct){
   if(!(pct > 0)) return null;
   for(const z of ZONAS){ if(pct >= z.vam[0] && pct < z.vam[1]) return z; }
@@ -3153,18 +3179,34 @@ function pintarVam(){
   if(!test){
     aviso.className = "notice ok";
     aviso.innerHTML = "VAM cargada a mano. Conviene volver a testear cada 8 a 12 semanas: el valor pierde vigencia.";
-  } else if(test.segundos < 200 || test.segundos > 1100){
+  } else if($("t-tipo").value === "D5000" || $("t-tipo").value === "D10000"){
     /* Una carrera real no es un test mal hecho: el esfuerzo es genuino y va
        bien dosificado. Merece otro texto, no el mismo reto. */
-    const esCarrera = $("t-tipo").value === "D5000" || $("t-tipo").value === "D10000";
-    aviso.className = esCarrera ? "notice" : "notice warn";
-    aviso.innerHTML = esCarrera
-      ? "Convertido desde una carrera. Es un buen punto de partida, porque el esfuerzo es real y va bien " +
-        "administrado. Con la salvedad de siempre: cuanto más larga la carrera, más pesa la resistencia y " +
-        "menos la potencia aeróbica, así que para seguir la VAM en el tiempo conviene el test de 5 minutos."
-      : "<b>Atención con este test.</b> Los esfuerzos de menos de 4 minutos o de más de 18 arrastran mucho de " +
-        "otra cosa (potencia anaeróbica en uno, resistencia pura en el otro) y la conversión pierde precisión. " +
-        "Sirve como referencia, pero el test de 5 minutos es el que manda.";
+    aviso.className = "notice";
+    aviso.innerHTML =
+      "Convertido desde una carrera. Es un buen punto de partida, porque el esfuerzo es real y va bien " +
+      "administrado. Con la salvedad de siempre: cuanto más larga la carrera, más pesa la resistencia y " +
+      "menos la potencia aeróbica. Para comparar en el tiempo, conviene repetir siempre el mismo tipo de " +
+      "esfuerzo, cada 8 a 12 semanas.";
+  } else if(test.segundos > 1100 && test.segundos <= 3600){
+    /* OJO, ACÁ ESTUVO EL PEOR ERROR DE COHERENCIA DE TODA LA HERRAMIENTA.
+       La v1.8 sumó los tests de umbral de 20 y 30 minutos al selector y les
+       escribió un protocolo propio, pero esta rama seguía siendo la de "test
+       mal hecho": al que elegía un test de umbral lo recibía un cartel amarillo
+       diciéndole que "el test de 5 minutos es el que manda". La herramienta
+       ofrecía algo y después retaba al que lo aceptaba. */
+    aviso.className = "notice ok";
+    aviso.innerHTML =
+      `Convertido desde un esfuerzo de umbral de <b>${fmtTiempo(test.segundos)}</b>, sostenido al ` +
+      `<b>${fmt1(pctVam(test.segundos, PERFIL))} %</b> de la VAM. Un esfuerzo así de largo no mide el techo ` +
+      "aeróbico sino cuánto de ese techo se sostiene, que es lo que define las zonas del medio. Conviene " +
+      "repetir el mismo test, en el mismo lugar, cada 8 a 12 semanas.";
+  } else if(test.segundos < 200 || test.segundos > 3600){
+    aviso.className = "notice warn";
+    aviso.innerHTML =
+      "<b>Atención con este test.</b> Los esfuerzos de menos de 4 minutos o de más de una hora arrastran " +
+      "mucho de otra cosa (potencia anaeróbica en uno, resistencia pura en el otro) y la conversión pierde " +
+      "precisión. Sirve como referencia, con esa salvedad.";
   } else {
     aviso.className = "notice ok";
     aviso.innerHTML =
@@ -3229,7 +3271,7 @@ function pintarZonas(){
   const sub = $("zonas-sub");
 
   if(!VAM){
-    cont.innerHTML = '<div class="notice">Con el esfuerzo cargado en la pestaña <b>Tu test</b>, las zonas aparecen acá.</div>';
+    cont.innerHTML = '<div class="notice">Con el esfuerzo cargado en la pestaña <b>El test</b>, las zonas aparecen acá.</div>';
     $("zonas-vam").innerHTML = '—<small>km/h</small>';
     $("zonas-hero-sub").textContent = "";
     sub.textContent = "Falta cargar el test en la pestaña anterior.";
@@ -3418,7 +3460,10 @@ function calcularDesnivel(){
     $("d-densidad").textContent = "—";
     $("d-pendiente").textContent = "—";
     $("d-objetivo").textContent = "—";
-    nota.textContent = "Faltan la distancia y el desnivel de la carrera objetivo.";
+    const faltaKm = !okm || okm <= 0, faltaDp = odp == null || odp < 0;
+    nota.textContent = faltaKm && faltaDp
+      ? "Faltan la distancia y el desnivel de la carrera objetivo."
+      : (faltaKm ? "Falta la distancia de la carrera objetivo." : "Falta el desnivel positivo de la carrera objetivo.");
     return;
   }
 
@@ -3438,7 +3483,7 @@ function calcularDesnivel(){
       `Para que <b>${fmt1(skm)} km</b> tengan el ${pct} % de la dureza por kilómetro de una carrera de ` +
       `<b>${fmt1(okm)} km con ${Math.round(odp)} m de D+</b>, hay que buscar <b>${dpSesion} m</b> de desnivel ` +
       `positivo.` +
-      (dpSesion >= 100 ? ` Equivale a subir ${Math.round(dpSesion/50)} veces una cuesta de 50 m.` : "");
+      (dpSesion >= 100 ? ` Equivale a unas ${Math.round(dpSesion/50)} subidas de una cuesta de 50 m.` : "");
   } else {
     $("d-objetivo").textContent = "—";
     nota.innerHTML =
@@ -3453,7 +3498,7 @@ function calcularFechas(){
   const nota = $("f-nota");
   if(!a || !b){
     ["f-dias","f-semanas","f-meses","f-utiles"].forEach((id)=>{ $(id).textContent = "—"; });
-    nota.textContent = "Faltan las dos fechas.";
+    nota.textContent = !a && !b ? "Faltan las dos fechas." : (!b ? "Falta la fecha del objetivo." : "Falta la fecha de inicio.");
     return;
   }
   const d1 = new Date(a + "T00:00:00"), d2 = new Date(b + "T00:00:00");
