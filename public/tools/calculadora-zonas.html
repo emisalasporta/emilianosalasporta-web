@@ -511,6 +511,13 @@ table.tabla td .rango.zc{
 /* ========== TEXTO LARGO (protocolo del test) ========== */
 .prosa{font-size:14px;color:var(--txt-2);line-height:1.75;max-width:74ch}
 .prosa p{margin-bottom:12px}
+/* Texto de apertura a dos columnas en pantalla ancha. El tope de 74ch de
+   .prosa es una medida de lectura y no se saca; lo que se hace es repartir el
+   texto para que no quede media tarjeta vacía a la derecha. */
+@media(min-width:900px){
+  .prosa.prosa-ancha{max-width:none;columns:2;column-gap:36px}
+  .prosa.prosa-ancha p{break-inside:avoid;margin-top:0}
+}
 .prosa b,.prosa strong{color:var(--txt-1);font-weight:600}
 .prosa ul,.prosa ol{margin:0 0 14px 20px}
 .prosa li{margin-bottom:7px}
@@ -1586,18 +1593,26 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <div class="card">
       <h2>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        Qué es la VAM y por qué vale la pena medirla
+        Qué mide un test, y por qué vale la pena hacerlo
       </h2>
-      <div class="prosa">
+      <div class="prosa prosa-ancha">
         <p>
-          Por encima de la VAM no se consume más oxígeno: no queda margen. La diferencia se cubre con un
-          sistema que no usa oxígeno y que <b>se agota rápido</b>. Por eso la VAM se sostiene cinco o seis
-          minutos, y no mucho más.
+          Todos estos tests miden lo mismo: la <b>velocidad más alta que se sostiene cuando el consumo de
+          oxígeno ya llegó a su techo</b>. Por encima de ese punto no se consume más oxígeno, no queda margen,
+          y la diferencia la cubre un sistema que no usa oxígeno y <b>se agota rápido</b>. Por eso ese ritmo
+          dura cinco o seis minutos, y no mucho más.
         </p>
         <p>
-          Sirve porque es <b>un solo número que ordena todo lo demás</b>, y porque es <b>gratis</b>: no hace
-          falta laboratorio ni tiras de lactato. Alcanza con una pista o un tramo llano medido, un reloj y
-          cinco minutos de esfuerzo máximo.
+          A ese número se lo llama <b>VAM</b>, velocidad aeróbica máxima, y acá cumple un solo papel: es el
+          <b>puente</b> que traduce lo que se corrió a las zonas de entrenamiento. No hace falta hacer el test
+          de cinco minutos para tenerlo. Sirve igual un test en pista, un 5K, un 10K o cualquier distancia
+          llana corrida a fondo, porque la cuenta se ajusta por <b>cuánto duró</b> el esfuerzo y no por cuántos
+          kilómetros tenía.
+        </p>
+        <p>
+          Y vale la pena porque es <b>un solo número que ordena todo lo demás</b>, y porque es <b>gratis</b>:
+          no hace falta laboratorio ni tiras de lactato. Alcanza con un tramo llano medido, un reloj y un
+          esfuerzo máximo.
         </p>
       </div>
     </div>
@@ -1626,36 +1641,36 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">1</span>
           <div>
-            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
-            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">2</span>
           <div>
-            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
-            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">3</span>
           <div>
             <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
-            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">4</span>
           <div>
             <div class="paso-t">Un bloque al ritmo del test · 1 × 200 metros</div>
-            <div class="paso-d">Al ritmo previsto para el test, no más rápido. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">5</span>
           <div>
-            <div class="paso-t">Pausa · 2 a 3 minutos</div>
-            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
           </div>
         </div>
         <div class="paso">
@@ -1692,36 +1707,36 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">1</span>
           <div>
-            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
-            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">2</span>
           <div>
-            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
-            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">3</span>
           <div>
             <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
-            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">4</span>
           <div>
             <div class="paso-t">Un bloque al ritmo del test · 1 × 200 metros</div>
-            <div class="paso-d">Al ritmo previsto para el test, no más rápido. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">5</span>
           <div>
-            <div class="paso-t">Pausa · 2 a 3 minutos</div>
-            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
           </div>
         </div>
         <div class="paso">
@@ -1758,36 +1773,36 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">1</span>
           <div>
-            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
-            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">2</span>
           <div>
-            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
-            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">3</span>
           <div>
             <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
-            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">4</span>
           <div>
             <div class="paso-t">Un bloque al ritmo del test · 2 a 3 × 250 metros</div>
-            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">5</span>
           <div>
-            <div class="paso-t">Pausa · 2 a 3 minutos</div>
-            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
           </div>
         </div>
         <div class="paso">
@@ -1824,36 +1839,36 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">1</span>
           <div>
-            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
-            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">2</span>
           <div>
-            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
-            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">3</span>
           <div>
             <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
-            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo del test. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">4</span>
           <div>
-            <div class="paso-t">Un bloque al ritmo del test · 2 a 3 × 250 metros</div>
-            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+            <div class="paso-t">Un bloque al ritmo del test · 2 a 3 × 300 metros</div>
+            <div class="paso-d">Al ritmo previsto para el test, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">5</span>
           <div>
-            <div class="paso-t">Pausa · 2 a 3 minutos</div>
-            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
           </div>
         </div>
         <div class="paso">
@@ -1893,36 +1908,36 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">1</span>
           <div>
-            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
-            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">2</span>
           <div>
-            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
-            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+            <div class="paso-t">Trote suave · 10 a 15 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">3</span>
           <div>
             <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
-            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo de carrera. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">4</span>
           <div>
-            <div class="paso-t">Un bloque al ritmo de carrera · 2 a 3 × 200 metros</div>
-            <div class="paso-d">Al ritmo previsto para el 5K, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental.</div>
+            <div class="paso-t">Un bloque al ritmo de carrera · 2 a 3 × 400 metros</div>
+            <div class="paso-d">Al ritmo previsto para la carrera, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">5</span>
           <div>
-            <div class="paso-t">Pausa · 2 a 3 minutos</div>
-            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
           </div>
         </div>
         <div class="paso">
@@ -1947,9 +1962,6 @@ details.mas .mas-body p:last-child{margin-bottom:0}
           </div>
         </div>
           </div>
-          <p class="hint" style="margin-top:12px">
-            Si la carrera tuvo desnivel, no sirve para esto: para eso está la <b>Calculadora de Trail</b>.
-          </p>
         </div>
       </details>
 
@@ -1965,36 +1977,36 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <div class="paso">
           <span class="paso-n">1</span>
           <div>
-            <div class="paso-t">Trote suave · 10 minutos</div>
-            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
+            <div class="paso-t">Movilidad articular · 3 a 5 minutos</div>
+            <div class="paso-d">Tobillos, caderas y tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">2</span>
           <div>
-            <div class="paso-t">Movilidad dinámica · 3 a 5 minutos</div>
-            <div class="paso-d">Tobillos, caderas, tren superior, siempre en movimiento. Sin estiramiento estático sostenido.</div>
+            <div class="paso-t">Trote suave · 10 minutos</div>
+            <div class="paso-d">Cómodo, conversando. Alargarlo no mejora el resultado.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">3</span>
           <div>
             <div class="paso-t">Progresivos · 3 a 4 × 80 a 100 metros</div>
-            <div class="paso-d">Cada uno arranca suave y termina claramente más rápido que el ritmo de carrera. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
+            <div class="paso-d">Cada uno arranca rápido y termina a velocidad máxima. Son estímulos cortos, para activar el sistema neuromuscular antes del esfuerzo. Vuelta caminando, unos 30 segundos entre uno y otro.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">4</span>
           <div>
-            <div class="paso-t">Un bloque al ritmo de carrera · 1 a 2 × 200 metros</div>
-            <div class="paso-d">Apenas para encontrar el ritmo. Acá se hace más corto que antes de un test breve, para no gastar de más.</div>
+            <div class="paso-t">Un bloque al ritmo de carrera · 1 × 1000 metros</div>
+            <div class="paso-d">Al ritmo previsto para la carrera, con vuelta trotando. Es el paso de la entrada en calor con mejor respaldo experimental. Se alarga a medida que el esfuerzo se alarga, y eso último es criterio: lo que está medido son bloques cortos, en medio fondo.</div>
           </div>
         </div>
         <div class="paso">
           <span class="paso-n">5</span>
           <div>
-            <div class="paso-t">Pausa · 2 a 3 minutos</div>
-            <div class="paso-d">Caminar o trotar muy suave. Lo justo para que baje el pulso sin que se enfríen las piernas.</div>
+            <div class="paso-t">Pausa · 2 a 3 minutos, o hasta sentirse listo</div>
+            <div class="paso-d">Caminar o trotar muy suave. Entre un paso y otro alcanza con lo justo; antes del test conviene tomarse lo que haga falta para largar entero, sin que se enfríen las piernas.</div>
           </div>
         </div>
         <div class="paso">
@@ -2019,10 +2031,6 @@ details.mas .mas-body p:last-child{margin-bottom:0}
           </div>
         </div>
           </div>
-          <p class="hint" style="margin-top:12px">
-            El reparto de la entrada en calor es criterio de entrenador. Nadie comparó en un ensayo cuánto
-            conviene calentar antes de un 10K.
-          </p>
         </div>
       </details>
 
@@ -2141,6 +2149,29 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       </div>
 
       <details class="mas">
+        <summary>Dónde hacerlo y con qué medirlo</summary>
+        <div class="mas-body">
+          <p>
+            <b>El lugar.</b> Lo ideal es una pista de atletismo. Si no hay, un tramo llano y medido, <b>sin
+            tráfico de peatones y mucho menos de vehículos</b>. No es solo por seguridad: cada frenada, cada
+            esquive y cada semáforo rompen el ritmo y arruinan el dato. Un test interrumpido no se corrige
+            después, se repite.
+          </p>
+          <p>
+            <b>La distancia, medida.</b> El GPS del reloj <b>tiene margen de error</b>, y crece entre edificios
+            y bajo los árboles. En pista conviene no usarlo para medir: se cuentan las vueltas, que en el carril
+            1 son 400 metros exactos. En calle, el recorrido se mide antes.
+          </p>
+          <p>
+            <b>El pulso, con banda.</b> El sensor óptico de la muñeca <b>no es confiable en intensidad</b>:
+            pierde precisión justo cuando el pulso sube y cambia rápido, que es todo el test. Los propios
+            fabricantes recomiendan una <b>banda pectoral o de brazo</b> para el trabajo intenso. Con el dato de
+            la muñeca no vale la pena sacar conclusiones.
+          </p>
+        </div>
+      </details>
+
+      <details class="mas">
         <summary>Las condiciones que invalidan un test, con números</summary>
         <div class="mas-body">
           <p>
@@ -2183,7 +2214,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <ul>
           <li><b>Cada 8 a 12 semanas.</b> Es el tiempo que necesita el cuerpo para cambiar más de lo que se mueve el propio test.</li>
           <li><b>Solo un cambio mayor al 5 % en velocidad cuenta como real.</b> Por debajo de eso no se distingue del ruido de la medición.</li>
-          <li><b>Mismo lugar, misma hora, mismas zapatillas, misma cafeína.</b> Si cambia el escenario, la comparación no significa nada.</li>
+          <li><b>Las mismas condiciones.</b> Mismo lugar, misma hora del día, el mismo calzado y la misma ingesta de cafeína. Si cambia el escenario, la comparación no significa nada.</li>
         </ul>
       </div>
 
@@ -2261,6 +2292,12 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.6 · 22-07-2026.</b> Repaso completo de los protocolos: la movilidad articular pasa a ir primero
+        y el trote suave después, los progresivos van de rápido a máximo, el bloque a ritmo se alarga cuando
+        el test se alarga y la pausa admite tomarse lo que haga falta antes de largar. Se suman
+        recomendaciones de dónde hacerlo y con qué medirlo, y se sacan las pautas que estaban repetidas.
+      </p>
+      <p>
         <b>v1.5 · 22-07-2026.</b> Las zonas de pulso ahora se ajustan según el sexo, porque los umbrales no
         caen en el mismo porcentaje de la FC máxima en mujeres y en varones. Cargando el sexo, la calculadora
         corrige sola las 8 o 9 pulsaciones que la escala única le sacaba de más a una mujer. Los ritmos no
@@ -2321,7 +2358,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.5", fecha:"22-07-2026" };
+const VERSION = { n:"1.6", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
