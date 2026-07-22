@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!--
   ============================================================
-  CALCULADORA DE ZONAS
+  CALCULADORA DE ZONAS DE ENTRENAMIENTO
   © 2026 Emiliano Salas Porta — emilianosalasporta.cloud
 
   Autor: Emiliano Salas Porta, entrenador de trail y ultradistancia.
@@ -26,8 +26,8 @@
      el buscador es /herramientas/<nombre>, que lo explica y lo ofrece: sin esto,
      los dos compiten por el mismo lugar en Google. -->
 <meta name="robots" content="noindex, follow">
-<title>Calculadora de Zonas · Emiliano Salas Porta</title>
-<meta name="description" content="Zonas de entrenamiento a partir de un test de campo o de una carrera reciente, con ritmo, pulso, RPE y tiempos estimados. Una herramienta de Emiliano Salas Porta.">
+<title>Calculadora de Zonas de Entrenamiento · Emiliano Salas Porta</title>
+<meta name="description" content="Las cinco zonas de entrenamiento a partir de un test de campo o de una carrera reciente, con su ritmo, su pulso y su esfuerzo percibido, más los tiempos estimados de 800 metros a maratón. Una herramienta de Emiliano Salas Porta.">
 <style>
 /* ============================================================
    TIPOGRAFÍAS — archivos locales, cero pedidos de red.
@@ -746,8 +746,9 @@ details.mas .mas-body p:last-child{margin-bottom:0}
   <!-- ENCABEZADO -->
   <header class="tool-head">
     <div>
-      <h1>Calculadora de Zonas</h1>
-      <p>Un test, el resultado cargado acá, y salen los ritmos, las pulsaciones y las zonas de entrenamiento.</p>
+      <h1>Calculadora de Zonas de Entrenamiento</h1>
+      <p>Un test o una carrera reciente, cargados acá, y salen las cinco zonas con su ritmo, su pulso y su
+        esfuerzo percibido, más los tiempos estimados de 800 metros a maratón.</p>
     </div>
     <div class="tool-head-actions">
       <button class="btn btn-ghost btn-sm" id="btn-save" title="Guardar datos en este navegador">
@@ -2292,6 +2293,10 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v1.7 · 22-07-2026.</b> Pasa a llamarse <b>Calculadora de Zonas de Entrenamiento</b>, y la
+        presentación dice lo que entrega en vez de de dónde sale el número. La dirección web no cambia.
+      </p>
+      <p>
         <b>v1.6 · 22-07-2026.</b> Repaso completo de los protocolos: la movilidad articular pasa a ir primero
         y el trote suave después, los progresivos van de rápido a máximo, el bloque a ritmo se alarga cuando
         el test se alarga y la pausa admite tomarse lo que haga falta antes de largar. Se suman
@@ -2339,7 +2344,7 @@ details.mas .mas-body p:last-child{margin-bottom:0}
       <span class="firma-nombre"><b>emiliano</b> salas porta</span>
       <span class="firma-sitio">emilianosalasporta.cloud</span>
     </span>
-    <span class="firma-meta">Calculadora de Zonas <span id="foot-stamp"></span></span>
+    <span class="firma-meta">Calculadora de Zonas de Entrenamiento <span id="foot-stamp"></span></span>
   </div>
 </div>
 
@@ -2358,7 +2363,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.6", fecha:"22-07-2026" };
+const VERSION = { n:"1.7", fecha:"22-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
