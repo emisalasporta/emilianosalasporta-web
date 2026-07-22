@@ -35,7 +35,7 @@ export const SITE = {
        la frenan. El número real de visitas siempre es algo mayor que el que
        muestra el panel.
    =========================================================================== */
-export const CF_ANALYTICS_TOKEN = '';
+export const CF_ANALYTICS_TOKEN = 'ad12b3aa499940a18078255ff90b7eb4';
 
 export const CATEGORIAS = {
   entrenamiento: 'Entrenamiento',

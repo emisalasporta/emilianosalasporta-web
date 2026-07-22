@@ -77,11 +77,14 @@ const ogImage = new URL(image, Astro.site).href;
     <Footer />
 
     {/* Cuenta las visitas sin cookies (por eso el sitio no necesita cartel de
-        consentimiento). Va último y con `defer`: no retrasa nada de lo que se
-        ve. El token no es un secreto, viaja en el HTML a la vista de todos. */}
+        consentimiento). Va último en el body y con `type="module"`, que difiere
+        la ejecución: no retrasa nada de lo que se ve. Los atributos son los que
+        entrega Cloudflare, sin retoques: el beacon es de ellos y si mañana lo
+        cambian, conviene que esto sea igual a lo que documentan.
+        El token no es un secreto, viaja en el HTML a la vista de todos. */}
     {medir && (
       <script
-        defer
+        type="module"
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon={JSON.stringify({ token: CF_ANALYTICS_TOKEN })}
       />
