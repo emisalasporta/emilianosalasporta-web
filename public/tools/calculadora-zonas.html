@@ -1268,26 +1268,26 @@ details.mas .mas-body p:last-child{margin-bottom:0}
         <summary>Cómo leer esta tabla</summary>
         <div class="mas-body">
           <p>
-            <b>El número grande es el centro; el rango de abajo es lo que hay que usar.</b> Para una pasada a
+            <b>El número grande es el centro; el rango de abajo es el margen razonable.</b> Para una pasada a
             ritmo de 10K, cualquier ritmo dentro de esa banda es ritmo de 10K. Buscar el segundo exacto es
             perseguir una precisión que el método no tiene.
           </p>
           <p>
-            <b>De dónde sale el rango.</b> No existe ningún estudio que mida el error de predecir una carrera a
-            partir de un test de campo de 5 minutos, así que estas bandas son un ensamblado de tres cosas que sí
-            están medidas por separado: lo que se mueve el propio test al repetirlo (<b>1 a 2 %</b> en 132
-            corredores, Dabonneville y col. 2003), lo que varía un mismo corredor de una carrera a otra (de
-            <b>1,2 % a 2,6 %</b> según la distancia, y hasta 2,3 veces más en los corredores lentos, Hopkins y
-            Hewson 2001) y el error de otros modelos a esas mismas distancias.
+            <b>Qué cubre ese rango.</b> Es el error <b>típico</b>, el que abarca a dos de cada tres corredores,
+            no el peor caso posible. Sale de dos cosas medidas: lo que se mueve el propio test al repetirlo
+            (entre <b>1 y 2 %</b> en 132 corredores, Dabonneville y col. 2003) y lo que varía un mismo corredor
+            de una carrera a otra (<b>1,2 %</b> en las distancias cortas y <b>2,6 %</b> en maratón, y hasta 2,3
+            veces más en los corredores lentos, Hopkins y Hewson 2001). En 800 y 1500 se ensancha, porque a esas
+            duraciones pesa la capacidad anaeróbica y la VAM no la mide.
           </p>
           <p>
-            <b>Por qué el rango cambia según la distancia.</b> En 800 y 1500 se ensancha porque a esas
-            duraciones pesa la capacidad anaeróbica, que la VAM no mide. De 30K para arriba deja de ser
-            simétrico, porque el error cambia de signo: en 5K estos modelos predicen demasiado lento, y en
-            maratón demasiado rápido. Las predicciones clásicas de maratón salen 10 minutos o más adelantadas
-            para la mitad de los corredores (Vickers y Vertosick 2016), y el 28 % de los varones y el 17 % de
-            las mujeres pierden el ritmo al final, a un costo medio de media hora (2,7 millones de corredores,
-            Smyth 2021). Por eso el borde lento es más ancho que el rápido.
+            <b>Lo que el rango no es: un pronóstico del día de la carrera.</b> Del maratón para arriba, alrededor
+            de la mitad de los corredores termina 10 minutos o más por detrás de lo que predicen los modelos
+            clásicos (Vickers y Vertosick 2016), y el 28 % de los varones y el 17 % de las mujeres pierden el
+            ritmo en la segunda mitad, a un costo medio de media hora (2,7 millones de corredores, Smyth 2021).
+            Eso es real, pero <b>no se arregla saliendo más lento</b>: depende de la distancia entrenada, del
+            avituallamiento y del calor. Por eso no está metido en la banda. El rango dice a qué ritmo, no qué
+            va a marcar el reloj.
           </p>
           <p>
             <b>Los tiempos suponen que la distancia está entrenada.</b> Se puede tener la VAM para bajar de 3:30
@@ -2263,16 +2263,24 @@ const DISTANCIAS = [
   { km:42.195, n:"42K · maratón", destacada:true },
 ];
 
-/* Banda de incertidumbre de cada estimación, en fracción del TIEMPO.
-   [rápido, lento]. Ver el comentario de arriba del archivo de trabajo: es un
-   ensamblado de tres fuentes, no una medición directa, y así se dice en
-   pantalla. De 30K para arriba es asimétrica a propósito. */
+/* Margen razonable de cada estimación, en fracción del tiempo. [rápido, lento].
+   Es el error TÍPICO, el que cubre a dos de cada tres corredores, no el peor
+   caso: es el margen que sirve para prescribir un ritmo. Sale de sumar en
+   cuadratura el error del propio test (0,95 a 1,89 %) y lo que varía un mismo
+   corredor de una carrera a otra (1,2 % en corto, 2,6 % en maratón).
+
+   OJO, no ensanchar esto con el riesgo del día de carrera. Ya se hizo una vez
+   (la banda del maratón llegó a ser -4 / +10 %) y quedaba proponiendo, para un
+   ritmo de maratón de 5:37, un borde lento de 6:11: eso no es maratón, es
+   rodaje. Que la mitad de los corredores termine por detrás del pronóstico es
+   real, pero no es incertidumbre sobre el RITMO: es lo que pasa cuando la
+   carrera se rompe. Eso va en el texto, no en la banda. */
 function bandaDe(km){
-  if(km < 3)     return [0.08, 0.08];
-  if(km <= 10)   return [0.05, 0.05];
-  if(km <= 21.5) return [0.06, 0.06];
-  if(km <= 45)   return [0.04, 0.10];
-  return null;                          // más allá del maratón no hay con qué
+  if(km < 3)     return [0.04,  0.04];   // pesa lo anaeróbico, que la VAM no mide
+  if(km <= 10)   return [0.025, 0.025];
+  if(km <= 21.5) return [0.03,  0.03];
+  if(km <= 45)   return [0.03,  0.04];   // apenas asimétrica: se falla más para lento
+  return null;                           // más allá del maratón no hay con qué
 }
 
 // ============================================================
