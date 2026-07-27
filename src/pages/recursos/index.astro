@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
-import { TIPOS_RECURSOS } from '../../consts';
+import RecursoCard from '../../components/RecursoCard.astro';
 
 /* Mismo molde que /blog y /herramientas: eyebrow, h1, lead y una grilla de
    tarjetas. Si hay que tocar algo acá, mirá primero cómo lo resuelven esas dos. */
@@ -42,14 +42,7 @@ const recursos = (
         </div>
       ) : (
         <div class="grid recursos-grid">
-          {recursos.map((r) => (
-            <a href={`/recursos/${r.id}`} class="card card-link recurso-card">
-              <span class="pill">{TIPOS_RECURSOS[r.data.tipo]}</span>
-              <h2 class="recurso-card-title">{r.data.title}</h2>
-              <p class="muted recurso-card-desc">{r.data.description}</p>
-              <span class="recurso-card-cta" aria-hidden="true">Ver recurso →</span>
-            </a>
-          ))}
+          {recursos.map((r) => <RecursoCard recurso={r} />)}
         </div>
       )}
     </div>
@@ -59,16 +52,8 @@ const recursos = (
 <style>
   .recursos-lead { max-width: 42rem; margin-top: 0.5rem; }
   .recursos-grid { margin-top: 2.25rem; }
-
-  .recurso-card { display: flex; flex-direction: column; align-items: flex-start; }
-  .recurso-card-title { font-size: 1.2rem; margin: 0.9rem 0 0.4rem; }
-  .recurso-card-desc { font-size: 0.95rem; flex: 1; }
-  .recurso-card-cta {
-    margin-top: 1.1rem;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--accent);
-  }
+  /* La tarjeta y sus estilos viven en src/components/RecursoCard.astro, que
+     también usa la página de etiquetas. */
 
   /* Estado vacío. La página está en el menú desde el día uno, así que alguien
      va a entrar antes de que haya nada: que se vaya sabiendo qué viene y con

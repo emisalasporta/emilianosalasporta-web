@@ -1,41 +1,73 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/PostCard.astro';
+import RecursoCard from '../../components/RecursoCard.astro';
 import { getCollection } from 'astro:content';
 
+/* Las etiquetas cruzan las dos colecciones: una nota del blog y un recurso
+   descargable pueden compartir #montana y tiene sentido verlos juntos.
+   OJO: si esta página se armara solo con las etiquetas del blog, un recurso
+   etiquetado con algo que ninguna nota usa mostraría su chip apuntando a una
+   página que no existe (404 silencioso). Por eso el listado de etiquetas sale
+   de las dos colecciones, no de una. */
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
-  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+  const recursos = await getCollection('recursos', ({ data }) => !data.draft);
+
+  const porFecha = (a, b) => b.data.date.getTime() - a.data.date.getTime();
+  const tags = [...new Set([...posts, ...recursos].flatMap((e) => e.data.tags))];
+
   return tags.map((tag) => ({
     params: { tag },
     props: {
-      posts: posts
-        .filter((p) => p.data.tags.includes(tag))
-        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+      posts: posts.filter((p) => p.data.tags.includes(tag)).sort(porFecha),
+      recursos: recursos.filter((r) => r.data.tags.includes(tag)).sort(porFecha),
     },
   }));
 }
 
 const { tag } = Astro.params;
-const { posts } = Astro.props;
+const { posts, recursos } = Astro.props;
+
+/* Los subtítulos solo aparecen cuando hay de los dos tipos: si la etiqueta
+   tiene únicamente notas (el caso más común hoy), la página se ve como siempre. */
+const hayDeLosDos = posts.length > 0 && recursos.length > 0;
 ---
 
-<BaseLayout title={`Etiqueta: #${tag}`} description={`Entradas etiquetadas con #${tag}.`}>
+<BaseLayout title={`Etiqueta: #${tag}`} description={`Notas y recursos etiquetados con #${tag}.`}>
   <section class="section">
     <div class="container">
       <p class="eyebrow">Etiqueta</p>
       <h1>#{tag}</h1>
 
-      <div class="grid tag-grid">
-        {posts.map((p) => <PostCard post={p} />)}
-      </div>
+      {posts.length > 0 && (
+        <>
+          {hayDeLosDos && <h2 class="tag-sub">Del blog</h2>}
+          <div class="grid tag-grid">
+            {posts.map((p) => <PostCard post={p} />)}
+          </div>
+        </>
+      )}
 
-      <p class="tag-back"><a href="/blog" class="btn btn-ghost">← Todo el blog</a></p>
+      {recursos.length > 0 && (
+        <>
+          {hayDeLosDos && <h2 class="tag-sub">Para descargar</h2>}
+          <div class="grid tag-grid">
+            {recursos.map((r) => <RecursoCard recurso={r} />)}
+          </div>
+        </>
+      )}
+
+      <p class="tag-back">
+        <a href="/blog" class="btn btn-ghost">← Todo el blog</a>
+        {recursos.length > 0 && <a href="/recursos" class="btn btn-ghost">Todos los recursos →</a>}
+      </p>
     </div>
   </section>
 </BaseLayout>
 
 <style>
   .tag-grid { margin-top: 1.75rem; }
-  .tag-back { margin-top: 2.5rem; }
+  .tag-sub { font-size: 1.1rem; margin-top: 2.5rem; }
+  .tag-back { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 2.5rem; }
 </style>

@@ -41,3 +41,14 @@ AGENTS.md
 /logo[0-9].png
 /iconoYT.png
 /banner*.png
+/*.pdf
+
+# carpeta de trabajo: los ORIGINALES de los recursos (los PDF y planillas
+# antes de prepararlos). Lo que se publica es la copia que va a
+# public/uploads/, no esto. Sin esta linea, un "git add ." se lleva los
+# originales pesados al repo.
+/recursos/
+
+# cosas que quedaron para borrar a mano (Claude no puede borrar archivos en
+# tu disco: los mueve aca y los borras vos).
+/_to_delete/

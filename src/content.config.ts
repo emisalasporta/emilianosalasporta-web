@@ -39,7 +39,8 @@ const blog = defineCollection({
 });
 
 /* Colección RECURSOS: fichas de descargables (PDF, planillas, guías).
-   El archivo real va en public/descargas/ y acá se guarda solo la ruta. */
+   El archivo real va en public/uploads/ (que es donde el panel /admin sube
+   todo) y acá se guarda solo la ruta pública, ej: "/uploads/plan.pdf". */
 const recursos = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/recursos' }),
   schema: z.object({
@@ -47,7 +48,10 @@ const recursos = defineCollection({
     description: z.string(),
     date: z.coerce.date(),
     tipo: z.enum(['pdf', 'planilla', 'guia', 'video']).default('pdf'),
-    archivo: textoOpcional, // ej: "/descargas/plan-base-8-semanas.pdf"
+    /* Ruta pública del archivo, ej: "/uploads/plan-base-8-semanas.pdf".
+       Es opcional a propósito: si está vacío o apunta a algo que no existe,
+       la ficha se publica sin botón de descarga en vez de romper el build. */
+    archivo: textoOpcional,
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
   }),

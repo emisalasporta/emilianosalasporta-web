@@ -1,0 +1,28 @@
+---
+/* Tarjeta de un recurso descargable. Es la hermana de PostCard.astro: se usa
+   en el listado /recursos y en las páginas de etiquetas, así que el día que
+   haya que tocarle algo se toca en un solo lado. */
+import { TIPOS_RECURSOS } from '../consts';
+
+const { recurso } = Astro.props;
+const { title, description, tipo } = recurso.data;
+---
+
+<a href={`/recursos/${recurso.id}`} class="card card-link recurso-card">
+  <span class="pill">{TIPOS_RECURSOS[tipo]}</span>
+  <h3 class="recurso-card-title">{title}</h3>
+  <p class="muted recurso-card-desc">{description}</p>
+  <span class="recurso-card-cta" aria-hidden="true">Ver recurso →</span>
+</a>
+
+<style>
+  .recurso-card { display: flex; flex-direction: column; align-items: flex-start; }
+  .recurso-card-title { font-size: 1.2rem; margin: 0.9rem 0 0.4rem; }
+  .recurso-card-desc { font-size: 0.95rem; flex: 1; }
+  .recurso-card-cta {
+    margin-top: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+</style>
