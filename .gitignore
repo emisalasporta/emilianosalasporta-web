@@ -52,3 +52,8 @@ AGENTS.md
 # cosas que quedaron para borrar a mano (Claude no puede borrar archivos en
 # tu disco: los mueve aca y los borras vos).
 /_to_delete/
+
+# biblioteca de referencia: libros, apuntes y las plantillas de EA. Son ~375 MB
+# de material de trabajo (y libros con derechos de autor) que NO son la web.
+# Ver biblioteca/LEEME.md.
+/biblioteca/

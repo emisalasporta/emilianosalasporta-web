@@ -33,6 +33,13 @@ README.md
 /foto-emiliano.jpg
 /logo.png
 
+# Carpetas de trabajo de Emiliano. Ya están en el .gitignore (así que en el
+# deploy real ni aparecen), pero si algún día se construye la imagen desde la
+# carpeta local, estas son cientos de MB que no tienen nada que hacer adentro.
+/biblioteca/
+/recursos/
+/_to_delete/
+
 # Variables de entorno, por las dudas
 .env
 .env.*
