@@ -53,6 +53,7 @@ if (archivo) {
   <article class="section">
     <div class="container">
       <div class="post">
+        <span class="post-hud" aria-hidden="true">Lectura //</span>
         <p class="eyebrow">{TIPOS_RECURSOS[tipo]}</p>
         <h1 class="post-title">{title}</h1>
         <p class="lead post-desc">{description}</p>
@@ -80,10 +81,10 @@ if (archivo) {
             {tags.map((t) => <a href={`/tags/${t}`} class="tag">#{t}</a>)}
           </div>
         )}
+      </div>
 
-        <div class="post-back">
-          <a href="/recursos" class="btn btn-ghost">← Volver a recursos</a>
-        </div>
+      <div class="post-back">
+        <a href="/recursos" class="btn btn-ghost">← Volver a recursos</a>
       </div>
     </div>
   </article>
@@ -92,13 +93,38 @@ if (archivo) {
 <style>
   /* Mismo molde que un post del blog (ver BlogPost.astro): encabezado, regla y
      .prose. Lo único propio de acá es el botón de descarga. */
-  .post { max-width: var(--content-narrow); margin-inline: auto; }
+  /* Mismo panel que un post del blog (ver BlogPost.astro): placa --surface con
+     riel de neón a la izquierda, para que el texto no quede sobre el casi-negro. */
+  .post {
+    position: relative;
+    max-width: var(--content-narrow);
+    margin-inline: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    box-shadow: -1px 0 14px rgba(47, 184, 255, 0.176), var(--shadow);
+    padding: clamp(1.6rem, 4vw, 2.8rem);
+  }
+  .post-hud {
+    position: absolute;
+    top: 0.9rem;
+    right: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+  }
+  @media (max-width: 30rem) { .post-hud { display: none; } }
   .post-title { margin-top: 0.5rem; }
   .post-desc { margin-top: 1rem; }
   .post-byline { font-family: var(--font-mono); font-size: 0.85rem; margin-top: 1.2rem; }
   .post-rule { margin-block: 2rem; }
   .post-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2.5rem; }
-  .post-back { margin-top: 2rem; }
+  /* El botón de volver vive FUERA del panel, sobre el fondo del sitio. */
+  .post-back { max-width: var(--content-narrow); margin: 2rem auto 0; }
 
   /* El botón va arriba, antes del texto: el que llega a esta página ya sabe lo
      que quiere. Las notas son para el que necesita leer antes de bajar. */

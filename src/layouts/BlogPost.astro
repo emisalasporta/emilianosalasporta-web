@@ -28,6 +28,7 @@ const imagenParaCompartir = cover || undefined;
   <article class="section">
     <div class="container">
       <div class="post">
+        <span class="post-hud" aria-hidden="true">Lectura //</span>
         <a href={`/categorias/${category}`} class="pill post-cat">{CATEGORIAS[category]}</a>
         <h1 class="post-title">{title}</h1>
         <p class="lead post-desc">{description}</p>
@@ -53,17 +54,45 @@ const imagenParaCompartir = cover || undefined;
             {tags.map((t) => <a href={`/tags/${t}`} class="tag">#{t}</a>)}
           </div>
         )}
+      </div>
 
-        <div class="post-back">
-          <a href="/blog" class="btn btn-ghost">← Volver al blog</a>
-        </div>
+      <div class="post-back">
+        <a href="/blog" class="btn btn-ghost">← Volver al blog</a>
       </div>
     </div>
   </article>
 </BaseLayout>
 
 <style>
-  .post { max-width: var(--content-narrow); margin-inline: auto; }
+  /* La nota va sobre un panel: una placa (--surface) apenas más clara que el
+     fondo, con un riel de neón cian a la izquierda. Así el texto claro deja de
+     estar apoyado directo sobre el casi-negro del sitio (cansaba la vista). El
+     resplandor del riel es tenue a propósito (0.176): se nota, no grita. */
+  .post {
+    position: relative;
+    max-width: var(--content-narrow);
+    margin-inline: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    box-shadow: -1px 0 14px rgba(47, 184, 255, 0.176), var(--shadow);
+    padding: clamp(1.6rem, 4vw, 2.8rem);
+  }
+  /* Sello mono arriba a la derecha. Decorativo (aria-hidden). En pantallas
+     angostas se esconde para no chocar con la etiqueta de categoría. */
+  .post-hud {
+    position: absolute;
+    top: 0.9rem;
+    right: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+  }
+  @media (max-width: 30rem) { .post-hud { display: none; } }
   .post-cat { margin-bottom: 1rem; }
   .post-title { margin-top: 0.5rem; }
   .post-desc { margin-top: 1rem; }
@@ -80,5 +109,6 @@ const imagenParaCompartir = cover || undefined;
     margin-bottom: 2rem;
   }
   .post-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2.5rem; }
-  .post-back { margin-top: 2rem; }
+  /* El botón de volver vive FUERA del panel, sobre el fondo del sitio. */
+  .post-back { max-width: var(--content-narrow); margin: 2rem auto 0; }
 </style>
