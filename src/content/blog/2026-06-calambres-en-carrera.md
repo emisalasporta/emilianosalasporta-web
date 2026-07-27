@@ -1,9 +1,15 @@
 ---
-title: "Calambres en carrera: por qué aparecen y qué hacer"
-description: "La idea de que los calambres son solo falta de sales quedó vieja. Qué dice hoy la evidencia y cómo prevenirlos de verdad."
+title: 'Calambres en carrera: por qué aparecen y qué hacer'
+description: La idea de que los calambres son solo falta de sales quedó vieja. Qué dice hoy la evidencia y cómo prevenirlos de verdad.
 date: 2026-06-20
 category: entrenamiento
-tags: ["calambres", "ultra", "hidratacion"]
+tags:
+  - calambres
+  - ultra
+  - hidratacion
+cover: /uploads/portada-blog-calambres.svg
+video: ''
+updated: ''
 draft: false
 ---
 
@@ -24,8 +30,8 @@ Y no es lo que pasa. El calambre suele aparecer en el músculo específico que e
 
 ## Lo que la ciencia mira ahora: fatiga neuromuscular
 
-La teoría que hoy explica mejor lo que vemos en carrera es la del **control neuromuscular
-alterado por fatiga**. En criollo: cuando el músculo se cansa más de lo que está preparado,
+La teoría que hoy explica mejor lo que vemos en carrera es la del \*\*control neuromuscular
+alterado por fatiga\*\*. En criollo: cuando el músculo se cansa más de lo que está preparado,
 los sensores que regulan su contracción y relajación se desajustan. El músculo recibe la orden
 de contraerse y le cuesta soltar. De ahí el espasmo.
 
@@ -41,8 +47,8 @@ de contraerse y le cuesta soltar. De ahí el espasmo.
 Si el calambre ya te agarró, lo más efectivo es **estirar suave el músculo afectado y esperar**
 a que ceda. Nada de forzar. Bajá el ritmo, respirá, y cuando afloje, retomá más tranquilo.
 
-Un recurso que funciona a muchos —y que la ciencia empezó a explicar— es tomar algo **fuerte de
-sabor**: jugo de pepinillos, una solución con vinagre, un shot bien ácido o picante. No es que
+Un recurso que funciona a muchos —y que la ciencia empezó a explicar— es tomar algo \*\*fuerte de
+sabor\*\*: jugo de pepinillos, una solución con vinagre, un shot bien ácido o picante. No es que
 "reponga sales" al instante (es demasiado rápido para eso): parece que el estímulo intenso en
 la boca y la garganta manda una señal que **calma la sobreexcitación nerviosa**. Vale tenerlo
 en el chaleco para las largas.
@@ -65,11 +71,11 @@ Acá está la buena noticia: si el calambre es sobre todo fatiga, **se entrena**
 
 ## Cuándo prestar atención de verdad
 
-Los calambres de esfuerzo son molestos pero benignos. Ahora, si te aparecen **en reposo, muy
-seguido, o acompañados de otros síntomas raros**, eso ya no es tema de entrenamiento: consultá
+Los calambres de esfuerzo son molestos pero benignos. Ahora, si te aparecen \*\*en reposo, muy
+seguido, o acompañados de otros síntomas raros\*\*, eso ya no es tema de entrenamiento: consultá
 con un profesional de la salud.
 
----
+***
 
 En resumen: el calambre casi nunca es mala suerte ni falta de una pastilla mágica. Es tu cuerpo
 avisándote que le pediste un poco más de lo que tenía ensayado. Entrená específico, sumá fuerza,
