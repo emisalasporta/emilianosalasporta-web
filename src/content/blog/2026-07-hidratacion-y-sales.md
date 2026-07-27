@@ -1,6 +1,6 @@
 ---
 title: 'Hidratación y sales: lo que damos por cierto, lo que está medido y lo que nadie sabe'
-description: '¿Cuánta agua? ¿Cuánta sal? ¿Cada cuánto? Las respuestas que circulan son promedios, y los promedios casi nunca describen a nadie. Vamos a ordenar qué dice la evidencia, y a partir de ahí, que vayas aprendiendo cómo encontrar tus propios números.'
+description: ¿Cuánta agua? ¿Cuánta sal? ¿Cada cuánto? Las respuestas que circulan son promedios, y los promedios casi nunca describen a nadie. Vamos a ordenar qué dice la evidencia, y a partir de ahí, que vayas aprendiendo cómo encontrar tus propios números.
 date: 2026-07-27
 category: nutricion
 tags:
@@ -8,7 +8,7 @@ tags:
   - sodio
   - ultra
   - calor
-cover: ''
+cover: /uploads/portada-blog.svg
 video: ''
 updated: ''
 draft: false
