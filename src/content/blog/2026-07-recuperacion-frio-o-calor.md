@@ -8,7 +8,8 @@ tags:
   - frio
   - calor
   - sauna
-cover: ''
+cover: /uploads/portada-blog-frioosauna.svg
+video: ''
 updated: ''
 draft: false
 ---
