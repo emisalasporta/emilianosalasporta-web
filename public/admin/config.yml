@@ -58,7 +58,16 @@ collections:
           - { label: "Mentalidad", value: "mentalidad" }
           - { label: "Equipamiento", value: "equipamiento" }
       - { name: "tags", label: "Etiquetas", widget: "list", required: false }
-      - { name: "cover", label: "Imagen de portada (opcional)", widget: "image", required: false }
+      - name: "cover"
+        label: "Imagen de portada (opcional)"
+        widget: "image"
+        required: false
+        hint: "Se ve arriba de la nota, en la tarjeta del listado y al compartir el link. Se recorta a formato apaisado 16:9, así que lo importante tiene que estar en el centro. Ideal 1600 x 900 px y menos de 300 KB (las fotos del celular pesan 3 o 4 MB y hacen lenta la página). Si la nota lleva video, esta imagen es la miniatura del play."
+      - name: "video"
+        label: "Video de YouTube (opcional)"
+        widget: "string"
+        required: false
+        hint: "Pegá el link del video tal cual lo copiás de YouTube (sirve cualquier formato: watch?v=, youtu.be, Shorts). No subas el archivo del video a ningún lado: primero va a YouTube y acá solo el link. Se muestra arriba de la nota con el botón de play, usando la imagen de portada de miniatura, y recién se carga cuando el visitante lo toca."
       - { name: "updated", label: "Fecha de actualización (opcional)", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", required: false }
       - { name: "draft", label: "Borrador (no se publica)", widget: "boolean", default: false, required: false }
       - { name: "body", label: "Contenido", widget: "markdown" }

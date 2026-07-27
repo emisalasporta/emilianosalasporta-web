@@ -1,0 +1,153 @@
+---
+/* Video de YouTube con portada propia y botón de play (patrón "fachada").
+
+   POR QUÉ NO ES UN <iframe> PEGADO DERECHO
+   El sitio hoy no le pide NADA a ningún servidor ajeno: ni las tipografías,
+   ni la medición de visitas (la inyecta Cloudflare en el borde). Gracias a
+   eso no necesita cartel de cookies. Un iframe de YouTube puesto de una
+   rompe las dos cosas: carga scripts de Google y deja cookies antes de que
+   el visitante haga absolutamente nada.
+
+   Acá, hasta que alguien no toca "play", no sale un solo pedido afuera. Al
+   tocarlo recién se crea el iframe, y contra youtube-nocookie.com, que es
+   el dominio de YouTube que no guarda nada hasta que el video arranca.
+
+   POR QUÉ LA MINIATURA NO SE TRAE DE YOUTUBE
+   Se podría pedir la miniatura a los servidores de YouTube, pero eso sería
+   justamente el pedido externo que estamos evitando. Así que la miniatura
+   es la portada de la nota (campo `cover`), una imagen nuestra que vive en
+   public/uploads. Si querés la miniatura exacta del video, descargala de
+   YouTube y subila como portada desde el panel: queda igual y el sitio
+   sigue sin pedirle nada a nadie.
+
+   Si la nota no tiene portada, se muestra un panel oscuro con el botón de
+   play, para que igual se entienda que ahí hay un video.
+*/
+interface Props {
+  /** Identificador de 11 caracteres, ya limpio (ver youtubeId en lib/utils.ts). */
+  id: string;
+  /** Título de la nota; se usa para el lector de pantalla. */
+  title?: string;
+  /** Ruta de la portada, ej. "/uploads/mi-miniatura.jpg". Opcional. */
+  poster?: string;
+}
+
+const { id, title = 'el video de esta nota', poster } = Astro.props;
+---
+
+<figure class="yt" data-yt-id={id}>
+  <button class="yt-boton" type="button" aria-label={`Reproducir ${title} en esta página`}>
+    {poster ? (
+      <img class="yt-portada" src={poster} alt="" loading="lazy" decoding="async" />
+    ) : (
+      <span class="yt-portada yt-portada-vacia" aria-hidden="true"></span>
+    )}
+    <span class="yt-play" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12z" /></svg>
+    </span>
+  </button>
+  <figcaption class="yt-aviso muted">
+    El video está alojado en YouTube y recién se carga cuando tocás play.
+  </figcaption>
+</figure>
+
+<script>
+  /* Un solo listener por video. Al primer clic, la portada se reemplaza por
+     el reproductor real y el listener se retira solo ({ once: true }). */
+  document.querySelectorAll('.yt').forEach((caja) => {
+    const boton = caja.querySelector('.yt-boton');
+    const id = caja.getAttribute('data-yt-id');
+    if (!boton || !id) return;
+
+    boton.addEventListener(
+      'click',
+      () => {
+        const marco = document.createElement('iframe');
+        marco.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+        marco.title = 'Video de YouTube';
+        marco.allow =
+          'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        marco.allowFullscreen = true;
+        marco.className = 'yt-marco';
+        boton.replaceWith(marco);
+      },
+      { once: true }
+    );
+  });
+</script>
+
+<style>
+  .yt {
+    margin: 0 0 2rem;
+  }
+
+  .yt-boton,
+  .yt :global(.yt-marco) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .yt-boton {
+    position: relative;
+    padding: 0;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .yt-boton:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 22px rgba(47, 184, 255, 0.16), var(--shadow);
+  }
+
+  .yt-portada {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Sin portada cargada: panel oscuro con una veladura del acento, para que
+     igual se lea como "acá hay un video" y no como un hueco roto. */
+  .yt-portada-vacia {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(60% 80% at 50% 45%, rgba(47, 184, 255, 0.14), transparent 70%),
+      var(--surface-2);
+  }
+
+  /* Triángulo de play. Se agranda apenas al pasar por encima. */
+  .yt-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 4.5rem;
+    height: 4.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--glow);
+    transition: transform 160ms ease, background 160ms ease;
+  }
+  .yt-play svg {
+    width: 2rem;
+    height: 2rem;
+    margin-left: 0.15rem; /* centrado óptico del triángulo */
+  }
+  .yt-boton:hover .yt-play {
+    transform: scale(1.08);
+    background: var(--accent-strong);
+  }
+
+  .yt-aviso {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    margin-top: 0.6rem;
+  }
+</style>

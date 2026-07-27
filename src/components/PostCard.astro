@@ -3,10 +3,11 @@ import { CATEGORIAS } from '../consts';
 import { formatFecha, isoFecha } from '../lib/utils';
 
 const { post } = Astro.props;
-const { title, description, date, category, tags } = post.data;
+const { title, description, date, category, tags, cover } = post.data;
 ---
 
 <a href={`/blog/${post.id}`} class="card card-link post-card">
+  {cover && <img class="post-card-cover" src={cover} alt="" loading="lazy" decoding="async" />}
   <div class="post-card-meta">
     <span class="pill">{CATEGORIAS[category]}</span>
     <time datetime={isoFecha(date)} class="muted post-card-date">{formatFecha(date)}</time>
@@ -22,6 +23,20 @@ const { title, description, date, category, tags } = post.data;
 
 <style>
   .post-card { display: flex; flex-direction: column; }
+  /* La portada va a sangre, pegada a los bordes de la tarjeta: por eso el
+     ancho se estira los 1.5rem de padding de cada lado y el margen es
+     negativo. Sin `max-width: none` la regla global de las imágenes la
+     recortaría al 100% y quedaría corrida.
+     Las notas sin portada no muestran nada y se ven como siempre. */
+  .post-card-cover {
+    max-width: none;
+    width: calc(100% + 3rem);
+    margin: -1.5rem -1.5rem 1.25rem;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-bottom: 1px solid var(--border);
+    border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+  }
   .post-card-meta {
     display: flex;
     align-items: center;

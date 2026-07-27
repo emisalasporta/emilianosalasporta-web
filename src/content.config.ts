@@ -22,7 +22,18 @@ const blog = defineCollection({
     updated: fechaOpcional,
     category: z.enum(['entrenamiento', 'nutricion', 'carreras', 'mentalidad', 'equipamiento']),
     tags: z.array(z.string()).default([]),
+    /* Imagen de portada, subida desde el panel a public/uploads/.
+       Se ve arriba de la nota, en la tarjeta del listado, y es la imagen
+       que aparece al compartir el link. Si la nota lleva video, esta misma
+       imagen es la miniatura con el botón de play. */
     cover: textoOpcional,
+    /* Link de YouTube, pegado tal cual se copia (cualquier formato sirve).
+       No se sube ningún archivo de video al sitio: el video vive en YouTube
+       y acá se muestra una portada con botón de play que recién lo carga
+       cuando el visitante lo toca. Ver src/components/VideoYouTube.astro.
+       Va como texto libre a propósito: si el link viene mal, la nota se
+       publica igual sin video en vez de tirar abajo el build. */
+    video: textoOpcional,
     draft: z.boolean().default(false),
   }),
 });

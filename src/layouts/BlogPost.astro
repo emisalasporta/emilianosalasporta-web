@@ -1,13 +1,30 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import VideoYouTube from '../components/VideoYouTube.astro';
 import { CATEGORIAS } from '../consts';
-import { formatFecha, isoFecha } from '../lib/utils';
+import { formatFecha, isoFecha, youtubeId } from '../lib/utils';
 
 const { frontmatter } = Astro.props;
-const { title, description, date, updated, category, tags } = frontmatter;
+const { title, description, date, updated, category, tags, cover, video } = frontmatter;
+
+/* Arriba de la nota va UNA sola cosa, en este orden de prioridad:
+   1) si la nota tiene video, el video (con la portada de miniatura);
+   2) si no, la portada sola;
+   3) si no hay ninguna de las dos, nada — y la nota se ve como siempre.
+
+   Es a propósito que no se muestren las dos: la portada ya es la miniatura
+   del video, así que ponerlas juntas sería la misma imagen dos veces.
+
+   El campo del panel puede venir vacío ('') o con un link mal pegado, y en
+   los dos casos youtubeId() devuelve null y esto sigue de largo sin romper. */
+const idVideo = youtubeId(video);
+
+/* La portada también es la imagen que aparece cuando alguien comparte el
+   link por WhatsApp o en redes. Sin portada queda la de siempre. */
+const imagenParaCompartir = cover || undefined;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} image={imagenParaCompartir}>
   <article class="section">
     <div class="container">
       <div class="post">
@@ -20,6 +37,12 @@ const { title, description, date, updated, category, tags } = frontmatter;
         </p>
 
         <hr class="post-rule" />
+
+        {idVideo ? (
+          <VideoYouTube id={idVideo} title={title} poster={cover || undefined} />
+        ) : cover ? (
+          <img class="post-cover" src={cover} alt="" decoding="async" />
+        ) : null}
 
         <div class="prose post-body">
           <slot />
@@ -46,6 +69,16 @@ const { title, description, date, updated, category, tags } = frontmatter;
   .post-desc { margin-top: 1rem; }
   .post-byline { font-family: var(--font-mono); font-size: 0.85rem; margin-top: 1.2rem; }
   .post-rule { margin-block: 2rem; }
+  /* Recorte fijo a 16:9: las portadas vienen de fotos de cualquier tamaño y
+     así todas las notas se ven parejas, sin que la página salte al cargar. */
+  .post-cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+  }
   .post-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2.5rem; }
   .post-back { margin-top: 2rem; }
 </style>
