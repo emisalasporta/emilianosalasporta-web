@@ -19,8 +19,12 @@ const bytes = readFileSync(tool.file);
 const pesoKB = Math.round(bytes.byteLength / 1024);
 const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 8);
 
-const src = `/tools/${tool.slug}.html`;
-const hrefDescarga = `${src}?v=${hash}`;
+/* El hash va en la URL del iframe, no sólo en la de descarga: así el servidor
+   puede cachear la calculadora por mucho tiempo (son 100-200 KB) y aún así,
+   cuando subimos una versión nueva, cambia la URL y el navegador la baja sola.
+   Antes la herramienta se bajaba entera en cada visita. */
+const src = `/tools/${tool.slug}.html?v=${hash}`;
+const hrefDescarga = src;
 
 /* La descripción del registro puede venir en varios párrafos (separados por una
    línea en blanco). Los partimos acá para que se lean como texto y no como un
@@ -63,11 +67,15 @@ const descripcionHtml = tool.description
 
   <section class="tool-frame-section">
     <div class="container container-tool">
+      {/* Sin `scrolling="no"`: si por lo que sea no llega el aviso de alto (una
+          conexión lenta en el celular, por ejemplo), la calculadora se queda
+          con su propia barra y se puede usar igual. Cortada y sin salida es
+          peor que una barra de más durante medio segundo. Cuando el alto llega
+          es exacto, así que no sobra nada que scrollear y la barra no aparece. */}
       <iframe
         id="tool-frame"
         src={src}
         title={tool.title}
-        scrolling="no"
       ></iframe>
       <noscript>
         <p class="muted">
@@ -105,6 +113,16 @@ const descripcionHtml = tool.description
       if (!Number.isFinite(alto) || alto <= 0) return;
 
       frame.style.height = `${Math.ceil(alto)}px`;
+    });
+
+    /* Al girar el teléfono cambia el ancho y con él el alto real de la
+       calculadora. El ResizeObserver de adentro suele avisar solo, pero si el
+       navegador lo agrupa con el repintado del giro el aviso se pierde y queda
+       un hueco (o contenido cortado). Volvemos a preguntar, por las dudas. */
+    let pendiente: ReturnType<typeof setTimeout> | undefined;
+    window.addEventListener('resize', () => {
+      clearTimeout(pendiente);
+      pendiente = setTimeout(pedirAlto, 200);
     });
   }
 </script>

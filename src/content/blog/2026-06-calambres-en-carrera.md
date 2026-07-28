@@ -7,7 +7,7 @@ tags:
   - calambres
   - ultra
   - hidratacion
-cover: /uploads/portada-blog-calambres.svg
+cover: /uploads/portada-blog-calambres.webp
 video: ''
 updated: ''
 draft: false

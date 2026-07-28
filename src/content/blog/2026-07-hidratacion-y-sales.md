@@ -8,7 +8,7 @@ tags:
   - sodio
   - ultra
   - calor
-cover: /uploads/portada-blog.svg
+cover: /uploads/portada-blog.webp
 video: ''
 updated: ''
 draft: false
