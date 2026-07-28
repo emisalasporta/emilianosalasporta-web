@@ -2372,6 +2372,15 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v2.0 · 28-07-2026.</b> Se corrigió la <b>escala de esfuerzo 0-10</b> de las zonas, que no
+        coincidía ni con lo medido ni con la infografía propia. Queda 1-2 · 2-4 · 4-6 · 6-8 · 8-10:
+        el primer umbral se percibe alrededor de 4 y el segundo alrededor de 6, y los bordes se
+        comparten a propósito porque un 4 es la frontera, no un valor de una zona sola. Se corrigió
+        también el lactato de las dos primeras zonas (decía “&lt; 1”, y el valor más bajo medido en
+        corredores es ~1,4). Los bordes en % de la VAM y las zonas de pulso <b>no cambiaron</b>.
+        Sube el primer número porque cambia un dato publicado de las zonas.
+      </p>
+      <p>
         <b>v1.9 · 22-07-2026.</b> Repaso de punta a punta. Lo más importante: elegir un test de umbral ya no
         devuelve un aviso de advertencia, que era el resto de cuando esto era “la calculadora del test de 5
         minutos”. Se recalcularon los cortes de zona que publican las tarjetas, que estaban tomados de un solo
@@ -2454,7 +2463,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"1.9", fecha:"22-07-2026" };
+const VERSION = { n:"2.0", fecha:"28-07-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
@@ -2667,12 +2676,38 @@ const FASES = [
    la rampa (Iannetta y col., MSSE 2020;52(2):466-473). Antes de importar un
    porcentaje de un paper, hay que mirar contra qué está calculado.
 
+   EL CAMPO `rpe` SE CORRIGIÓ EL 28-07-2026 Y NO HAY QUE VOLVER ATRÁS. Antes
+   era 1-2 / 3-5 / 5-7 / 7-8 / 9-10, y la infografía propia de Emiliano usaba
+   una tercera escala distinta (0,5-1 / 2-3 / 4-6 / 7-9 / 10). Ninguna de las
+   dos coincidía con lo medido. En corredores entrenados el PRIMER umbral se
+   percibe en 3,2-3,7 sobre 10 (González-Mohíno y col., Appl Sci 2025;15:8843,
+   n=43, escala 1-10) y en 12,5 ± 1,6 de Borg 6-20 (Nuuttila y col., Eur J Appl
+   Physiol 2025;125:2161-2171, n=165), que pasado a CR10 con la ecuación de
+   Arney y col. (Kinesiology 2019;51(2):150-157) da ~3,9. El SEGUNDO umbral da
+   15,4 ± 1,8 de Borg -> ~5,9. Por eso los bordes quedan en 4 y en 6, y las
+   zonas comparten el número del borde a propósito: un 4 ES la frontera, no un
+   valor de una sola zona.
+
+   DOS COSAS QUE NO HAY QUE OLVIDAR AL LEER ESTA COLUMNA. Una: en esos mismos
+   estudios el RPE fue el anclaje MENOS preciso de todos (IC 95 % del primer
+   umbral: 9,4 a 15,7 de Borg, o sea de "muy suave" a "duro"). Sirve de control,
+   no de prescripción. Dos: el número SUBE SOLO con el tiempo. A velocidad
+   constante, en 40 minutos pasó de 4,5 ± 0,8 a 6,1 ± 1,9, con un caso de +4,1
+   (Fleckenstein y col., Sports 2023;11(10):198, n=15). El número de acá es el
+   de los primeros 10 a 15 minutos. Y NO hay que usar el RPE para separar Z1 de
+   Z2: no existe ninguna medición con esa resolución en la parte baja.
+
+   EL LACTATO DE Z1 Y Z2 también se corrigió el 28-07-2026 (era "< 1" y "1 a 2").
+   En 165 corredores el valor más bajo de la curva fue ~1,4 y el primer umbral
+   cayó en 1,7 ± 0,5 mmol/L (Nuuttila 2025), así que "< 1" era más bajo que lo
+   medido en reposo activo.
+
    Los campos "para" y "como" van dentro de un desplegable: la calculadora es
    para calcular, y el texto no tiene que tapar los números. */
 const ZONAS = [
   {
     id:"Z1", fase:1, nombre:"Regenerativo", eq:"trote suave",
-    vam:[45,62], fcmax:[50,68], fcr:[40,57], rpe:"1 a 2", lac:"< 1",
+    vam:[45,62], fcmax:[50,68], fcr:[40,57], rpe:"1 a 2", lac:"1 a 1,5",
     sesiones:{
       aca:"Trote de recuperación · vuelta a la calma · cruzado suave.",
       cruza:"Ninguna distancia de competencia cae acá: es zona de entrenamiento, no de carrera.",
@@ -2684,7 +2719,7 @@ const ZONAS = [
   },
   {
     id:"Z2", fase:1, nombre:"Endurance", eq:"rodaje y tirada larga",
-    vam:[62,76], fcmax:[68,82], fcr:[57,74], rpe:"3 a 5", lac:"1 a 2",
+    vam:[62,76], fcmax:[68,82], fcr:[57,74], rpe:"2 a 4", lac:"1,5 a 2",
     sesiones:{
       aca:"Rodaje · tirada larga · continuo variable.",
       cruza:"Se reparte con Z3: el maratón y el 30K cambian de zona según el nivel y el perfil. Con perfil equilibrado el ritmo de maratón cae acá por debajo de 17,3 km/h de VAM; con perfil orientado a la resistencia el corte baja a 11,3 y con perfil orientado a la velocidad sube a 23,3.",
@@ -2697,7 +2732,7 @@ const ZONAS = [
   },
   {
     id:"Z3", fase:2, nombre:"Tempo", eq:"de ritmo de maratón a ritmo de media",
-    vam:[76,85], fcmax:[82,90], fcr:[74,86], rpe:"5 a 7", lac:"2 a 3",
+    vam:[76,85], fcmax:[82,90], fcr:[74,86], rpe:"4 a 6", lac:"2 a 3",
     sesiones:{
       aca:"Tempo continuo · carrera progresiva · bloques a ritmo de competencia.",
       cruza:"Se reparte con Z2: el maratón y el 30K. Se reparte con Z4: la media maratón, el 15K y el 10K, que con perfil equilibrado cae acá por debajo de 11,8 km/h de VAM.",
@@ -2710,7 +2745,7 @@ const ZONAS = [
   },
   {
     id:"Z4", fase:2, nombre:"Umbral anaeróbico", eq:"lo que se sostiene de poco menos de media hora a una hora",
-    vam:[85,90], fcmax:[90,94], fcr:[86,91], rpe:"7 a 8", lac:"3 a 4,5",
+    vam:[85,90], fcmax:[90,94], fcr:[86,91], rpe:"6 a 8", lac:"3 a 4,5",
     sesiones:{
       aca:"Series largas de umbral · fartlek · ritmo de 10K.",
       cruza:"Se reparte con Z3: la media maratón, el 15K y, en corredores lentos, el 10K. Se reparte con Z5: el 5K, que por debajo del corte es trabajo de umbral y por encima es VO₂ máx. Ese corte va de 10,3 km/h de VAM con perfil orientado a la resistencia a 17,7 con perfil orientado a la velocidad, y queda en 13,6 con perfil equilibrado.",
@@ -2723,7 +2758,7 @@ const ZONAS = [
   },
   {
     id:"Z5", fase:3, nombre:"VO₂ máx y velocidad", eq:"series largas y trabajo por encima de la VAM",
-    vam:[90,115], fcmax:[94,100], fcr:[91,100], rpe:"9 a 10", lac:null,
+    vam:[90,115], fcmax:[94,100], fcr:[91,100], rpe:"8 a 10", lac:null,
     sesiones:{
       aca:"Series de 3 a 5 min · series cortas · velocidad · 1500 y 3000 m.",
       cruza:"Se reparte con Z4: el 5K y, en corredores muy rápidos, el 10K.",
