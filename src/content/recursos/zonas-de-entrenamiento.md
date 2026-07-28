@@ -1,9 +1,9 @@
 ---
-title: Zonas de entrenamiento — la guía de intensidad
+title: Zonas de entrenamiento — cómo se mide la intensidad
 description: 'Las cinco zonas lado a lado: cómo se siente cada una, a qué ritmo, a qué pulso, con qué porcentaje del VO₂ máx, con qué lactato y con qué potencia. Nueve páginas para dejar de adivinar si estás corriendo fácil o no.'
 date: 2026-07-28
 tipo: pdf
-archivo: /uploads/guia-intensidad.pdf
+archivo: /uploads/zonas-de-entrenamiento.pdf
 tags:
   - zonas
   - intensidad
