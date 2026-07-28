@@ -42,8 +42,16 @@ const ogImage = new URL(image, Astro.site).href;
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    {/* Google se baja /favicon.ico del raiz aunque la pagina declare otro icono,
+        y ahi seguia el de Astro (el que trae la plantilla): en los resultados de
+        busqueda aparecia la "A" en vez del logo. Ahora los tres archivos son el
+        logo sobre el fondo oscuro de la marca. El .ico lleva 16, 32 y 48 px
+        adentro; a 16 px, que es como lo dibuja Google, el celeste sobre blanco
+        se perdia, por eso el cuadro oscuro. */}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icono-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Redes sociales (Open Graph / Twitter) -->
