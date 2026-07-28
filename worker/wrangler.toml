@@ -1,0 +1,29 @@
+# ============================================================
+#  Configuración del Worker de los contadores.
+#
+#  ESTO SÓLO HACE FALTA si publicás desde la computadora con la
+#  herramienta `wrangler`. Si lo hacés desde el panel de Cloudflare
+#  (que es el camino que recomienda el LEEME.md), no toques nada acá:
+#  el panel te pide lo mismo con clics.
+# ============================================================
+
+name = "contadores"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# La base de datos. El `database_id` te lo da Cloudflare cuando la creás:
+# pegalo acá reemplazando el texto de abajo.
+[[d1_databases]]
+binding = "DB"
+database_name = "esp-contadores"
+database_id = "PEGA-ACA-EL-ID-QUE-TE-DA-CLOUDFLARE"
+
+# En qué direcciones responde. Todo lo que empiece con /api/ lo atiende el
+# Worker; el resto del sitio sigue saliendo de nginx como siempre.
+[[routes]]
+pattern = "emilianosalasporta.cloud/api/*"
+zone_name = "emilianosalasporta.cloud"
+
+# Limpieza de la tabla de límites, todos los días a las 4 de la mañana (UTC).
+[triggers]
+crons = ["0 4 * * *"]

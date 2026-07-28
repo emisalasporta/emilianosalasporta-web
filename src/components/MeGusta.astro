@@ -1,0 +1,231 @@
+---
+/**
+ * Botón de "me gusta" + los números, para una nota o un recurso.
+ *
+ * Cómo funciona, en dos líneas: la página se publica estática y SIN números
+ * (así se puede seguir cacheando entera), y recién en el navegador le pregunta
+ * a /api/contadores cuánto va. Si esa respuesta no llega --porque el Worker
+ * todavía no está publicado, o porque se cayó-- el bloque NO se muestra y la
+ * nota se ve exactamente como antes. Eso es a propósito: es preferible que no
+ * aparezca a que aparezca roto o en cero.
+ *
+ * `id` tiene que ser "blog:<slug>" o "recurso:<slug>".
+ */
+interface Props {
+  id: string;
+  /** En los recursos también mostramos cuántas veces se bajó el archivo. */
+  mostrarDescargas?: boolean;
+}
+
+const { id, mostrarDescargas = false } = Astro.props;
+---
+
+<div class="megusta" data-id={id} data-descargas={mostrarDescargas ? '1' : null} hidden>
+  <button type="button" class="megusta-btn" aria-pressed="false">
+    <svg
+      class="megusta-icono"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M20.8 5.7a5 5 0 0 0-7.1 0L12 7.4l-1.7-1.7a5 5 0 1 0-7.1 7.1l1.7 1.7L12 21.6l7.1-7.1 1.7-1.7a5 5 0 0 0 0-7.1z"
+      ></path>
+    </svg>
+    <span class="megusta-texto">Me gusta</span>
+    <span class="megusta-n"></span>
+  </button>
+
+  <p class="muted megusta-bajadas" hidden></p>
+</div>
+
+<script>
+  /* Una sola clave para todo: adentro guardamos la lista de lo que esta
+     persona ya marcó. Sirve para dejar el corazón encendido cuando vuelve, y
+     para no sumar dos veces desde el mismo navegador. No es infalible (quien
+     borra los datos del navegador puede volver a marcar) y está bien que así
+     sea: acá no hay nada que proteger, sólo un número que orienta. */
+  const CLAVE = 'esp:megusta';
+
+  const yaMarcados = (): string[] => {
+    try {
+      const crudo = localStorage.getItem(CLAVE);
+      const lista = crudo ? JSON.parse(crudo) : [];
+      return Array.isArray(lista) ? lista : [];
+    } catch {
+      return []; // modo incógnito o storage bloqueado: seguimos igual
+    }
+  };
+
+  const marcar = (id: string) => {
+    try {
+      const lista = yaMarcados();
+      if (!lista.includes(id)) localStorage.setItem(CLAVE, JSON.stringify([...lista, id]));
+    } catch {
+      /* si no se puede guardar, no pasa nada: sólo se pierde el estado visual */
+    }
+  };
+
+  const enCastellano = (n: number, uno: string, varios: string) =>
+    `${n} ${n === 1 ? uno : varios}`;
+
+  document.querySelectorAll<HTMLElement>('.megusta').forEach(async (caja) => {
+    const id = caja.dataset.id;
+    if (!id) return;
+
+    const boton = caja.querySelector<HTMLButtonElement>('.megusta-btn')!;
+    const numero = caja.querySelector<HTMLElement>('.megusta-n')!;
+    const bajadas = caja.querySelector<HTMLElement>('.megusta-bajadas')!;
+
+    let cuenta = 0;
+    let marcado = yaMarcados().includes(id);
+
+    const pintar = () => {
+      numero.textContent = cuenta > 0 ? String(cuenta) : '';
+      boton.setAttribute('aria-pressed', marcado ? 'true' : 'false');
+      boton.classList.toggle('esta-marcado', marcado);
+      boton.setAttribute(
+        'aria-label',
+        cuenta > 0
+          ? `Me gusta. ${enCastellano(cuenta, 'persona lo marcó', 'personas lo marcaron')}`
+          : 'Me gusta'
+      );
+    };
+
+    /* Paso 1: pedir los números. Si esto falla, nos vamos en silencio y el
+       bloque queda oculto para siempre. */
+    try {
+      const respuesta = await fetch(`/api/contadores?ids=${encodeURIComponent(id)}`);
+      if (!respuesta.ok) return;
+      const datos = await respuesta.json();
+      cuenta = datos?.[id]?.megusta ?? 0;
+
+      if (caja.dataset.descargas) {
+        const n = datos?.[id]?.descargas ?? 0;
+        /* Un "0 descargas" flamante no le hace bien a nadie: si todavía no
+           hay ninguna, no decimos nada. */
+        if (n > 0) {
+          bajadas.textContent = enCastellano(n, 'descarga', 'descargas');
+          bajadas.hidden = false;
+        }
+      }
+    } catch {
+      return;
+    }
+
+    pintar();
+    caja.hidden = false;
+
+    boton.addEventListener('click', async () => {
+      if (marcado) return; // una vez por navegador, y listo
+
+      /* Optimista: encendemos el corazón y sumamos uno antes de que conteste
+         el servidor. Se siente instantáneo, y si el pedido falla lo dejamos
+         marcado igual --el visitante ya hizo lo suyo, no vamos a devolverle
+         un error por un me gusta. */
+      marcado = true;
+      cuenta += 1;
+      pintar();
+      marcar(id);
+
+      try {
+        const respuesta = await fetch('/api/megusta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        if (respuesta.ok) {
+          const datos = await respuesta.json();
+          if (typeof datos?.megusta === 'number') {
+            cuenta = datos.megusta; // el número de verdad, por si hubo otros
+            pintar();
+          }
+        }
+      } catch {
+        /* sin internet o servidor caído: se queda como está */
+      }
+    });
+  });
+</script>
+
+<style>
+  .megusta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 2rem;
+  }
+
+  .megusta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--txt-2);
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+
+  .megusta-btn:hover {
+    color: var(--accent-2);
+    border-color: var(--accent-2);
+    background: var(--accent-2-soft);
+  }
+
+  /* Ya marcado: el corazón se rellena con el magenta de la marca y el botón
+     deja de invitar al clic (cursor normal). */
+  .megusta-btn.esta-marcado {
+    color: var(--accent-2);
+    border-color: var(--accent-2);
+    background: var(--accent-2-soft);
+    cursor: default;
+  }
+  .megusta-btn.esta-marcado .megusta-icono {
+    fill: var(--accent-2);
+  }
+
+  .megusta-icono {
+    flex: none;
+    transition: fill 0.2s, transform 0.2s;
+  }
+  .megusta-btn.esta-marcado .megusta-icono {
+    transform: scale(1.12);
+  }
+
+  .megusta-n {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+  }
+  .megusta-n:empty {
+    display: none;
+  }
+
+  .megusta-bajadas {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  /* Quien pidió menos animación en su sistema, que no tenga ninguna. */
+  @media (prefers-reduced-motion: reduce) {
+    .megusta-btn,
+    .megusta-icono {
+      transition: none;
+    }
+    .megusta-btn.esta-marcado .megusta-icono {
+      transform: none;
+    }
+  }
+</style>

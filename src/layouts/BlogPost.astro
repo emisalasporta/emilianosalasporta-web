@@ -1,10 +1,14 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import VideoYouTube from '../components/VideoYouTube.astro';
+import MeGusta from '../components/MeGusta.astro';
 import { CATEGORIAS } from '../consts';
 import { formatFecha, isoFecha, youtubeId } from '../lib/utils';
 
-const { frontmatter } = Astro.props;
+/* `slug` viene de la pagina (src/pages/blog/[...slug].astro) y sirve para
+   identificar la nota en los contadores. Es opcional: si no llega, el bloque
+   de "me gusta" simplemente no se dibuja. */
+const { frontmatter, slug } = Astro.props;
 const { title, description, date, updated, category, tags, cover, video } = frontmatter;
 
 /* Arriba de la nota va UNA sola cosa, en este orden de prioridad:
@@ -54,6 +58,8 @@ const imagenParaCompartir = cover || undefined;
             {tags.map((t) => <a href={`/tags/${t}`} class="tag">#{t}</a>)}
           </div>
         )}
+
+        {slug && <MeGusta id={`blog:${slug}`} />}
       </div>
 
       <div class="post-back">

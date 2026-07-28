@@ -5,6 +5,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { TIPOS_RECURSOS } from '../../consts';
 import { formatFecha, isoFecha } from '../../lib/utils';
+import MeGusta from '../../components/MeGusta.astro';
 
 export async function getStaticPaths() {
   const recursos = await getCollection('recursos', ({ data }) =>
@@ -63,7 +64,12 @@ if (archivo) {
 
         {descarga && (
           <div class="descarga">
-            <a class="btn btn-primary" href={descarga.href} download={descarga.nombre}>
+            <a
+              class="btn btn-primary"
+              href={descarga.href}
+              download={descarga.nombre}
+              data-contar={`recurso:${recurso.id}`}
+            >
               Descargar ({descarga.ext}, {descarga.peso})
             </a>
             <p class="muted descarga-nota">Es tuyo: bajalo y usalo cuando quieras.</p>
@@ -81,6 +87,8 @@ if (archivo) {
             {tags.map((t) => <a href={`/tags/${t}`} class="tag">#{t}</a>)}
           </div>
         )}
+
+        <MeGusta id={`recurso:${recurso.id}`} mostrarDescargas />
       </div>
 
       <div class="post-back">
@@ -131,3 +139,27 @@ if (archivo) {
   .descarga { margin-top: 1.75rem; }
   .descarga-nota { font-size: 0.88rem; margin-top: 0.6rem; }
 </style>
+
+<script>
+  /* Contar las descargas sin molestar a nadie.
+
+     El enlace sigue apuntando al PDF de siempre --no lo pasamos por ningun
+     intermediario-- asi que la direccion del archivo no cambia, Google la
+     sigue viendo igual, y si esto falla la descarga arranca lo mismo.
+
+     `sendBeacon` es justo para esto: el navegador se lleva el aviso en
+     segundo plano y no le importa si la pagina se va mientras tanto. Con un
+     `fetch` normal, el navegador puede cancelarlo al empezar la bajada y la
+     descarga no se contaria. */
+  document.querySelectorAll<HTMLAnchorElement>('a[data-contar]').forEach((enlace) => {
+    enlace.addEventListener('click', () => {
+      const id = enlace.dataset.contar;
+      if (!id || !navigator.sendBeacon) return;
+      try {
+        navigator.sendBeacon('/api/descarga', JSON.stringify({ id }));
+      } catch {
+        /* que no se cuente jamas puede estorbar la descarga */
+      }
+    });
+  });
+</script>

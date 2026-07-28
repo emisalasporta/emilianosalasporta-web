@@ -13,6 +13,6 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 ---
 
-<BlogPost frontmatter={post.data}>
+<BlogPost frontmatter={post.data} slug={post.id}>
   <Content />
 </BlogPost>
