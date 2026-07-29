@@ -1,6 +1,6 @@
 ---
 title: ¿Cuántas veces por semana hay que entrenar?
-description: 'Una alumna vio el plan de 5K y me preguntó si podía hacerlo con dos sesiones semanales. De ahí salió esta nota: qué es la frecuencia, cuánta necesitás para la salud, cuánta para rendir, y qué pasa con el doble turno.'
+description: 'Vero vio el plan de 5K y me preguntó si podía hacerlo con dos sesiones semanales. De ahí salió esta nota: qué es la frecuencia, cuánta necesitás para la salud, cuánta para rendir, y qué pasa con el doble turno.'
 date: 2026-07-29
 category: entrenamiento
 tags:
@@ -13,7 +13,7 @@ updated: ''
 draft: true
 ---
 
-Hace unos días publiqué un [plan de 5K de calle](/recursos/plan-5k-calle-nivel-1) y me escribió una alumna que hacía rato no corría. Se motivó, quiere volver, y me preguntó si podía hacerlo con dos sesiones por semana en lugar de las que tiene el plan.
+Hace unos días publiqué un [plan de 5K de calle](/recursos/plan-5k-calle-nivel-1) y me escribió Vero, que hacía rato no corría. Se motivó, quiere volver, y me preguntó si podía hacerlo con dos sesiones por semana en lugar de las que tiene el plan.
 
 Antes de contestarle, una aclaración que vale para cualquier plan que te bajes de internet, incluido el mío: un plan genérico es una estructura de ejemplo. No sabe cómo dormís, qué trabajás, de dónde venís ni qué lesiones tuviste. El entrenamiento rinde de verdad cuando está hecho para vos, y eso ningún PDF lo puede resolver.
 
@@ -97,7 +97,7 @@ Y un detalle que me sirve mucho en la cancha: las lesiones por estrés óseo apa
 
 ***
 
-En resumen: a mi alumna le dije que vuelva con sus dos días. Con dos días se mejora, se llega a los 5K y sobre todo se sostiene, que es lo que más importa. Con tres o cuatro va a llegar más lejos, especialmente si adentro de esos días hay algo pensado. Lo que no funciona es agarrar un plan de cuatro días, borrarle dos y esperar el mismo resultado. Para eso está lo primero que le pregunto a cualquiera que empieza: qué días podés, y desde ahí armamos.
+En resumen: a Vero le dije que vuelva con sus dos días. Con dos días se mejora, se llega a los 5K y sobre todo se sostiene, que es lo que más importa. Con tres o cuatro va a llegar más lejos, especialmente si adentro de esos días hay algo pensado. Lo que no funciona es agarrar un plan de cuatro días, borrarle dos y esperar el mismo resultado. Para eso está lo primero que le pregunto a cualquiera que empieza: qué días podés, y desde ahí armamos.
 
 ## Para los curiosos (los estudios)
 
