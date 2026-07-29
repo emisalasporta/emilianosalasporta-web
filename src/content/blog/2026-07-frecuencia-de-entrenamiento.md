@@ -7,7 +7,7 @@ tags:
   - frecuencia
   - planificacion
   - principiantes
-cover: ''
+cover: /uploads/portada-blog-frecuencia.webp
 video: ''
 updated: ''
 draft: true
