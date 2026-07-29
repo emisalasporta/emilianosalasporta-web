@@ -1,6 +1,6 @@
 ---
 title: ¿Cuántas veces por semana hay que entrenar?
-description: 'Vero vio el plan de 5K y me preguntó si podía hacerlo con dos sesiones semanales. De ahí salió esta nota: qué es la frecuencia, cuánta necesitás para la salud, cuánta para rendir, y qué pasa con el doble turno.'
+description: 'Una alumna vio el plan de 5K y me preguntó si podía hacerlo con dos sesiones semanales. De ahí salió esta nota: qué es la frecuencia, cuánta necesitás para la salud, cuánta para rendir, y qué pasa con el doble turno.'
 date: 2026-07-29
 category: entrenamiento
 tags:
