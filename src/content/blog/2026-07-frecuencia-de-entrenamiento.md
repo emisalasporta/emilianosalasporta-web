@@ -55,13 +55,13 @@ La intuición dice que repartir los mismos kilómetros en más días te protege,
 
 Lo que sí sabemos es más concreto. Siguieron a [más de 5.000 corredores con reloj GPS](https://bjsm.bmj.com/content/59/17/1203) durante año y medio, y lo que predijo la lesión fue una sola cosa: **una salida que se pasa de la salida más larga que hiciste en el último mes.** Un poco más larga, un poco más de riesgo. El doble de larga, el doble de riesgo.
 
-Y acá hay que juntar dos cosas de esta nota que parecen no tocarse. Si metés el mismo volumen en menos días, cada salida es obligatoriamente más larga. Que es justo el escenario riesgoso. En criollo: la contracara del "con dos días se puede" es que con dos días hay que cuidar **más** el salto del fondo, no menos.
+Y acá hay que juntar dos cosas de esta nota que parecen no tocarse. Si metés el mismo volumen en menos días, cada salida es obligatoriamente más larga, que es justo el escenario riesgoso. La contracara del "con dos días se puede" es que con dos días hay que cuidar **más** el salto del fondo.
 
 El detalle que más me sirve en la cancha: las lesiones por estrés óseo aparecen recién tres o cuatro semanas después del error de carga. Por eso tanta gente se lesiona jurando que esa semana no hizo nada raro. El error fue el mes pasado.
 
 ## Entonces, ¿qué hago?
 
-En criollo, cómo se ve esto en tu semana:
+Cómo se ve esto en tu semana:
 
 1. **Arrancá por los días que realmente tenés**, no por los que te gustaría tener. Dos días sostenidos durante un año valen muchísimo más que cinco días durante tres semanas.
 2. **Con dos días:** uno con trabajo (intervalos, cuestas, un progresivo) y uno de fondo tranquilo que termines con ganas de más. Es tentador cargar los dos, pero lo que hace abandonar es entrenar demasiado duro, no entrenar seguido.
