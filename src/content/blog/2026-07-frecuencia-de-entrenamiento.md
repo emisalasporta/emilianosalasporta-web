@@ -13,7 +13,7 @@ updated: 2026-07-29
 draft: false
 ---
 
-Anteriormente publiqué un [plan de 5K de calle](/recursos/plan-5k-calle-nivel-1) y me escribió una alumna, que hacía rato no corría. Se motivó, quiere volver, y me preguntó si podía hacerlo con dos sesiones por semana en lugar de las que tiene el plan.
+Anteriormente publiqué un [plan de 5K de calle](/recursos/plan-5k-calle-nivel-1) y me escribió Vero T., que hacía rato no corría. Se motivó, quiere volver, y me preguntó si podía hacerlo con dos sesiones por semana en lugar de las que tiene el plan.
 
 Primero una aclaración que vale para cualquier plan que te bajes de internet, incluido el mío: un plan genérico es una estructura de ejemplo. No sabe cómo dormís, de qué trabajás, de dónde venís ni qué lesiones tuviste. El entrenamiento rinde de verdad cuando está hecho para vos, y eso ningún PDF lo puede resolver.
 
