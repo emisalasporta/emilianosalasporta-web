@@ -9,19 +9,19 @@ tags:
   - principiantes
 cover: /uploads/portada-blog-frecuencia.webp
 video: ''
-updated: ''
-draft: true
+updated: 2026-07-29
+draft: false
 ---
 
-Anteriormente publiqué un [plan de 5K de calle](/recursos/plan-5k-calle-nivel-1) y me escribió Vero, que hacía rato no corría. Se motivó, quiere volver, y me preguntó si podía hacerlo con dos sesiones por semana en lugar de las que tiene el plan.
+Anteriormente publiqué un [plan de 5K de calle](/recursos/plan-5k-calle-nivel-1) y me escribió una alumna, que hacía rato no corría. Se motivó, quiere volver, y me preguntó si podía hacerlo con dos sesiones por semana en lugar de las que tiene el plan.
 
-Antes de contestarle, una aclaración que vale para cualquier plan que te bajes de internet, incluido el mío: un plan genérico es una estructura de ejemplo. No sabe cómo dormís, qué trabajás, de dónde venís ni qué lesiones tuviste. El entrenamiento rinde de verdad cuando está hecho para vos, y eso ningún PDF lo puede resolver.
+Primero una aclaración que vale para cualquier plan que te bajes de internet, incluido el mío: un plan genérico es una estructura de ejemplo. No sabe cómo dormís, de qué trabajás, de dónde venís ni qué lesiones tuviste. El entrenamiento rinde de verdad cuando está hecho para vos, y eso ningún PDF lo puede resolver.
 
-Dicho eso, su consulta me llevó a la que yo pregunto siempre que alguien empieza a entrenar conmigo: **¿qué días de la semana podés?** Vamos a ordenar el tema.
+Dicho esto, su consulta me llevó a la que yo pregunto siempre cuando alguien quiere que yo sea su entrenador: **¿qué días de la semana podés correr?** Vamos a ordenar el tema.
 
 ## Qué es la frecuencia y por qué se define primero
 
-En el entrenamiento hay tres variables fundamentales. **Volumen**, que es cuánto (kilómetros, minutos). **Intensidad**, que es qué tan fuerte (fácil, difícil, frecuencia cardíaca, consumo de oxígeno, lactato). Y **frecuencia**, que es cuántas sesiones hacés por semana.
+En el entrenamiento hay tres variables fundamentales. **Volumen**, que es cuánto (kilómetros, minutos). **Intensidad**, que es qué tan fuerte (fácil, difícil, frecuencia cardíaca, consumo de oxígeno, lactato,etc.). Y **frecuencia**, que es cuántas sesiones hacés por semana.
 
 Por lo general, la frecuencia no la elegís vos, te la impone tu dinámica de vida. Y una vez fijada, condiciona todo lo demás. Con tres días tenés que meter en cada sesión lo que otro reparte en cinco, así que cada salida pesa más y el margen de error es más chico. Con más días podés cargar el mismo trabajo en porciones más chicas y te queda más descanso entre estímulos fuertes.
 
