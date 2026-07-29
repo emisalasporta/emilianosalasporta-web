@@ -19,7 +19,33 @@ Con el plan gratuito de Cloudflare tenés 100.000 pedidos por día y 100.000
 escrituras diarias en la base. Para tu escala eso es enorme: no lo vas a rozar,
 y no hay tarjeta de por medio.
 
-## Puesta en marcha (una sola vez, ~10 minutos)
+## YA ESTA PUESTO EN MARCHA (29 de julio de 2026)
+
+Esto quedo configurado y funcionando. No hay que volver a hacerlo. Asi quedo:
+
+| Cosa | Valor |
+|---|---|
+| Base D1 | `esp-contadores` — id `0a3ca92f-3357-4d5c-b00f-afc083eb4e49` |
+| Tablas | `contadores`, `limites`, indice `limites_por_hora` |
+| Worker | `contadores` |
+| Binding | `DB` -> `esp-contadores` |
+| Secreto | `SAL` (guardado, no se puede volver a ver) |
+| Ruta | `emilianosalasporta.cloud/api/*` |
+| Limpieza | cron `0 4 * * *`, todos los dias a las 4 UTC |
+
+Probado en vivo: el boton suma, el numero queda guardado en la base y
+sobrevive a recargar. La prueba se borro despues, asi que los contadores
+arrancan en cero.
+
+**Si algun dia hay que tocar el codigo del Worker**: se edita
+`worker/src/index.js`, se sube al repositorio, y despues en el panel de
+Cloudflare (Workers -> contadores -> Edit code) se pega la version nueva y
+se le da Deploy. El Worker NO se actualiza solo con el deploy de la web:
+son dos cosas separadas.
+
+---
+
+## Puesta en marcha desde cero (por si alguna vez hay que rehacerlo)
 
 Todo se hace con clics en `dash.cloudflare.com`. **No hace falta instalar nada.**
 

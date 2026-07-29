@@ -86,7 +86,34 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
   const enCastellano = (n: number, uno: string, varios: string) =>
     `${n} ${n === 1 ? uno : varios}`;
 
-  document.querySelectorAll<HTMLElement>('.megusta').forEach(async (caja) => {
+  /* UN SOLO PEDIDO PARA TODA LA PÁGINA.
+     En un listado hay un botón por tarjeta. Si cada uno preguntara por su
+     cuenta, entrar al blog serían tres viajes al servidor para traer tres
+     números que caben en una sola respuesta. La API acepta varios ids
+     separados por coma justamente para esto. */
+  const arrancar = async () => {
+    const cajas = Array.from(document.querySelectorAll<HTMLElement>('.megusta'));
+    if (cajas.length === 0) return;
+
+    const ids = [...new Set(cajas.map((c) => c.dataset.id).filter(Boolean))] as string[];
+    if (ids.length === 0) return;
+
+    let datos: Record<string, { megusta?: number; descargas?: number }>;
+    try {
+      const respuesta = await fetch(`/api/contadores?ids=${ids.map(encodeURIComponent).join(',')}`);
+      if (!respuesta.ok) return; // sin API, el bloque queda escondido y la página se ve igual
+      datos = await respuesta.json();
+    } catch {
+      return;
+    }
+
+    for (const caja of cajas) encender(caja, datos);
+  };
+
+  function encender(
+    caja: HTMLElement,
+    datos: Record<string, { megusta?: number; descargas?: number }>
+  ) {
     const id = caja.dataset.id;
     if (!id) return;
 
@@ -94,7 +121,7 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
     const numero = caja.querySelector<HTMLElement>('.megusta-n')!;
     const bajadas = caja.querySelector<HTMLElement>('.megusta-bajadas')!;
 
-    let cuenta = 0;
+    let cuenta = datos?.[id]?.megusta ?? 0;
     let marcado = yaMarcados().includes(id);
 
     const pintar = () => {
@@ -109,25 +136,14 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
       );
     };
 
-    /* Paso 1: pedir los números. Si esto falla, nos vamos en silencio y el
-       bloque queda oculto para siempre. */
-    try {
-      const respuesta = await fetch(`/api/contadores?ids=${encodeURIComponent(id)}`);
-      if (!respuesta.ok) return;
-      const datos = await respuesta.json();
-      cuenta = datos?.[id]?.megusta ?? 0;
-
-      if (caja.dataset.descargas) {
-        const n = datos?.[id]?.descargas ?? 0;
-        /* Un "0 descargas" flamante no le hace bien a nadie: si todavía no
-           hay ninguna, no decimos nada. */
-        if (n > 0) {
-          bajadas.textContent = enCastellano(n, 'descarga', 'descargas');
-          bajadas.hidden = false;
-        }
+    if (caja.dataset.descargas) {
+      const n = datos?.[id]?.descargas ?? 0;
+      /* Un "0 descargas" flamante no le hace bien a nadie: si todavía no hay
+         ninguna, no decimos nada. */
+      if (n > 0) {
+        bajadas.textContent = enCastellano(n, 'descarga', 'descargas');
+        bajadas.hidden = false;
       }
-    } catch {
-      return;
     }
 
     pintar();
@@ -145,6 +161,17 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
       pintar();
       marcar(id);
 
+      /* Si el mismo id está dos veces en la página (la tarjeta y algo más),
+         que se enciendan las dos sin recargar. */
+      document.querySelectorAll<HTMLElement>(`.megusta[data-id="${CSS.escape(id)}"]`)
+        .forEach((otra) => {
+          if (otra === caja) return;
+          const b = otra.querySelector<HTMLButtonElement>('.megusta-btn');
+          const n = otra.querySelector<HTMLElement>('.megusta-n');
+          if (b) { b.classList.add('esta-marcado'); b.setAttribute('aria-pressed', 'true'); }
+          if (n) n.textContent = String(cuenta);
+        });
+
       try {
         const respuesta = await fetch('/api/megusta', {
           method: 'POST',
@@ -152,9 +179,9 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
           body: JSON.stringify({ id }),
         });
         if (respuesta.ok) {
-          const datos = await respuesta.json();
-          if (typeof datos?.megusta === 'number') {
-            cuenta = datos.megusta; // el número de verdad, por si hubo otros
+          const datosNuevos = await respuesta.json();
+          if (typeof datosNuevos?.megusta === 'number') {
+            cuenta = datosNuevos.megusta; // el número de verdad, por si hubo otros
             pintar();
           }
         }
@@ -162,7 +189,9 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
         /* sin internet o servidor caído: se queda como está */
       }
     });
-  });
+  }
+
+  arrancar();
 </script>
 
 <style>

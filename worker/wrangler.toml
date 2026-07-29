@@ -16,7 +16,7 @@ compatibility_date = "2026-07-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "esp-contadores"
-database_id = "PEGA-ACA-EL-ID-QUE-TE-DA-CLOUDFLARE"
+database_id = "0a3ca92f-3357-4d5c-b00f-afc083eb4e49"
 
 # En qué direcciones responde. Todo lo que empiece con /api/ lo atiende el
 # Worker; el resto del sitio sigue saliendo de nginx como siempre.
