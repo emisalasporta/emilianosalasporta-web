@@ -43,7 +43,7 @@ const descripcionHtml = tool.description
     quedaba truncada a la mitad de una frase en los resultados. */}
 <BaseLayout title={tool.title} description={tool.summary}>
   <section class="section">
-    <div class="container container-tool">
+    <div class="container">
       <p class="eyebrow">{CATEGORIAS_HERRAMIENTAS[tool.category]}</p>
       <h1>{tool.title}</h1>
 
@@ -66,7 +66,7 @@ const descripcionHtml = tool.description
   </section>
 
   <section class="tool-frame-section">
-    <div class="container container-tool">
+    <div class="container">
       {/* Sin `scrolling="no"`: si por lo que sea no llega el aviso de alto (una
           conexión lenta en el celular, por ejemplo), la calculadora se queda
           con su propia barra y se puede usar igual. Cortada y sin salida es
@@ -128,10 +128,12 @@ const descripcionHtml = tool.description
 </script>
 
 <style>
-  /* La página de una herramienta es más ancha que el resto del sitio: acá el
-     protagonista es la calculadora, que por dentro mide 1280px. Con 82rem el
-     marco la contiene justa y no le sobra aire a los costados. */
-  .container-tool { max-width: 82rem; }
+  /* Antes esta pagina era mas ancha que el resto (82rem) para que la
+     calculadora entrara justa. Se saco: un sitio con tres anchos distintos se
+     siente como tres sitios. Ahora usa el ancho de siempre, --content, igual
+     que la home y que todo lo demas. La calculadora es responsiva por dentro
+     (sus cortes estan en 880 y 680 px), asi que a 1048 px conserva todas sus
+     columnas y no pierde nada. */
 
   .tool-intro { margin-top: 0.75rem; }
   .tool-desc :global(p + p) { margin-top: 0.9rem; }

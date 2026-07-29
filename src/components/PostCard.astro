@@ -1,11 +1,17 @@
 ---
 import { CATEGORIAS } from '../consts';
 import { formatFecha, isoFecha } from '../lib/utils';
+import MeGusta from './MeGusta.astro';
 
 const { post } = Astro.props;
 const { title, description, date, category, tags, cover } = post.data;
 ---
 
+{/* El "me gusta" NO puede ir adentro del <a>: un boton dentro de un enlace es
+    HTML invalido y, peor, tocarlo navegaria a la nota. Por eso la tarjeta se
+    envuelve: el enlace y el boton son hermanos, y el boton se apoya en la
+    esquina con posicion absoluta. */}
+<article class="tarjeta-envoltorio">
 <a href={`/blog/${post.id}`} class="card card-link post-card">
   {cover && <img class="post-card-cover" src={cover} alt="" loading="lazy" decoding="async" />}
   <div class="post-card-meta">
@@ -20,8 +26,16 @@ const { title, description, date, category, tags, cover } = post.data;
     </div>
   )}
 </a>
+  <MeGusta id={`blog:${post.id}`} compacto />
+</article>
 
 <style>
+  /* El envoltorio es el que tiene `position: relative`, asi el boton compacto
+     se cuelga de la esquina de la tarjeta. Y es el que pasa a ser la celda de
+     la grilla, por eso estira a la tarjeta a lo alto. */
+  .tarjeta-envoltorio { position: relative; display: flex; }
+  .tarjeta-envoltorio > .card { flex: 1; }
+
   .post-card { display: flex; flex-direction: column; }
   /* La portada va a sangre, pegada a los bordes de la tarjeta: por eso el
      ancho se estira los 1.5rem de padding de cada lado y el margen es

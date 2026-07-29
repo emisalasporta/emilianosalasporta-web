@@ -21,8 +21,15 @@ import fotoEmiliano from '../assets/foto-emiliano.jpg';
 >
   <section class="section">
     <div class="container">
+      {/* Mismo panel que un post del blog. Antes esta pagina era texto suelto
+          sobre el fondo casi-negro del sitio y se sentia como un documento sin
+          terminar. El panel le da el mismo marco que a una nota, y de paso el
+          ancho de la columna deja de leerse como un error: se lee como el
+          margen del panel, igual que en todo el resto del sitio. */}
+      <div class="post">
+        <span class="post-hud" aria-hidden="true">Sobre mi //</span>
 
-      <header class="intro">
+        <header class="intro">
         <div class="intro-texto">
           <p class="eyebrow">Sobre mí</p>
           <h1 class="intro-titulo">Me llamo Emiliano</h1>
@@ -48,11 +55,11 @@ import fotoEmiliano from '../assets/foto-emiliano.jpg';
             quality={82}
           />
         </figure>
-      </header>
+        </header>
 
-      <hr class="sobre-rule" />
+        <hr class="post-rule sobre-rule" />
 
-      <div class="prose sobre-prosa">
+        <div class="prose sobre-prosa">
         <h2>Una breve historia</h2>
 
         <p>
@@ -130,8 +137,8 @@ import fotoEmiliano from '../assets/foto-emiliano.jpg';
         </p>
 
         <p class="cierre">Cada persona es importante.</p>
+        </div>
       </div>
-
     </div>
   </section>
 </BaseLayout>
@@ -150,7 +157,7 @@ import fotoEmiliano from '../assets/foto-emiliano.jpg';
   /* Misma medida que la prosa de abajo: así el texto del encabezado y el de la
      historia comparten el borde izquierdo Y el derecho. Es lo que hace que se
      lea como un documento y no como dos piezas pegadas. */
-  .intro-texto { max-width: var(--content-narrow); }
+  .intro-texto { max-width: var(--medida); }
   .intro-titulo { margin-top: 0.5rem; }
   .intro-texto .lead { margin-top: 1rem; }
   /* El remate va aparte: es el latido del párrafo, no un renglón más. Se separa

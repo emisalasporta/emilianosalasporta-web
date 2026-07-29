@@ -48,7 +48,11 @@ const categorias = Object.entries(CATEGORIAS);
 </BaseLayout>
 
 <style>
-  .blog-lead { max-width: 42rem; margin-top: 0.5rem; }
+  /* La bajada usa --medida, igual que el texto de cualquier articulo. No llega
+     hasta donde llegan las tarjetas y esta bien: es la misma regla en todo el
+     sitio, texto largo se corta en la medida de lectura. Lo que importa es que
+     arranque en el MISMO borde izquierdo que la grilla, y eso sí pasa. */
+  .blog-lead { max-width: var(--medida); margin-top: 0.5rem; }
   .cat-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.75rem 0 2.25rem; }
   .blog-grid { margin-top: 0.5rem; }
   .blog-empty { margin-top: 2rem; }

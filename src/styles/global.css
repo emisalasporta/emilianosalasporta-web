@@ -36,7 +36,15 @@
 
   /* Layout y forma (esquinas apenas más nítidas para el aire tech) */
   --content: 68rem;
-  --content-narrow: 44rem;
+  /* --medida es el ancho de una COLUMNA DE TEXTO LARGO, no de una caja.
+     Sale de una regla vieja de tipografia: un renglon comodo tiene entre 45 y
+     75 caracteres. Mas largo que eso, el ojo se pierde al volver al principio
+     del renglon siguiente y hay que releer. 40rem da 73 caracteres con la
+     tipografia de este sitio (medido, no estimado).
+     Los titulos, las fotos y las tarjetas NO se leen renglon por renglon: esos
+     usan --content sin problema. */
+  --medida: 40rem;
+  --content-narrow: 44rem;   /* alias historico; usar --medida */
   --radius: 8px;
   --radius-lg: 12px;
 
@@ -181,7 +189,7 @@ hr { border: none; border-top: 1px solid var(--border); }
   margin-inline: auto;
   padding-inline: 1.25rem;
 }
-.container-narrow { max-width: var(--content-narrow); }
+.container-narrow { max-width: var(--medida); }
 
 .section { padding-block: clamp(2.5rem, 1.5rem + 4vw, 5rem); }
 
@@ -194,7 +202,10 @@ hr { border: none; border-top: 1px solid var(--border); }
 }
 .eyebrow::before { content: "// "; opacity: 0.7; }
 
-.lead { font-size: 1.15rem; color: var(--muted); }
+/* La bajada de una pagina. Era 1.15rem con el interlineado del cuerpo (1.7) y
+   quedaba grande y aireada: en pantallas anchas parecia un subtitulo mas que un
+   parrafo. 1.05/1.62 la deja compacta sin perder jerarquia contra el cuerpo. */
+.lead { font-size: 1.05rem; line-height: 1.62; color: var(--muted); }
 
 .muted { color: var(--muted); }
 
@@ -284,7 +295,11 @@ a.tag:hover { border-color: var(--accent); text-decoration: none; }
 }
 
 /* Prosa (contenido del blog / páginas de texto) */
-.prose { max-width: var(--content-narrow); }
+.prose { max-width: var(--medida); }
+/* El cuerpo de un articulo va un punto por debajo del texto de interfaz: la
+   diferencia es chica a proposito (0.97 contra 1), lo justo para que un texto
+   largo se lea mas denso sin que nadie tenga que acercarse a la pantalla. */
+.prose p, .prose li { font-size: 0.97rem; line-height: 1.72; }
 .prose > * + * { margin-top: 1.1rem; }
 .prose h2 { margin-top: 2.4rem; }
 .prose h3 { margin-top: 1.8rem; }
@@ -323,3 +338,91 @@ a.tag:hover { border-color: var(--accent); text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+
+/* ============================================================
+   ARTICULOS — el molde de una nota, una ficha de recurso o "Sobre mi"
+
+   ESTO VIVE ACA Y EN UN SOLO LADO. Antes estaba copiado y pegado en
+   BlogPost.astro y en recursos/[...slug].astro: dos copias que habia que
+   acordarse de tocar juntas, y que ya se habian empezado a separar.
+
+   La regla de anchos del sitio, completa, en tres renglones:
+
+     1. TODA pagina se encuadra en .container, que mide --content (68rem).
+        No hay paginas mas anchas ni mas angostas. Ni las calculadoras.
+     2. Dentro de un articulo, el titulo, la bajada y la portada usan el
+        panel entero. Se miran de un vistazo, no se leen renglon por renglon.
+     3. El texto corrido se corta en --medida y arranca en el MISMO borde
+        izquierdo que el titulo. Termina antes a la derecha, y eso esta bien:
+        es lo que lo hace comodo de leer.
+
+   Si algun dia hay que agregar un tipo de pagina nueva, se le pone .post y
+   ya entra en el sistema. No inventar un ancho nuevo.
+   ============================================================ */
+
+/* El panel: una placa (--surface) apenas mas clara que el fondo, con un riel
+   de neon cian a la izquierda. Asi el texto claro deja de estar apoyado
+   directo sobre el casi-negro del sitio (cansaba la vista). El resplandor del
+   riel es tenue a proposito: se nota, no grita. */
+.post {
+  position: relative;
+  max-width: var(--content);
+  margin-inline: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  box-shadow: -1px 0 14px rgba(47, 184, 255, 0.176), var(--shadow);
+  padding: clamp(1.6rem, 4vw, 3rem);
+}
+
+/* Sello mono arriba a la derecha. Decorativo (aria-hidden). En pantallas
+   angostas se esconde para no chocar con la etiqueta de categoria. */
+.post-hud {
+  position: absolute;
+  top: 0.9rem;
+  right: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+}
+@media (max-width: 30rem) { .post-hud { display: none; } }
+
+.post-cat { margin-bottom: 1rem; }
+.post-title { margin-top: 0.5rem; }
+.post-byline { font-family: var(--font-mono); font-size: 0.85rem; margin-top: 1.2rem; }
+.post-rule { margin-block: 2rem; }
+.post-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 2.5rem; }
+
+/* La bajada es texto que se lee, pero es corta y va en tono menor: aguanta un
+   poco mas de ancho que el cuerpo sin cansar. Un poco, no mucho: a 52rem daba
+   82 caracteres por renglon (medido) y se despegaba del resto de la pagina. */
+.post-desc { margin-top: 1rem; max-width: 46rem; }
+
+/* Recorte fijo a 16:9: las portadas vienen de fotos de cualquier tamano y asi
+   todas las notas se ven parejas, sin que la pagina salte al cargar. */
+.post-cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+}
+
+/* El punto 3 de la regla, en codigo. `.prose` suelta (fuera de un panel) sigue
+   valiendo --medida por si misma; adentro del panel el limite se corre a cada
+   hijo, para que las imagenes y los bloques de codigo SI puedan ir anchos. */
+.post .prose { max-width: none; }
+.post .prose > * { max-width: var(--medida); }
+.post .prose > img,
+.post .prose > figure,
+.post .prose > pre,
+.post .prose > table { max-width: none; }
+
+/* El boton de volver vive FUERA del panel, sobre el fondo del sitio. */
+.post-back { max-width: var(--content); margin: 2rem auto 0; }

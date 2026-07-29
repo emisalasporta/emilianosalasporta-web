@@ -15,12 +15,23 @@ interface Props {
   id: string;
   /** En los recursos también mostramos cuántas veces se bajó el archivo. */
   mostrarDescargas?: boolean;
+  /** Versión chica, para la esquina de una tarjeta del listado. */
+  compacto?: boolean;
 }
 
-const { id, mostrarDescargas = false } = Astro.props;
+const { id, mostrarDescargas = false, compacto = false } = Astro.props;
 ---
 
-<div class="megusta" data-id={id} data-descargas={mostrarDescargas ? '1' : null} hidden>
+{/* El mismo componente sirve adentro de la nota y en la esquina de la tarjeta.
+    Que sea el mismo es lo que hace que se sincronicen solos: los dos usan el
+    mismo `id` y la misma lista en el navegador, así que marcar en un lado
+    aparece marcado en el otro apenas se carga la página. */}
+<div
+  class:list={['megusta', compacto && 'megusta--compacto']}
+  data-id={id}
+  data-descargas={mostrarDescargas ? '1' : null}
+  hidden
+>
   <button type="button" class="megusta-btn" aria-pressed="false">
     <svg
       class="megusta-icono"
@@ -155,6 +166,16 @@ const { id, mostrarDescargas = false } = Astro.props;
 </script>
 
 <style>
+  /* IMPRESCINDIBLE, y cuesta verlo: el componente se esconde con el atributo
+     `hidden` mientras no sepa los numeros, pero `hidden` funciona con una regla
+     del navegador (`[hidden]{display:none}`) que PIERDE contra cualquier
+     `display` que pongamos nosotros por clase. Sin esta linea el bloque se ve
+     siempre, incluso cuando la API no existe: el boton aparece, se puede tocar,
+     y al recargar se despinta porque el codigo se corta antes de repintarlo. */
+  .megusta[hidden] {
+    display: none;
+  }
+
   .megusta {
     display: flex;
     flex-wrap: wrap;
@@ -217,6 +238,45 @@ const { id, mostrarDescargas = false } = Astro.props;
     font-family: var(--font-mono);
     font-size: 0.8rem;
   }
+
+  /* ---------- Versión compacta: la esquina de una tarjeta ---------- */
+  /* Se posiciona sola contra el ancestro con `position: relative` que le pone
+     la tarjeta. Va arriba a la derecha, encima de la portada cuando la hay, con
+     un fondo propio para que se lea sobre cualquier foto. */
+  .megusta--compacto {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 2;
+    margin-top: 0;
+  }
+  .megusta--compacto .megusta-btn {
+    gap: 0.35rem;
+    padding: 0.34rem 0.55rem;
+    font-size: 0.8rem;
+    color: #fff;
+    background: rgba(10, 11, 16, 0.62);
+    border-color: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(3px);
+  }
+  .megusta--compacto .megusta-btn:hover,
+  .megusta--compacto .megusta-btn.esta-marcado {
+    color: var(--accent-2);
+    border-color: var(--accent-2);
+    background: rgba(10, 11, 16, 0.78);
+  }
+  /* El texto sigue en el HTML para quien usa lector de pantalla; solo se
+     esconde a la vista, que es lo que pide una esquina de tarjeta. */
+  .megusta--compacto .megusta-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .megusta--compacto .megusta-icono { width: 15px; height: 15px; }
+  .megusta--compacto .megusta-n { font-size: 0.76rem; }
 
   /* Quien pidió menos animación en su sistema, que no tenga ninguna. */
   @media (prefers-reduced-motion: reduce) {
