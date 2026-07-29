@@ -42,23 +42,29 @@ const ogImage = new URL(image, Astro.site).href;
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {/* Google se baja /favicon.ico del raiz aunque la pagina declare otro icono,
-        y ahi seguia el de Astro (el que trae la plantilla): en los resultados de
-        busqueda aparecia la "A" en vez del logo.
+    {/* VUELVE A SER /logo.png, y hay que dejarlo asi.
 
-        Van SIN fondo, con el logo ocupando todo el cuadro. Se probo con un
-        cuadro oscuro detras --se lee un poco mejor a 16 px sobre el blanco del
-        buscador-- pero en la pestaña del navegador parece una cajita y queda
-        peor donde uno lo ve todos los dias. Si algun dia se vuelve a intentar,
-        que sea sabiendo eso.
+        Google lee el <link rel="icon"> de la home para armar el icono de los
+        resultados; NO se baja /favicon.ico por su cuenta. Es decir que esta
+        linea ya estaba bien: si en el buscador salia la "A" de Astro era
+        porque Google tenia cacheado el icono de un rastreo viejo, no porque
+        faltara declararlo. Su documentacion dice que refrescarlo lleva de
+        varios dias a varias semanas.
 
-        La excepcion es apple-touch-icon: la pantalla de inicio de iOS no admite
-        transparencia y la rellena de negro, asi que ese SI lleva el fondo
-        oscuro de la marca, a proposito. */}
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" href="/icono-192.png" sizes="192x192" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        Se probo cambiar esto por un juego de cuatro archivos (favicon.ico,
+        favicon.svg, icono-192.png, apple-touch-icon.png). Dos motivos para
+        haber vuelto atras:
+        1) Google pide expresamente que la URL del favicon sea ESTABLE. Cambiar
+           la declaracion le reinicia el reloj y tarda mas, no menos.
+        2) Con esas rutas nuevas el icono de la pestaña dejaba de ser el mismo
+           archivo de siempre, y se veia distinto.
+
+        /favicon.ico SI se reemplazo: ese archivo era el de Astro y ahora es el
+        logo. Misma URL de siempre, contenido correcto. Sirve de respaldo para
+        el navegador y para cualquiera que lo busque en la raiz, sin tocar nada
+        de lo que ya funcionaba. */}
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Redes sociales (Open Graph / Twitter) -->
