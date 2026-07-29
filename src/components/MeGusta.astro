@@ -83,6 +83,14 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
     }
   };
 
+  const desmarcar = (id: string) => {
+    try {
+      localStorage.setItem(CLAVE, JSON.stringify(yaMarcados().filter((x) => x !== id)));
+    } catch {
+      /* idem */
+    }
+  };
+
   const enCastellano = (n: number, uno: string, varios: string) =>
     `${n} ${n === 1 ? uno : varios}`;
 
@@ -130,10 +138,12 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
       boton.classList.toggle('esta-marcado', marcado);
       boton.setAttribute(
         'aria-label',
-        cuenta > 0
-          ? `Me gusta. ${enCastellano(cuenta, 'persona lo marcó', 'personas lo marcaron')}`
-          : 'Me gusta'
+        (marcado ? 'Sacar mi me gusta. ' : 'Me gusta. ') +
+          (cuenta > 0
+            ? enCastellano(cuenta, 'persona lo marcó', 'personas lo marcaron')
+            : 'Nadie lo marcó todavía')
       );
+      boton.title = marcado ? 'Tocá de nuevo para sacarlo' : 'Me gusta';
     };
 
     if (caja.dataset.descargas) {
@@ -150,16 +160,19 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
     caja.hidden = false;
 
     boton.addEventListener('click', async () => {
-      if (marcado) return; // una vez por navegador, y listo
+      /* Alterna: si ya estaba marcado, lo saca. Un botón que no se puede
+         desmarcar se siente una trampa, y el que se arrepiente merece poder
+         volver atrás. */
+      const ahoraMarco = !marcado;
 
-      /* Optimista: encendemos el corazón y sumamos uno antes de que conteste
-         el servidor. Se siente instantáneo, y si el pedido falla lo dejamos
-         marcado igual --el visitante ya hizo lo suyo, no vamos a devolverle
-         un error por un me gusta. */
-      marcado = true;
-      cuenta += 1;
+      /* Optimista: movemos el corazón y el número antes de que conteste el
+         servidor. Se siente instantáneo, y si el pedido falla lo dejamos como
+         quedó --el visitante ya hizo lo suyo, no vamos a devolverle un error
+         por un me gusta. */
+      marcado = ahoraMarco;
+      cuenta = Math.max(0, cuenta + (ahoraMarco ? 1 : -1));
       pintar();
-      marcar(id);
+      if (ahoraMarco) marcar(id); else desmarcar(id);
 
       /* Si el mismo id está dos veces en la página (la tarjeta y algo más),
          que se enciendan las dos sin recargar. */
@@ -168,12 +181,15 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
           if (otra === caja) return;
           const b = otra.querySelector<HTMLButtonElement>('.megusta-btn');
           const n = otra.querySelector<HTMLElement>('.megusta-n');
-          if (b) { b.classList.add('esta-marcado'); b.setAttribute('aria-pressed', 'true'); }
-          if (n) n.textContent = String(cuenta);
+          if (b) {
+            b.classList.toggle('esta-marcado', ahoraMarco);
+            b.setAttribute('aria-pressed', ahoraMarco ? 'true' : 'false');
+          }
+          if (n) n.textContent = cuenta > 0 ? String(cuenta) : '';
         });
 
       try {
-        const respuesta = await fetch('/api/megusta', {
+        const respuesta = await fetch(ahoraMarco ? '/api/megusta' : '/api/megusta-sacar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id }),
@@ -240,7 +256,6 @@ const { id, mostrarDescargas = false, compacto = false } = Astro.props;
     color: var(--accent-2);
     border-color: var(--accent-2);
     background: var(--accent-2-soft);
-    cursor: default;
   }
   .megusta-btn.esta-marcado .megusta-icono {
     fill: var(--accent-2);

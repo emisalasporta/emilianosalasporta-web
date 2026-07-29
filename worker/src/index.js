@@ -16,6 +16,7 @@
  * Endpoints:
  *   GET  /api/contadores?ids=blog:x,recurso:y   -> los números, para pintar
  *   POST /api/megusta    {"id":"blog:x"}        -> suma uno y devuelve el total
+ *   POST /api/megusta-sacar {"id":"blog:x"}      -> resta uno (nunca baja de 0)
  *   POST /api/descarga   {"id":"recurso:y"}     -> suma una descarga (204)
  */
 
@@ -50,6 +51,9 @@ export default {
       }
       if (request.method === 'POST' && url.pathname === '/api/megusta') {
         return await sumarMeGusta(request, env);
+      }
+      if (request.method === 'POST' && url.pathname === '/api/megusta-sacar') {
+        return await sacarMeGusta(request, env);
       }
       if (request.method === 'POST' && url.pathname === '/api/descarga') {
         return await sumarDescarga(request, env);
@@ -130,6 +134,35 @@ async function sumarMeGusta(request, env) {
 
   const total = await sumarUno(env, id, 'megusta');
   return json({ megusta: total }, 200);
+}
+
+/**
+ * Sacar un "me gusta". Si alguien se arrepiente tiene que poder deshacerlo:
+ * un boton que no se puede desmarcar se siente una trampa.
+ *
+ * El `MAX(0, ...)` es importante: sin el, alguien que llame a esto muchas veces
+ * deja el contador en negativo. Con el, lo peor que puede pasar es que quede
+ * en cero, que es donde empezo.
+ */
+async function sacarMeGusta(request, env) {
+  if (!origenValido(request)) return json({ error: 'origen no permitido' }, 403);
+
+  const id = await leerId(request);
+  if (!id) return json({ error: 'id invalido' }, 400);
+
+  if (!(await dentroDelLimite(request, env))) return json({ error: 'demasiados' }, 429);
+
+  /* Sin INSERT: si la fila no existe es que nadie lo marco nunca, y no hay
+     nada que restar. Devolvemos cero y listo. */
+  const fila = await env.DB.prepare(
+    `UPDATE contadores SET megusta = MAX(0, megusta - 1)
+     WHERE id = ?
+     RETURNING megusta`
+  )
+    .bind(id)
+    .first();
+
+  return json({ megusta: fila?.megusta ?? 0 }, 200);
 }
 
 async function sumarDescarga(request, env) {
