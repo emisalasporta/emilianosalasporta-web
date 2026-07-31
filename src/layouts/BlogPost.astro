@@ -60,6 +60,22 @@ const imagenParaCompartir = cover || undefined;
         )}
 
         {slug && <MeGusta id={`blog:${slug}`} />}
+
+        {/* El momento en que a alguien se le ocurre la pregunta es justo acá,
+            recién terminada la nota: por eso el enlace va al final del texto y
+            no escondido en el menú. Le pasamos el título en la dirección para
+            que del otro lado se sepa de qué nota vino sin que la persona tenga
+            que explicarlo. */}
+        <aside class="preguntar">
+          <p class="preguntar-titulo">¿Te quedó una duda con esto?</p>
+          <p class="muted preguntar-texto">
+            Escribime y te contesto. Si la pregunta le sirve a más gente, capaz sale una nota
+            nueva de ahí.
+          </p>
+          <a class="btn btn-ghost" href={`/contacto?sobre=${encodeURIComponent(title)}`}>
+            Hacerme una pregunta →
+          </a>
+        </aside>
       </div>
 
       <div class="post-back">

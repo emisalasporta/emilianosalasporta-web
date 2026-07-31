@@ -426,3 +426,26 @@ a.tag:hover { border-color: var(--accent); text-decoration: none; }
 
 /* El boton de volver vive FUERA del panel, sobre el fondo del sitio. */
 .post-back { max-width: var(--content); margin: 2rem auto 0; }
+
+/* ------------------------------------------------------------
+   El bloque de "hacerme una pregunta" del final de una nota o de
+   una ficha de recurso.
+
+   Vive aca por el mismo motivo que el resto del molde: lo usan
+   BlogPost.astro y recursos/[...slug].astro, y dos copias se
+   separan solas. Se apoya en --medida como el texto: es una
+   invitacion a leer, no una tarjeta ancha.
+   ------------------------------------------------------------ */
+.preguntar {
+  max-width: var(--medida);
+  margin-top: 3rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border);
+}
+.preguntar-titulo {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+.preguntar-texto { font-size: 0.92rem; margin-bottom: 1.1rem; }

@@ -1,0 +1,299 @@
+---
+/**
+ * El formulario para escribirle a Emiliano.
+ *
+ * Cómo viaja el mensaje: el navegador se lo manda a `/api/pregunta`, que es una
+ * dirección de ESTE dominio (la atiende el Worker de Cloudflare, el mismo que
+ * lleva los contadores). Nadie le habla a un servidor ajeno, no se pone ninguna
+ * cookie y el sitio sigue sin necesitar cartel de consentimiento. El aviso por
+ * mail sale del otro lado, de servidor a servidor, donde el visitante ya no
+ * participa. Es la misma regla que el resto del sitio.
+ *
+ * Sin JavaScript el formulario no se envía: por eso abajo hay un `<noscript>`
+ * con la dirección de mail escrita. Preferimos eso a que alguien apriete
+ * "Enviar" y no pase nada.
+ */
+import { CONTACTO } from '../consts';
+
+interface Props {
+  /** Un texto suelto que se manda junto con el mensaje. Lo usa el bloque del
+   *  final de cada nota para avisar desde dónde escribió la persona. */
+  referencia?: string;
+}
+
+const { referencia = '' } = Astro.props;
+
+const TEMAS = [
+  'Una duda de entrenamiento',
+  'Sobre una nota o un recurso',
+  'Quiero entrenar con vos',
+  'Otra cosa',
+];
+---
+
+<form class="contacto-form" novalidate data-referencia={referencia} data-mail={CONTACTO.mail}>
+  {/* Aparece solo si se llegó desde una nota. Lo llena el JavaScript de abajo
+      con el título que venga en la dirección. */}
+  <p class="contacto-desde" hidden>
+    Escribís sobre: <strong class="contacto-desde-que"></strong>
+  </p>
+
+  <div class="campo">
+    <label for="c-nombre">Cómo te llamás</label>
+    <input id="c-nombre" name="nombre" type="text" maxlength="80" autocomplete="name" required />
+  </div>
+
+  <div class="campo">
+    <label for="c-mail">Tu mail</label>
+    <input id="c-mail" name="mail" type="email" maxlength="120" autocomplete="email" required />
+    <p class="campo-ayuda muted">Lo uso solo para contestarte. No va a ninguna lista.</p>
+  </div>
+
+  <div class="campo">
+    <label for="c-tema">Sobre qué</label>
+    <select id="c-tema" name="tema">
+      {TEMAS.map((t) => <option value={t}>{t}</option>)}
+    </select>
+  </div>
+
+  <div class="campo">
+    <label for="c-mensaje">Tu pregunta</label>
+    <textarea id="c-mensaje" name="mensaje" rows="7" maxlength="2000" required></textarea>
+    <p class="campo-ayuda muted">
+      Contame lo más concreto que puedas: cuánto corrés por semana, hace cuánto y qué te está
+      pasando. Con eso te puedo contestar algo que sirva de verdad.
+    </p>
+  </div>
+
+  {/* Trampa para robots: no se ve y ninguna persona la llena. Los programas
+      que recorren formularios completan todos los campos que encuentran, así
+      que un valor acá adentro delata al que lo mandó. Va con `tabindex=-1` y
+      `autocomplete=off` para que no se lo cruce nadie navegando con teclado. */}
+  <div class="trampa" aria-hidden="true">
+    <label for="c-sitio">No completar</label>
+    <input id="c-sitio" name="sitio" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <div class="contacto-pie">
+    <button type="submit" class="btn btn-primary contacto-enviar">Enviar la pregunta</button>
+    <p class="contacto-aviso muted" role="status" aria-live="polite"></p>
+  </div>
+
+  <p class="contacto-legal muted">
+    Te contesto yo, no un robot, y puede tardar unos días. Nada de lo que escribas se publica
+    en ningún lado.
+  </p>
+</form>
+
+<noscript>
+  <p class="contacto-sinjs">
+    El formulario necesita JavaScript para enviarse. Si lo tenés apagado, escribime a
+    <a href={`mailto:${CONTACTO.mail}`}>{CONTACTO.mail}</a>.
+  </p>
+</noscript>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('.contacto-form');
+  if (form) {
+    const aviso = form.querySelector<HTMLElement>('.contacto-aviso')!;
+    const boton = form.querySelector<HTMLButtonElement>('.contacto-enviar')!;
+    const desde = form.querySelector<HTMLElement>('.contacto-desde')!;
+    const desdeQue = form.querySelector<HTMLElement>('.contacto-desde-que')!;
+
+    /* Desde cuándo está abierta la página. Un robot completa y manda en menos
+       de un segundo; una persona escribiendo una pregunta tarda bastante más.
+       El número viaja con el mensaje y lo mira el Worker. */
+    const abiertaEn = Date.now();
+
+    /* De dónde viene. Puede llegar por la dirección (`/contacto?sobre=Título`,
+       que es lo que enlaza el final de cada nota) o por la propiedad del
+       componente. La primera gana porque es más específica. */
+    let referencia = form.dataset.referencia || '';
+    const enLaDireccion = new URLSearchParams(location.search).get('sobre');
+    if (enLaDireccion) referencia = enLaDireccion.slice(0, 140);
+
+    if (referencia) {
+      /* textContent y no innerHTML: el texto viene de la barra de direcciones,
+         o sea de afuera. Así lo que llegue se muestra como texto y nunca como
+         código. */
+      desdeQue.textContent = referencia;
+      desde.hidden = false;
+    }
+
+    const decir = (texto: string, tipo: 'ok' | 'error' | '') => {
+      aviso.textContent = texto;
+      aviso.classList.toggle('es-error', tipo === 'error');
+      aviso.classList.toggle('es-ok', tipo === 'ok');
+    };
+
+    form.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+
+      const datos = new FormData(form);
+      const nombre = String(datos.get('nombre') || '').trim();
+      const mail = String(datos.get('mail') || '').trim();
+      const mensaje = String(datos.get('mensaje') || '').trim();
+
+      /* Validamos nosotros en vez de dejárselo al navegador para poder decir
+         las cosas con nuestras palabras: los carteles de fábrica son secos y
+         cambian de idioma según la computadora. */
+      if (!nombre) return decir('Falta tu nombre.', 'error');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))
+        return decir('Revisá el mail: sin una dirección válida no te puedo contestar.', 'error');
+      if (mensaje.length < 10) return decir('Contame un poco más, así te puedo ayudar.', 'error');
+
+      boton.disabled = true;
+      decir('Enviando…', '');
+
+      try {
+        const respuesta = await fetch('/api/pregunta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre,
+            mail,
+            tema: String(datos.get('tema') || ''),
+            mensaje,
+            referencia,
+            sitio: String(datos.get('sitio') || ''), // la trampa
+            demora: Date.now() - abiertaEn,
+          }),
+        });
+
+        if (respuesta.ok) {
+          /* Se reemplaza el formulario entero por el gracias. Dejarlo puesto
+             invita a mandar lo mismo de nuevo por las dudas. */
+          const gracias = document.createElement('div');
+          gracias.className = 'contacto-gracias';
+          gracias.setAttribute('role', 'status');
+          gracias.innerHTML =
+            '<p class="contacto-gracias-titulo">Listo, me llegó.</p>' +
+            '<p class="muted">Te contesto a tu mail apenas pueda. Gracias por escribir.</p>';
+          form.replaceWith(gracias);
+          gracias.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          return;
+        }
+
+        if (respuesta.status === 429) {
+          decir('Ya me mandaste varios mensajes seguidos. Probá de nuevo más tarde.', 'error');
+        } else {
+          decir(
+            `No pude enviarlo. Probá de nuevo en un rato, o escribime a ${form.dataset.mail}.`,
+            'error'
+          );
+        }
+      } catch {
+        decir('Parece que te quedaste sin internet. El texto sigue acá: probá de nuevo.', 'error');
+      }
+
+      boton.disabled = false;
+    });
+  }
+</script>
+
+<style>
+  .contacto-form { max-width: var(--medida); }
+
+  .campo { margin-bottom: 1.4rem; }
+  .campo label {
+    display: block;
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Los campos son de este sitio, no los grises de fábrica: misma superficie
+     que una tarjeta, mismo borde, y el foco se marca con el neón del acento. */
+  .campo input,
+  .campo select,
+  .campo textarea {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 0.97rem;
+    line-height: 1.6;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .campo textarea { resize: vertical; min-height: 8rem; }
+  .campo input:focus,
+  .campo select:focus,
+  .campo textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .campo-ayuda { font-size: 0.85rem; margin-top: 0.4rem; }
+
+  .contacto-desde {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 1.6rem;
+  }
+  .contacto-desde strong { color: var(--text); font-weight: 500; }
+  /* Igual que en el boton de me gusta: `hidden` pierde contra cualquier
+     display que pongamos por clase, asi que hay que decirlo a mano. */
+  .contacto-desde[hidden] { display: none; }
+
+  /* La trampa no puede ser `display: none` ni `type=hidden`: los robots
+     mejores se saltean esos. Se saca de la pantalla, y listo. */
+  .trampa {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .contacto-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.1rem;
+    margin-top: 1.8rem;
+  }
+  .contacto-enviar:disabled { opacity: 0.6; cursor: progress; }
+
+  .contacto-aviso { font-size: 0.9rem; margin: 0; }
+  .contacto-aviso:empty { display: none; }
+  .contacto-aviso.es-error { color: var(--accent-2); }
+  .contacto-aviso.es-ok { color: var(--accent); }
+
+  .contacto-legal { font-size: 0.85rem; margin-top: 1.5rem; }
+
+  .contacto-sinjs {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1rem;
+    color: var(--muted);
+  }
+</style>
+
+<style is:global>
+  /* Global porque el bloque de gracias lo crea el JavaScript después de que
+     Astro ya repartió sus clases: un estilo con alcance no lo alcanzaría. */
+  .contacto-gracias {
+    max-width: var(--medida);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft);
+    padding: 1.6rem;
+  }
+  .contacto-gracias-titulo {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+  }
+</style>

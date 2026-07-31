@@ -1,0 +1,39 @@
+---
+/* Las páginas 2 en adelante del blog. La 1 es `/blog` a secas.
+   Mientras haya doce notas o menos, `getStaticPaths` devuelve una lista vacía
+   y de acá no sale ningún archivo: el sitio queda igual que siempre. */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ListadoBlog from '../../../components/ListadoBlog.astro';
+import { getCollection } from 'astro:content';
+import { paginar, numerosDePaginaExtra } from '../../../lib/paginar';
+
+export async function getStaticPaths() {
+  const posts = (
+    await getCollection('blog', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+  ).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+  return numerosDePaginaExtra(posts.length).map((numero) => ({
+    params: { page: String(numero) },
+    props: { posts, numero },
+  }));
+}
+
+const { posts, numero } = Astro.props;
+const pagina = paginar(posts, numero);
+---
+
+<BaseLayout
+  title={`Blog · página ${pagina.numero}`}
+  description="Notas de entrenamiento, nutrición, carreras y cabeza para corredores de trail y ultra."
+>
+  <section class="section">
+    <div class="container">
+      <ListadoBlog
+        posts={pagina.items}
+        numero={pagina.numero}
+        total={pagina.total}
+        cuantasEnTotal={posts.length}
+      />
+    </div>
+  </section>
+</BaseLayout>

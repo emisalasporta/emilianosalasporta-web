@@ -1,0 +1,32 @@
+---
+/* Las páginas 2 en adelante de los recursos. La 1 es `/recursos` a secas. */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ListadoRecursos from '../../../components/ListadoRecursos.astro';
+import { getCollection } from 'astro:content';
+import { paginar, numerosDePaginaExtra } from '../../../lib/paginar';
+
+export async function getStaticPaths() {
+  const recursos = (
+    await getCollection('recursos', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
+  ).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+  return numerosDePaginaExtra(recursos.length).map((numero) => ({
+    params: { page: String(numero) },
+    props: { recursos, numero },
+  }));
+}
+
+const { recursos, numero } = Astro.props;
+const pagina = paginar(recursos, numero);
+---
+
+<BaseLayout
+  title={`Recursos · página ${pagina.numero}`}
+  description="Planillas, guías y archivos descargables para acompañar tu entrenamiento de trail y ultradistancia. Gratis y sin dejar el mail."
+>
+  <section class="section">
+    <div class="container">
+      <ListadoRecursos recursos={pagina.items} numero={pagina.numero} total={pagina.total} />
+    </div>
+  </section>
+</BaseLayout>

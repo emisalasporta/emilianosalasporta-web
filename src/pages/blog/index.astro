@@ -1,82 +1,28 @@
 ---
+/* La página 1 del blog. Las siguientes viven en `pagina/[page].astro` y las
+   dos dibujan el mismo componente. Por qué está partido en dos archivos en
+   vez de usar el `paginate()` de Astro está explicado en src/lib/paginar.ts. */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostCard from '../../components/PostCard.astro';
+import ListadoBlog from '../../components/ListadoBlog.astro';
 import { getCollection } from 'astro:content';
-import { CATEGORIAS } from '../../consts';
+import { paginar } from '../../lib/paginar';
 
 const posts = (
   await getCollection('blog', ({ data }) => (import.meta.env.PROD ? !data.draft : true))
 ).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
-const categorias = Object.entries(CATEGORIAS);
+const pagina = paginar(posts, 1);
 ---
 
 <BaseLayout title="Blog" description="Notas de entrenamiento, nutrición, carreras y cabeza para corredores de trail y ultra.">
   <section class="section">
     <div class="container">
-      <p class="eyebrow">Blog</p>
-      <h1>Notas de entrenamiento</h1>
-      <p class="lead blog-lead">
-        Lo que voy aprendiendo y quiero compartir: entrenamiento, nutrición, carreras y cabeza.
-        Sin humo, con criterio.
-      </p>
-
-      <nav class="cat-filters" aria-label="Categorías">
-        {categorias.map(([slug, label]) => (
-          <a href={`/categorias/${slug}`} class="pill">{label}</a>
-        ))}
-      </nav>
-
-      {posts.length === 0 ? (
-        <p class="muted blog-empty">Todavía no hay entradas publicadas. Muy pronto las primeras.</p>
-      ) : (
-        <div class="grid blog-grid">
-          {posts.map((post) => <PostCard post={post} />)}
-          {posts.length < 4 && (
-            <div class="ghost-card">
-              <span class="ghost-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-              </span>
-              <p class="ghost-title">Más notas en camino</p>
-              <p class="muted ghost-text">Estoy escribiendo las próximas. Pasá seguido.</p>
-            </div>
-          )}
-        </div>
-      )}
+      <ListadoBlog
+        posts={pagina.items}
+        numero={pagina.numero}
+        total={pagina.total}
+        cuantasEnTotal={posts.length}
+      />
     </div>
   </section>
 </BaseLayout>
-
-<style>
-  /* La bajada usa --medida, igual que el texto de cualquier articulo. No llega
-     hasta donde llegan las tarjetas y esta bien: es la misma regla en todo el
-     sitio, texto largo se corta en la medida de lectura. Lo que importa es que
-     arranque en el MISMO borde izquierdo que la grilla, y eso sí pasa. */
-  .blog-lead { max-width: var(--medida); margin-top: 0.5rem; }
-  .cat-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.75rem 0 2.25rem; }
-  .blog-grid { margin-top: 0.5rem; }
-  .blog-empty { margin-top: 2rem; }
-
-  .ghost-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    border: 1px dashed var(--border-strong);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    color: var(--muted);
-  }
-  .ghost-icon {
-    display: inline-flex;
-    width: 40px; height: 40px;
-    align-items: center; justify-content: center;
-    border-radius: 10px;
-    background: var(--surface-2);
-    color: var(--accent);
-    margin-bottom: 0.9rem;
-  }
-  .ghost-icon svg { width: 20px; height: 20px; }
-  .ghost-title { font-family: var(--font-heading); font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
-  .ghost-text { font-size: 0.9rem; }
-</style>

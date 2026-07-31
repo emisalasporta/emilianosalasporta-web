@@ -1,9 +1,11 @@
-# Los contadores de "me gusta" y de descargas
+# Los contadores, y el buzón de preguntas
 
 Esta carpeta **no es parte de la web**. La web se sigue publicando igual que
 siempre (nginx sirviendo archivos estáticos). Esto de acá es un programita
 aparte que vive en Cloudflare y se ocupa de lo único que un sitio estático no
-puede hacer: **guardar un número y acordarse**.
+puede hacer: **guardar algo y acordarse**. Hoy hace dos cosas: lleva los
+contadores de "me gusta" y de descargas, y **recibe los mensajes del
+formulario de `/contacto`**.
 
 ## Por qué en Cloudflare y no en otro lado
 
@@ -42,6 +44,118 @@ arrancan en cero.
 Cloudflare (Workers -> contadores -> Edit code) se pega la version nueva y
 se le da Deploy. El Worker NO se actualiza solo con el deploy de la web:
 son dos cosas separadas.
+
+---
+
+# EL FORMULARIO DE CONTACTO — lo que falta hacer (agosto de 2026)
+
+El formulario ya está en la web (`/contacto`, y un enlace al final de cada nota
+y de cada recurso). Para que empiece a funcionar de verdad **hay que hacer una
+sola cosa sí o sí**, y dos que son opcionales pero convienen. Todo con clics,
+nada de instalar programas.
+
+## 1. Poner al día el Worker (obligatorio)
+
+1. Entrá a `dash.cloudflare.com` → **Compute (Workers) → Workers & Pages →
+   contadores → Edit code**.
+2. Borrá todo lo que haya en el editor.
+3. Abrí `worker/src/index.js` de esta carpeta, copiá **todo** y pegalo ahí.
+4. **Deploy**.
+
+Con esto solo, el formulario **ya guarda los mensajes**. La tabla nueva de la
+base se crea sola con el primer mensaje que llegue: no hace falta correr nada
+en la consola de D1. (Si igual querés correrlo, `schema.sql` la tiene, y está
+escrito para que se pueda ejecutar de nuevo sin romper lo que ya existe.)
+
+Lo que todavía no pasa sin los pasos que siguen: **el aviso por mail**, y
+**poder leer los mensajes desde el celular**.
+
+## 2. El aviso por mail (recomendado)
+
+Sin esto los mensajes se guardan igual, pero nadie te avisa que llegaron.
+
+1. Creá una cuenta gratis en **resend.com** (el plan gratis da 3.000 mails por
+   mes; vas a usar unos pocos). Registrate **con tu Gmail de siempre**, porque
+   sin dominio propio verificado Resend solo deja mandarse mails **a la casilla
+   del dueño de la cuenta** — que es justo lo que necesitamos acá.
+2. En Resend: **API Keys → Create API Key**. Copiá la clave que te da (empieza
+   con `re_`). **Se ve una sola vez.**
+3. En Cloudflare, en el Worker `contadores`: **Settings → Variables and
+   Secrets → Add**, y cargá estos dos, los dos de tipo **Secret**:
+
+   | Name | Value |
+   |---|---|
+   | `RESEND_API_KEY` | la clave que copiaste (`re_...`) |
+   | `MAIL_DESTINO` | `emilianosalas85@gmail.com` |
+
+4. Deploy si te lo pide.
+
+Desde ese momento, cada mensaje te llega al Gmail. **Le podés dar Responder
+directamente**: el mail viene preparado para que la respuesta le llegue a la
+persona que escribió, sin copiar direcciones de ningún lado.
+
+> Si algún día querés que los avisos salgan desde una dirección tuya
+> (`web@emilianosalasporta.cloud`) en vez de la de prueba de Resend, hay que
+> verificar el dominio en Resend (te pide agregar unos registros en Cloudflare)
+> y después sumar una tercera variable, `MAIL_DESDE`, con esa dirección. No
+> hace falta para que ande.
+
+## 3. La bandeja para leer los mensajes (recomendado)
+
+Es una página simple con todos los mensajes, para abrir desde el celular sin
+entrar al panel de Cloudflare. Sirve además de respaldo el día que el mail
+falle.
+
+1. En el Worker: **Settings → Variables and Secrets → Add → tipo Secret**.
+   - **Name**: `CLAVE_BANDEJA`
+   - **Value**: una frase larga inventada, sin espacios ni tildes. Por ejemplo
+     `mis-mensajes-cerro-champaqui-7741`.
+2. Deploy si te lo pide.
+3. Guardate en favoritos esta dirección, con tu frase al final:
+
+   ```
+   https://emilianosalasporta.cloud/api/preguntas?clave=TU-FRASE-ACA
+   ```
+
+**Esa dirección es la llave: quien la tenga entra.** No la pegues en ningún
+lado público. Si se te escapa, cambiá el secreto en Cloudflare y listo: la
+dirección vieja deja de funcionar al instante. Mientras no cargues
+`CLAVE_BANDEJA`, esa página directamente no existe (contesta 404 a todo el
+mundo, con clave o sin ella).
+
+## Cómo está frenado el spam
+
+Sin cuentas, sin CAPTCHA y sin cargarle nada al que escribe:
+
+- **Un campo invisible** que ninguna persona ve ni completa. Si viene lleno, es
+  un robot: el mensaje se descarta y al robot se le contesta que salió todo
+  bien, para que no vuelva a probar de otra forma.
+- **El reloj**: si el formulario se completó y se mandó en menos de dos
+  segundos y medio, es un programa. Mismo trato.
+- **Cinco mensajes por hora** desde la misma conexión. El sexto rebota con un
+  cartel que dice que pruebe más tarde.
+- **Solo se aceptan pedidos que vengan de tu web**, no de otro sitio.
+
+Si alguna vez pasa spam igual, lo primero que se toca es el tope de cinco
+(`TOPE_MENSAJES_POR_HORA`, arriba de todo en `src/index.js`).
+
+## Y si algo del formulario sale mal
+
+**Alguien dice que escribió y no me llegó nada.** Mirá primero la bandeja
+(paso 3): si el mensaje está ahí, lo que falló es el mail (paso 2), no el
+formulario. Los mensajes se guardan **antes** de mandarse justamente para que
+esto no sea una pérdida.
+
+**El formulario dice "no pude enviarlo".** El Worker está caído o no se subió
+la versión nueva (paso 1). Probá abrir
+`https://emilianosalasporta.cloud/api/contadores?ids=blog:x`: si eso tampoco
+contesta, es el Worker entero, no el formulario.
+
+**Quiero ver los mensajes en la base.** En D1 → `esp-contadores` → **Console**:
+
+```sql
+SELECT creado, nombre, mail, tema, mensaje FROM preguntas ORDER BY creado DESC;
+```
 
 ---
 

@@ -1,0 +1,52 @@
+---
+/* La página de contacto. Usa el mismo molde que una nota o "Sobre mí"
+   (class="post"), que es la regla del sitio para cualquier página de texto:
+   el panel, el riel de neón y los anchos salen de global.css, sección
+   ARTICULOS. No inventar un ancho nuevo acá. */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FormularioContacto from '../components/FormularioContacto.astro';
+import { CONTACTO } from '../consts';
+---
+
+<BaseLayout
+  title="Contacto"
+  description="Escribile a Emiliano Salas Porta: dudas de entrenamiento, comentarios sobre una nota o un recurso, o consultas para entrenar juntos."
+>
+  <section class="section">
+    <div class="container">
+      <div class="post">
+        <span class="post-hud" aria-hidden="true">Mensaje //</span>
+        <p class="eyebrow">Contacto</p>
+        <h1 class="post-title">Escribime</h1>
+        <p class="lead post-desc">
+          Si algo de lo que leíste te dejó una duda, si querés que escriba sobre un tema, si
+          encontraste un error en una calculadora o si estás pensando en entrenar conmigo, este
+          es el lugar. Leo todo y contesto yo.
+        </p>
+
+        <hr class="post-rule" />
+
+        <FormularioContacto />
+
+        <div class="otras-vias">
+          <h2 class="otras-titulo">Si preferís tu propia casilla</h2>
+          <p class="muted">
+            También me llega a <a href={`mailto:${CONTACTO.mail}`}>{CONTACTO.mail}</a>.
+            Es la misma dirección que figura en los PDF de los planes.
+          </p>
+        </div>
+      </div>
+
+      <div class="post-back">
+        <a href="/blog" class="btn btn-ghost">← Ir al blog</a>
+        <a href="/herramientas" class="btn btn-ghost">Ver las calculadoras →</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .otras-vias { margin-top: 3rem; padding-top: 1.75rem; border-top: 1px solid var(--border); max-width: var(--medida); }
+  .otras-titulo { font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .post-back { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+</style>

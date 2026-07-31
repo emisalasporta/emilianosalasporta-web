@@ -10,6 +10,16 @@ export const SITE = {
   domain: 'https://emilianosalasporta.cloud',
 };
 
+/* Por dónde se le escribe. El formulario de /contacto no usa esta dirección
+   --el mensaje viaja al Worker y de ahí al mail de Emiliano-- pero la página
+   la muestra igual, para quien tiene el JavaScript apagado y para el que
+   prefiere escribir desde su propia casilla.
+   Es la MISMA dirección que va en los PDF de los planes: si cambia, cambia
+   en los dos lados. El teléfono NO se publica, y eso lo decidió él. */
+export const CONTACTO = {
+  mail: 'emilianosalas85@gmail.com',
+};
+
 /* ===========================================================================
    MEDICIÓN DE VISITAS — ya está hecha, y NO va en el código
    ---------------------------------------------------------------------------

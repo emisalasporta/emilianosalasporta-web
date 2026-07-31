@@ -1,0 +1,99 @@
+---
+/**
+ * El cuerpo del listado del blog: bajada, filtros de categoría, grilla y
+ * numeritos. Lo usan las DOS páginas del listado (`/blog`, que es la número 1,
+ * y `/blog/pagina/N`), y por eso vive acá: son la misma pantalla y tienen que
+ * seguir siendo idénticas sin que nadie se acuerde de tocar las dos.
+ */
+import PostCard from './PostCard.astro';
+import Paginacion from './Paginacion.astro';
+import { CATEGORIAS } from '../consts';
+
+interface Props {
+  /** Las notas de esta página, ya cortadas y ordenadas. */
+  posts: any[];
+  numero: number;
+  total: number;
+  /** Cuántas notas hay publicadas en todo el blog (no en esta página). */
+  cuantasEnTotal: number;
+}
+
+const { posts, numero, total, cuantasEnTotal } = Astro.props;
+const categorias = Object.entries(CATEGORIAS);
+---
+
+<p class="eyebrow">Blog</p>
+<h1>Notas de entrenamiento</h1>
+<p class="lead blog-lead">
+  Lo que voy aprendiendo y quiero compartir: entrenamiento, nutrición, carreras y cabeza.
+  Sin humo, con criterio.
+</p>
+
+<nav class="cat-filters" aria-label="Categorías">
+  {categorias.map(([slug, label]) => (
+    <a href={`/categorias/${slug}`} class="pill">{label}</a>
+  ))}
+</nav>
+
+{/* En la página 2 en adelante avisamos dónde está parado. Sin esto, una lista
+    de notas viejas se ve igual que la portada del blog y desorienta. */}
+{numero > 1 && (
+  <p class="muted pagina-actual">Página {numero} de {total}</p>
+)}
+
+{posts.length === 0 ? (
+  <p class="muted blog-empty">Todavía no hay entradas publicadas. Muy pronto las primeras.</p>
+) : (
+  <div class="grid blog-grid">
+    {posts.map((post) => <PostCard post={post} />)}
+    {/* La tarjeta fantasma es para cuando el blog recién arranca y la grilla
+        se ve vacía. Con la lista ya llena no aporta nada, y en las páginas
+        siguientes sería mentira. */}
+    {cuantasEnTotal < 4 && numero === 1 && (
+      <div class="ghost-card">
+        <span class="ghost-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </span>
+        <p class="ghost-title">Más notas en camino</p>
+        <p class="muted ghost-text">Estoy escribiendo las próximas. Pasá seguido.</p>
+      </div>
+    )}
+  </div>
+)}
+
+<Paginacion numero={numero} total={total} base="/blog" />
+
+<style>
+  /* La bajada usa --medida, igual que el texto de cualquier articulo. No llega
+     hasta donde llegan las tarjetas y esta bien: es la misma regla en todo el
+     sitio, texto largo se corta en la medida de lectura. Lo que importa es que
+     arranque en el MISMO borde izquierdo que la grilla, y eso sí pasa. */
+  .blog-lead { max-width: var(--medida); margin-top: 0.5rem; }
+  .cat-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.75rem 0 2.25rem; }
+  .pagina-actual { font-family: var(--font-mono); font-size: 0.82rem; margin-bottom: 1.25rem; }
+  .blog-grid { margin-top: 0.5rem; }
+  .blog-empty { margin-top: 2rem; }
+
+  .ghost-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    color: var(--muted);
+  }
+  .ghost-icon {
+    display: inline-flex;
+    width: 40px; height: 40px;
+    align-items: center; justify-content: center;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+  .ghost-icon svg { width: 20px; height: 20px; }
+  .ghost-title { font-family: var(--font-heading); font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+  .ghost-text { font-size: 0.9rem; }
+</style>

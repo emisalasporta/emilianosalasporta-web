@@ -89,6 +89,20 @@ if (archivo) {
         )}
 
         <MeGusta id={`recurso:${recurso.id}`} mostrarDescargas />
+
+        {/* Mismo bloque que al final de una nota (los estilos están en
+            global.css). Acá importa todavía más: el que se bajó una planilla y
+            no la entiende no tenía hasta ahora ninguna forma de avisar. */}
+        <aside class="preguntar">
+          <p class="preguntar-titulo">¿Te sirvió? ¿Algo no se entiende?</p>
+          <p class="muted preguntar-texto">
+            Contame qué te pareció o qué le falta. Estos materiales los voy corrigiendo con lo
+            que me llega.
+          </p>
+          <a class="btn btn-ghost" href={`/contacto?sobre=${encodeURIComponent(title)}`}>
+            Escribirme sobre este recurso →
+          </a>
+        </aside>
       </div>
 
       <div class="post-back">

@@ -1,0 +1,152 @@
+---
+/**
+ * Los numeritos del final de un listado.
+ *
+ * Se dibuja solo cuando hay más de una página: mientras el blog tenga cinco
+ * notas, esto no existe en el HTML y la página se ve exactamente como antes.
+ *
+ * Cada página tiene su propia dirección de verdad (no es un "cargar más" con
+ * JavaScript). Eso importa por tres motivos: el que comparte el link de la
+ * página 3 manda la página 3, el buscador encuentra las notas viejas, y el
+ * botón "atrás" del navegador vuelve a donde estaba.
+ */
+import { direccionDePagina } from '../lib/paginar';
+
+interface Props {
+  /** Página actual, empezando de 1. */
+  numero: number;
+  /** Cuántas páginas hay. */
+  total: number;
+  /** La raíz del listado: '/blog' o '/recursos'. */
+  base: string;
+}
+
+const { numero, total, base } = Astro.props;
+
+/* Qué numeritos se muestran. Con pocas páginas, todos. Con muchas, la primera,
+   la última, la actual y sus vecinas; el resto se resume en un "…". Sin esto,
+   con veinte páginas el pie del listado sería una tira de veinte números que
+   nadie usa. */
+const ventana = new Set<number>([1, total, numero - 1, numero, numero + 1]);
+const visibles = [...ventana].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
+
+/* Intercalamos el corte donde el salto es de más de uno. */
+const items: Array<number | 'corte'> = [];
+visibles.forEach((n, i) => {
+  if (i > 0 && n - visibles[i - 1] > 1) items.push('corte');
+  items.push(n);
+});
+---
+
+{total > 1 && (
+  <nav class="paginacion" aria-label="Paginación">
+    {numero > 1 ? (
+      <a class="pag-flecha" href={direccionDePagina(base, numero - 1)} rel="prev">
+        <span aria-hidden="true">←</span> Anterior
+      </a>
+    ) : (
+      <span class="pag-flecha pag-apagada" aria-hidden="true"><span>←</span> Anterior</span>
+    )}
+
+    <ol class="pag-numeros">
+      {items.map((item) =>
+        item === 'corte' ? (
+          <li class="pag-corte" aria-hidden="true">…</li>
+        ) : (
+          <li>
+            {item === numero ? (
+              <span class="pag-n pag-actual" aria-current="page" aria-label={`Página ${item}, la que estás viendo`}>
+                {item}
+              </span>
+            ) : (
+              <a class="pag-n" href={direccionDePagina(base, item)} aria-label={`Página ${item}`}>
+                {item}
+              </a>
+            )}
+          </li>
+        )
+      )}
+    </ol>
+
+    {numero < total ? (
+      <a class="pag-flecha" href={direccionDePagina(base, numero + 1)} rel="next">
+        Siguiente <span aria-hidden="true">→</span>
+      </a>
+    ) : (
+      <span class="pag-flecha pag-apagada" aria-hidden="true">Siguiente <span>→</span></span>
+    )}
+  </nav>
+)}
+
+<style>
+  .paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem 1rem;
+    margin-top: 3rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pag-flecha {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+  }
+  .pag-flecha:hover { text-decoration: none; color: var(--accent-strong); }
+
+  /* Los extremos no desaparecen: se apagan. Si el botón se fuera, los otros
+     se correrían de lugar al cambiar de página y el ojo tendría que buscarlos
+     de nuevo en cada salto. */
+  .pag-apagada { color: var(--muted); opacity: 0.45; }
+
+  .pag-numeros {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .pag-n {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.1rem;
+    height: 2.1rem;
+    padding-inline: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  a.pag-n:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    text-decoration: none;
+  }
+
+  /* La página actual es un dato, no un enlace: se pinta con el acento del
+     sitio y el texto va oscuro, igual que en cualquier botón de acento. */
+  .pag-actual {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--glow);
+  }
+
+  .pag-corte { color: var(--muted); padding-inline: 0.15rem; font-family: var(--font-mono); }
+
+  @media (max-width: 26rem) {
+    /* En un teléfono angosto las palabras de las flechas se comen la fila
+       entera. Quedan las puntas de flecha solas, que se entienden igual. */
+    .pag-flecha { font-size: 0; }
+    .pag-flecha span { font-size: 1rem; }
+  }
+</style>
