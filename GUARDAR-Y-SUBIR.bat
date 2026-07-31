@@ -27,6 +27,11 @@ if errorlevel 1 goto salio_mal
 git status --short
 echo.
 
+rem Si no hay nada nuevo para guardar puede ser que ya este todo commiteado y
+rem falte solamente subirlo. Antes esto se tomaba como error y no subia nada.
+git diff --cached --quiet
+if not errorlevel 1 goto nada_para_guardar
+
 if exist "_to_delete\mensaje-commit.txt" goto con_mensaje
 
 echo  Contame en una linea que cambiaste (y apreta Enter):
@@ -43,8 +48,21 @@ echo.
 git commit -F "_to_delete\mensaje-commit.txt"
 if errorlevel 1 goto salio_mal
 del /f /q "_to_delete\mensaje-commit.txt" >nul 2>&1
+goto subir
+
+:nada_para_guardar
+echo  No hay nada nuevo para guardar.
+echo  Reviso igual si quedo algo sin subir.
+echo.
 
 :subir
+echo.
+echo  Trayendo lo que se publico desde el panel...
+echo.
+rem El panel /admin commitea directo en GitHub, asi que la web puede tener
+rem cosas que esta compu no tiene. Sin esto, el push se rechaza.
+git pull --rebase
+if errorlevel 1 goto salio_mal_pull
 echo.
 echo  Subiendo...
 echo.
@@ -64,6 +82,17 @@ exit /b 0
 echo.
 echo  No escribiste nada, asi que no guarde nada. Tus cambios siguen
 echo  intactos: volve a abrir este archivo cuando quieras.
+echo.
+pause
+exit /b 1
+
+:salio_mal_pull
+echo.
+echo  ------------------------------------------------------------
+echo    NO PUDE JUNTAR TUS CAMBIOS CON LOS DE LA WEB.
+echo    Tu trabajo NO se perdio: sigue guardado en tu compu.
+echo    Sacale una foto al texto de arriba y pasamelo.
+echo  ------------------------------------------------------------
 echo.
 pause
 exit /b 1
