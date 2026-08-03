@@ -1,5 +1,5 @@
 ---
-title: Plan de 5K de calle — Nivel 1
+title: Plan para 5K de calle — Nivel 1
 description: 'Doce semanas para preparar un 5K de calle, día por día y con los ritmos explicados. Es un plan genérico: sirve de estructura y de base, no reemplaza un entrenamiento hecho a tu medida.'
 date: 2026-07-28
 tipo: pdf
@@ -39,6 +39,6 @@ No sabe cómo dormís, qué trabajás, de dónde venís ni qué lesiones tuviste
 
 Con esa aclaración arriba de la mesa, es un molde honesto y probado, y a un montón de gente le alcanza.
 
----
+***
 
 Si lo bajás y te sirve, contámelo. Y si algo no se entendió o encontraste un error, más todavía: así el próximo que lo baje lo recibe mejor.
