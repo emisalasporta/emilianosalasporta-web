@@ -1,5 +1,5 @@
 ---
-title: Plan de montaña de 5K a 7K — Nivel 1
+title: Plan para montaña de 5K a 7K — Nivel 1
 description: 'Doce semanas para una carrera corta de montaña: 5 a 7 km con 300 a 450 m de desnivel, que es lo que mide la Junior Classic Up & Down (U20). Cuatro sesiones por semana, con el terreno y el desnivel de cada día, y los ritmos explicados por sensación.'
 date: 2026-07-31
 tipo: pdf
@@ -41,6 +41,6 @@ No sabe cómo dormís, qué trabajás, qué cerro tenés cerca ni qué lesiones 
 
 Con esa aclaración arriba de la mesa, es un molde honesto y probado, y a un montón de gente le alcanza.
 
----
+***
 
 Si lo bajás y te sirve, contámelo. Y si algo no se entendió o encontraste un error, más todavía: así el próximo que lo baje lo recibe mejor.
