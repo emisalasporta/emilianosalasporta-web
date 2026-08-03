@@ -1,6 +1,6 @@
 ---
-title: Plan de 10K de calle — Nivel 1
-description: 'Dieciséis semanas para preparar un 10K de calle, día por día y con los ritmos explicados. Cinco sesiones por semana, dos mediciones para saber a qué ritmo entrenar, y un bloque final todo a ritmo de 10K.'
+title: Plan para 10K de calle — Nivel 1
+description: Dieciséis semanas para preparar un 10K de calle, día por día y con los ritmos explicados. Cinco sesiones por semana, dos mediciones para saber a qué ritmo entrenar, y un bloque final todo a ritmo de 10K.
 date: 2026-08-03
 tipo: pdf
 archivo: /uploads/plan-10k-calle-nivel-1.pdf
@@ -39,6 +39,6 @@ No sabe cómo dormís, qué trabajás, de dónde venís ni qué lesiones tuviste
 
 Con esa aclaración arriba de la mesa, es un molde honesto y probado, y a un montón de gente le alcanza.
 
----
+***
 
 Si lo bajás y te sirve, contámelo. Y si algo no se entendió o encontraste un error, más todavía: así el próximo que lo baje lo recibe mejor.
