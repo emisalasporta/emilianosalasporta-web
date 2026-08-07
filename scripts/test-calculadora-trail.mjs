@@ -271,5 +271,31 @@ console.log("\n=== F · REALIDAD (contra resultados de verdad) ===");
   chk("ningún tramo se desvía más de 20 min de lo real", peor < 20, `el peor se va ${peor.toFixed(1)} min`);
 }
 
+console.log("\n=== G · LA BANDA DE INCERTIDUMBRE ===");
+{
+  const bandaCon = (n, ratio) => { base(); ref(REF_FER);
+    for (let k = 1; k < n; k++) ref({ ...REF_FER, dist: 31.2 + k*0.01 });
+    if (ratio) api.state.race.dist = 31.2 * ratio;   // fuerza un salto de tamano
+    return calc().banda; };
+
+  const b1 = bandaCon(1), b3 = bandaCon(3), b5 = bandaCon(5);
+  chk("la banda existe y trae p50 y p80", !!(b1 && b1.p80 > 0 && b1.p50 > 0));
+  chk("la mitad probable es mas angosta que el 80 %", b1.p50 < b1.p80, `${b1.p50} vs ${b1.p80}`);
+  chk("se angosta al sumar referencias", b1.p80 > b3.p80 && b3.p80 >= b5.p80,
+      `1 ref +-${(b1.p80*100).toFixed(1)}% | 3 +-${(b3.p80*100).toFixed(1)}% | 5 +-${(b5.p80*100).toFixed(1)}%`);
+  chk("nunca promete mejor que +-5 %", b5.p80 >= 0.05, `da +-${(b5.p80*100).toFixed(1)}%`);
+  chk("nunca se dispara arriba de +-25 %", bandaCon(1, 4).p80 <= 0.25, `da +-${(bandaCon(1,4).p80*100).toFixed(1)}%`);
+
+  base(); ref(REF_FER);
+  const rb = calc();
+  chk("el borde rapido de la banda sigue siendo un tiempo positivo", rb.totalSec*(1 - rb.banda.p80) > 0);
+  chk("el estimado cae justo en el medio de la banda",
+      Math.abs((rb.totalSec*(1-rb.banda.p80) + rb.totalSec*(1+rb.banda.p80))/2 - rb.totalSec) < 1);
+
+  base(); api.state.refMode = "pace"; api.state.pace = { dist: 21.1, time: "01:45:00" };
+  const rp = calc();
+  chk("tambien hay banda estimando desde ritmo de ruta", !!(rp.ok && rp.banda && rp.banda.p80 > 0));
+}
+
 console.log(`\n=========== ${ok} pasan · ${mal} fallan ===========`);
 if (fallos.length) { console.log("\nFALLAS:"); fallos.forEach(f => console.log("  · " + f)); }

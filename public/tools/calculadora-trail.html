@@ -316,6 +316,27 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 .result-hero .r-time{font-family:var(--font-mono);font-size:clamp(42px,7vw,72px);font-weight:700;letter-spacing:-.02em;line-height:1;position:relative;font-variant-numeric:tabular-nums;color:var(--red)}
 .result-hero .r-sub{margin-top:8px;font-size:14px;color:var(--txt-2);position:relative}
 
+/* ---- La banda de incertidumbre ----
+   La barra entera es el 80 % de los casos; la zona clara del medio, la mitad
+   más probable. La marca del centro es el tiempo estimado. Es simétrica porque
+   la banda es un porcentaje del tiempo, así que el estimado cae siempre al medio. */
+.r-banda{position:relative;margin:18px auto 4px;max-width:460px}
+.rb-bar{position:relative;height:12px;border-radius:99px;overflow:hidden;
+  background:linear-gradient(90deg,rgba(47,184,255,.10),rgba(47,184,255,.22),rgba(47,184,255,.10));
+  border:1px solid var(--border-2)}
+.rb-inner{position:absolute;top:0;bottom:0;left:25%;width:50%;
+  background:linear-gradient(90deg,rgba(47,184,255,.35),rgba(47,184,255,.55),rgba(47,184,255,.35))}
+.rb-mark{position:absolute;top:-3px;bottom:-3px;left:calc(50% - 1px);width:2px;
+  background:var(--red);box-shadow:0 0 8px rgba(47,184,255,.8);border-radius:2px}
+.rb-ends{display:flex;justify-content:space-between;margin-top:7px;
+  font-family:var(--font-mono);font-size:12px;color:var(--txt-3);font-variant-numeric:tabular-nums}
+.rb-txt{margin-top:9px;font-size:12.5px;line-height:1.55;color:var(--txt-3)}
+.rb-txt b{color:var(--txt-2);font-weight:600}
+.rb-cta{margin-top:10px;padding:9px 12px;border:1px dashed var(--border-2);border-radius:var(--radius-sm);
+  font-size:12.5px;line-height:1.5;color:var(--txt-2);background:rgba(47,184,255,.05)}
+.rb-cta b{color:var(--red)}
+@media(max-width:520px){ .r-banda{max-width:100%} .rb-txt{font-size:12px} }
+
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
 .kpi{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
 .kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px}
@@ -701,7 +722,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
           <span class="tt"><span class="info">?</span><span class="tt-body">Distancia oficial del circuito según el organizador. Si hay varias variantes, cargá la que vas a correr.</span></span>
         </span></div><input type="number" id="r_dist" step="0.1" min="1" value="42"><span class="unit">km</span></div>
         <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo (D+)
-          <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. Si el organizador publica "1800 m D+", cargá 1800. El D+ pesa más que la distancia pura: una carrera de 20 km con 1500 m equivale a 32 km-esfuerzo en tipo mixto.</span></span>
+          <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. Si el organizador publica "1800 m D+", cargá 1800. El D+ pesa más que la distancia pura: una carrera de 20 km con 1500 m equivale a 32 km-esfuerzo en tipo mixto. <b>Usá la misma fuente para las dos carreras</b>: las dos con el número del organizador, o las dos con el de tu reloj. Mezclarlas es el error más común y el más caro — la misma carrera puede figurar con 2905, 3043 o 3602 m según quién la midió.</span></span>
         </span></div><input type="number" id="r_dplus" step="10" min="0" value="2000"><span class="unit">m</span></div>
       </div>
 
@@ -967,6 +988,19 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
     <div class="result-hero" id="r-hero">
       <div class="r-label">Tiempo estimado · <span id="r-race-name">—</span></div>
       <div class="r-time" id="r-time">--:--:--</div>
+
+      <!-- La banda. No es decoración: sale de 266 predicciones contra resultados
+           reales y está verificada (contiene el 82 % de los casos). Ver bandaDe(). -->
+      <div class="r-banda" id="r-banda" hidden>
+        <div class="rb-bar">
+          <div class="rb-inner" id="rb-inner"></div>
+          <div class="rb-mark"></div>
+        </div>
+        <div class="rb-ends"><span id="rb-lo">—</span><span id="rb-hi">—</span></div>
+        <div class="rb-txt" id="rb-txt"></div>
+        <div class="rb-cta" id="rb-cta" hidden></div>
+      </div>
+
       <div class="r-sub" id="r-sub">Completá los datos para ver el pronóstico</div>
     </div>
 
@@ -1408,6 +1442,39 @@ function confianzaRef(base, kmEffRef, kmEffTarget){
   return Math.max(0.10, Math.min(0.90, c));
 }
 
+/* LA BANDA DE INCERTIDUMBRE. No es un ±5 % inventado: son percentiles medidos.
+
+   De dónde salen los números (2026-08-07):
+     · 208 predicciones con UNA referencia — 14 atletas de élite, cada carrera
+       prediciendo otra que esa misma persona corrió de verdad dentro de 14 meses,
+       distancia y D+ de ITRA. p80 del error absoluto: 14,4 %.
+     · 58 predicciones caminando hacia adelante — los mismos élites más una
+       corredora con 13 carreras propias, prediciendo cada carrera solo con las
+       anteriores. p80 con 3+ referencias: 9,3 %. Con 5+: 7,2 % (n=9, el dato más
+       flojo de la tabla; por eso acá se redondea para arriba a 8,5 %).
+
+   Lo que MANDA es la cantidad de referencias, no cuánto se extrapola. Suena
+   raro y por eso se dice: en las 208 el error casi no depende del ratio de
+   km-esfuerzo (p80 de 16,7 / 12,2 / 15,6 / 13,4 % por tramo, sin orden). El
+   ratio quedó solo como un ensanche chico para saltos muy grandes, donde sí
+   se lo vio pesar.
+
+   VERIFICADO, que es lo que la hace honesta: con estos anchos, la banda contiene
+   el 81 % de las 208, el 83 % de las 58 y el 82 % de las 266 juntas. Si se tocan
+   estos números hay que volver a correr scripts/validar-calculadora-trail.mjs y
+   comprobar que la cobertura siga cerca del 80 %. Una banda que promete 8 de cada
+   10 y contiene 6 es peor que no tener banda.
+
+   La mitad interior (p50) se toma como la mitad del ancho. Es una aproximación:
+   las medianas medidas dan entre 0,34 y 0,52 del p80 según el grupo, y 0,5 queda
+   en el medio sin pretender más precisión de la que hay. */
+function bandaDe(nrefs, ratio){
+  let b = nrefs>=5 ? 8.5 : nrefs>=3 ? 10.5 : nrefs===2 ? 13 : 14.5;
+  if(ratio > 2.2)      b *= 1.30;
+  else if(ratio > 1.8) b *= 1.12;
+  return { p80: b/100, p50: b/200 };
+}
+
 // Devuelve ritmo-esfuerzo (seg / km-esfuerzo) ponderado desde refs,
 // o null si no hay datos válidos.
 function referenceEffortPace(targetKmEff){
@@ -1707,10 +1774,12 @@ function compute(){
   const pace = totalSec / Math.max(race.dist,0.01); // seg/km real
   const effPace = refPace.secPerKmEff * condMult;
 
+  const banda = bandaDe(refPace.sources, refPace.ratio || 1);
+
   return {
     ok:true,
     totalSec, pace, effPace, kmEffRace,
-    splits, refPace, condMult, extraSec,
+    splits, refPace, condMult, extraSec, banda,
     raceDist:race.dist, raceDplus:race.dplus,
   };
 }
@@ -1724,6 +1793,7 @@ function recompute(scrollToTop){
   if(!r.ok){
     eWrap.innerHTML = `<div class="notice warn"><b>Faltan datos para calcular:</b><br>${r.errs.map(x=>"• "+x).join("<br>")}</div>`;
     $("r-time").textContent="--:--:--";
+    $("r-banda").hidden=true;
     $("r-sub").textContent="Completá los campos marcados";
     $("r-race-name").textContent="—";
     ["r-dist","r-dplus","r-pace","r-effpace","r-kmeff","r-conf"].forEach(id=>$(id).textContent="—");
@@ -1735,6 +1805,42 @@ function recompute(scrollToTop){
   eWrap.innerHTML="";
   $("r-race-name").textContent=state.race.name||"Carrera";
   $("r-time").textContent=fmtTime(r.totalSec);
+
+  /* ---- LA BANDA ----
+     El tiempo grande de arriba es el centro de esto, no una promesa. La barra
+     entera es donde cae el resultado 8 de cada 10 veces; la zona clara del medio,
+     la mitad más probable. Y abajo, lo único que el usuario puede hacer para
+     angostarla: cargar más carreras. Ese renglón es el que convierte la
+     incertidumbre en algo accionable en lugar de en una excusa. */
+  const b80 = r.banda.p80, b50 = r.banda.p50;
+  $("r-banda").hidden = false;
+  $("rb-lo").textContent = fmtTime(r.totalSec*(1-b80));
+  $("rb-hi").textContent = fmtTime(r.totalSec*(1+b80));
+  $("rb-inner").style.left  = (50 - 50*(b50/b80)) + "%";
+  $("rb-inner").style.width = (100*(b50/b80)) + "%";
+  $("rb-txt").innerHTML =
+    `<b>8 de cada 10 veces</b> el resultado cae dentro de la barra (±${(b80*100).toFixed(1)} %). ` +
+    `La mitad de las veces, en la zona clara: <b>${fmtTime(r.totalSec*(1-b50))} a ${fmtTime(r.totalSec*(1+b50))}</b>.`;
+
+  const nR = r.refPace.sources;
+  const cta = $("rb-cta");
+  if(state.refMode==="pace"){
+    cta.hidden = false;
+    cta.innerHTML = `Estás estimando desde un <b>ritmo de ruta</b>, que es la referencia más floja que hay. ` +
+      `Con una carrera de trail que ya hayas corrido, la banda se angosta bastante.`;
+  } else if(nR < 3){
+    const conMas = bandaDe(nR+2, r.refPace.ratio||1).p80;
+    cta.hidden = false;
+    cta.innerHTML = `Tenés <b>${nR} carrera${nR===1?"":"s"} de referencia</b>. ` +
+      `Con ${nR===1?"tres":"dos más"} la banda bajaría a <b>±${(conMas*100).toFixed(1)} %</b> ` +
+      `(${fmtTime(r.totalSec*(1-conMas))} a ${fmtTime(r.totalSec*(1+conMas))}). ` +
+      `Agregalas en la pestaña <b>Tu nivel</b>: es lo que más mejora el pronóstico.`;
+  } else {
+    cta.hidden = false;
+    cta.innerHTML = `<b>${nR} carreras de referencia</b> cargadas. Es la banda más angosta que este método sabe dar; ` +
+      `de acá para abajo ya no es la calculadora, es que las personas no rinden igual todos los días.`;
+  }
+
   $("r-sub").textContent = `Ritmo promedio ${fmtPace(r.pace)} /km · ${r.splits.length} ${r.splits.length===1?"tramo":"tramos"}`;
   $("r-dist").innerHTML=`${r.raceDist.toFixed(1)}<small>km</small>`;
   $("r-dplus").innerHTML=`${Math.round(r.raceDplus)}<small>m</small>`;
@@ -1782,8 +1888,12 @@ function recompute(scrollToTop){
      error: cargás una carrera corta y buena, la calculadora contesta un número
      prolijo para una carrera del doble de larga, y nada en la pantalla dice que
      ese salto es justo donde el método pierde pie. */
+  /* El umbral es 1,8 y no 1,5 ni 1,35: es el mismo punto donde la banda se
+     ensancha, así la pantalla no se contradice sola. Y porque en las 208
+     predicciones el ratio resultó un predictor flojo — el aviso se guarda para
+     los saltos donde sí se lo vio pesar, en vez de gritar en cada cálculo. */
   const ratio = r.refPace.ratio || 1;
-  if(ratio >= 1.5){
+  if(ratio >= 1.8){
     const kmEfRef = r.refPace.kmEffRef;
     cmpHtml += `<div class="notice warn">
       <b>Ojo: estás extrapolando ×${ratio.toFixed(1)}.</b>
@@ -1964,7 +2074,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"2.0", fecha:"07-08-2026" };
+  var VERSION = { n:"3.0", fecha:"07-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();

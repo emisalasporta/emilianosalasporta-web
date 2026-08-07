@@ -272,3 +272,26 @@ const opt = Object.keys(D).map(fuera => {
 });
 console.log("  optimos: " + opt.map(x => x.toFixed(2)).join(", "));
 console.log("  rango: " + Math.min(...opt).toFixed(2) + " a " + Math.max(...opt).toFixed(2));
+
+
+/* ===== COBERTURA DE LA BANDA =====
+   Una banda que dice "8 de cada 10" y contiene 6 es peor que no tener banda.
+   Esto lo comprueba contra el mismo set. Si tocás bandaDe() en el HTML, corré
+   esto y mirá que siga cerca de 80. */
+let _dentro = 0, _tot = 0, _d50 = 0;
+for (const [atleta, carreras] of Object.entries(D))
+  for (const a of carreras) for (const b of carreras) {
+    if (a === b || dias(a[0], b[0]) > 430) continue;
+    if (a[2] < 10 || b[2] < 10 || a[2] > 60 || b[2] > 60) continue;
+    const s = reset();
+    Object.assign(s.race, { dist: b[2], dplus: b[3], tipo: 3,
+      opts: { tipo: true, dneg: false, alt: false, obj: false } });
+    ref({ time: a[4], dist: a[2], dplus: a[3], tipo: 3, opts: { tipo: true, alt: false, dneg: false } });
+    const r = calc();
+    if (!r.ok || !r.banda) continue;
+    const e = Math.abs(r.totalSec / hhmmss(b[4]) - 1);
+    _tot++; if (e <= r.banda.p80) _dentro++; if (e <= r.banda.p50) _d50++;
+  }
+console.log("\n\n=== COBERTURA DE LA BANDA (n=" + _tot + ") ===");
+console.log("  dentro de la banda del 80 %: " + (100*_dentro/_tot).toFixed(0) + " %   (tiene que dar ~80)");
+console.log("  dentro de la mitad probable: " + (100*_d50/_tot).toFixed(0) + " %   (tiene que dar ~50)");
