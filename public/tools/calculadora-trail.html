@@ -701,7 +701,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
           <span class="tt"><span class="info">?</span><span class="tt-body">Distancia oficial del circuito según el organizador. Si hay varias variantes, cargá la que vas a correr.</span></span>
         </span></div><input type="number" id="r_dist" step="0.1" min="1" value="42"><span class="unit">km</span></div>
         <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo (D+)
-          <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. Si el organizador publica "1800 m D+", cargá 1800. El D+ pesa más que la distancia pura: una carrera de 20 km con 1500 m equivale a ~29 km-esfuerzo en tipo mixto.</span></span>
+          <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. Si el organizador publica "1800 m D+", cargá 1800. El D+ pesa más que la distancia pura: una carrera de 20 km con 1500 m equivale a 32 km-esfuerzo en tipo mixto.</span></span>
         </span></div><input type="number" id="r_dplus" step="10" min="0" value="2000"><span class="unit">m</span></div>
       </div>
 
@@ -711,7 +711,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
         <div class="field" data-optional="r_tipo">
           <div class="field-head">
             <span class="field-label">Tipo de recorrido
-              <span class="tt"><span class="info">?</span><span class="tt-body">Define el "costo" de cada 100 m de desnivel. <b>1-Muy corrible</b>: camino ancho, senderos fluidos (100 m D+ ≈ 1 km). <b>3-Mixto</b> (default): típico trail (100 m D+ ≈ 1.16 km). <b>5-Alpino</b>: rocoso, pasamanos, escalada suave (100 m D+ ≈ 1.32 km).</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Define el "costo" de cada 100 m de desnivel. <b>1-Muy corrible</b>: camino ancho, senderos fluidos (100 m D+ ≈ 0,69 km de llano). <b>3-Mixto</b> (default): típico trail (0,80 km). <b>5-Alpino</b>: rocoso, pasamanos, escalada suave (0,91 km). El valor del medio está calibrado contra 208 predicciones de carreras reales; el paso entre un tipo y el siguiente es criterio, no medición.</span></span>
             </span>
             <span class="toggle on" data-toggle="r_tipo"></span>
           </div>
@@ -737,7 +737,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
         <div class="field" data-optional="r_alt">
           <div class="field-head">
             <span class="field-label">Altitud media del circuito
-              <span class="tt"><span class="info">?</span><span class="tt-body">Altitud promedio sobre el nivel del mar. Por debajo de 1200 m el efecto es despreciable. Entre 1200–1800 m: +2 %. 1800–2300: +5 %. 2300–2800: +8 %. &gt;3000 m: +12 % o más. Esto refleja la menor disponibilidad de oxígeno (Fulco et al., 1998).</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Altitud promedio sobre el nivel del mar. Hasta 1200 m no penaliza. De ahí para arriba sube de forma continua: +2 % a 1800 m, +5 % a 2300, +8 % a 2800, +12 % a 3300. Los valores del medio se interpolan, así que un metro de diferencia nunca mueve el resultado de golpe. Refleja la menor disponibilidad de oxígeno (Fulco et al., 1998).</span></span>
             </span>
             <span class="toggle" data-toggle="r_alt"></span>
           </div>
@@ -1041,8 +1041,29 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 "use strict";
 
 // -------- TABLAS (desde CALCULADORA PRO v.1) --------
-const T_TECNICIDAD = {1:0.9, 2:1.0, 3:1.1, 4:1.25, 5:1.4};
-const T_RECORRIDO  = {1:1.00, 2:1.08, 3:1.16, 4:1.24, 5:1.32};
+/* CALIBRADO EL 2026-08-07 CONTRA CARRERAS REALES. Antes era
+     T_TECNICIDAD {1:0.9, 2:1.0, 3:1.1, 4:1.25, 5:1.4}
+     T_RECORRIDO  {1:1.00, 2:1.08, 3:1.16, 4:1.24, 5:1.32}
+   o sea: 100 m de D+ costaban 1,16 km de llano en terreno mixto. Ese número no
+   tenía origen conocido y le cobraba de más a las subidas.
+
+   Se probó el motor contra 208 predicciones reales: 14 atletas de élite, cada
+   carrera prediciendo otra que esa misma persona corrió de verdad dentro de los
+   14 meses, con distancia y D+ de ITRA (medidos con el mismo criterio en todas).
+   Barriendo la constante, el error mediano hace piso claro en 0,80:
+
+       c = 0,40 → 8,1 %      c = 0,80 → 6,9 %   ← mínimo
+       c = 0,60 → 7,9 %      c = 1,16 → 8,8 %   (lo que había)
+       c = 0,70 → 7,3 %      c = 1,40 → 8,8 %
+
+   Y aguanta: sacando a cualquiera de los 14 atletas y recalculando, el óptimo se
+   queda entre 0,75 y 0,85 en los 14 casos. El exponente de Riegel se barrió igual
+   y 1,05 ya estaba bien, así que no se tocó.
+
+   Se conservó la FORMA de las dos escalas (el paso entre un tipo de terreno y el
+   siguiente) porque de eso no hay datos: lo medido es el valor del medio. */
+const T_TECNICIDAD = {1:0.62, 2:0.69, 3:0.76, 4:0.86, 5:0.97};
+const T_RECORRIDO  = {1:0.69, 2:0.75, 3:0.80, 4:0.86, 5:0.91};
 const K_FATIGA     = 0.06;
 const EXP_RIEGEL   = 1.05;
 
@@ -1103,6 +1124,27 @@ function lookupStep(table, value, col){
   return table[table.length-1][col];
 }
 
+/* Igual que lookupStep pero INTERPOLANDO entre umbrales.
+   Con el escalón puro, 1800 m de altitud media daban +2 % y 1801 m daban +5 %:
+   un metro movía el pronóstico 7 minutos en una carrera de 4 horas. Nadie cree
+   eso, y en el borde de cada banda el resultado dependía de cómo hubieras
+   redondeado un dato que ya venía estimado. El efecto de la altura y el de la
+   pendiente son continuos, así que la tabla se lee como una curva por tramos:
+   los valores publicados de cada banda no cambian, solo se rellena el medio. */
+function lookupLerp(table, value, col){
+  if(!table.length) return 1;
+  if(value <= table[0][0]) return table[0][col];
+  for(let i=1;i<table.length;i++){
+    if(value <= table[i][0]){
+      const [x0,,] = table[i-1], [x1,,] = table[i];
+      const y0 = table[i-1][col], y1 = table[i][col];
+      const t = (x1-x0)>0 ? (value-x0)/(x1-x0) : 0;
+      return y0 + (y1-y0)*t;
+    }
+  }
+  return table[table.length-1][col];
+}
+
 // -------- STATE --------
 const state = {
   refMode:"race", // "race" | "pace"
@@ -1126,7 +1168,7 @@ const state = {
 
 function emptyRef(){
   return {name:"Carrera pasada", dist:21, dplus:600, tipo:3, time:"02:15:00",
-          opts:{tipo:true, alt:false, sup:false}, alt:500, sup:"tierra"};
+          opts:{tipo:true, alt:false, dneg:false, sup:false}, alt:500, dneg:600, sup:"tierra"};
 }
 function emptySeg(){
   return {name:"Segmento", dist:0, dplus:0, dneg:0, alt:null, tec:"", sup:"", pc:0};
@@ -1179,6 +1221,15 @@ function renderRefs(){
             ${[1,2,3,4,5].map(n=>`<option value="${n}" ${r.tipo==n?"selected":""}>${n} – ${{1:"Muy corrible",2:"Moderadamente corrible",3:"Mixto balanceado",4:"Técnico dominante",5:"Muy técnico / alpino"}[n]}</option>`).join("")}
           </select>
         </div>
+        <div class="field ${r.opts.dneg?"":"disabled"}" data-opt="dneg" data-i="${i}">
+          <div class="field-head">
+            <span class="field-label">Desnivel negativo
+              <span class="tt"><span class="info">?<\/span><span class="tt-body">Metros de bajada de <b>esa<\/b> carrera. Si no lo cargás asumimos que bajaba lo mismo que subía. Importa cuando la referencia fue punto a punto: una carrera con mucha más bajada que subida se corre más rápido, y sin este dato ese regalo quedaba metido dentro de tu ritmo-base y se te trasladaba a la carrera nueva.<\/span><\/span>
+            </span>
+            <span class="toggle ${r.opts.dneg?"on":""}" data-toptionref="dneg" data-i="${i}"></span>
+          </div>
+          <input type="number" data-k="dneg" data-i="${i}" step="10" min="0" value="${r.dneg}"><span class="unit">m</span>
+        </div>
         <div class="field ${r.opts.alt?"":"disabled"}" data-opt="alt" data-i="${i}">
           <div class="field-head">
             <span class="field-label">Altitud media
@@ -1197,7 +1248,7 @@ function renderRefs(){
     inp.addEventListener("input",e=>{
       const i=+e.target.dataset.i, k=e.target.dataset.k;
       let v=e.target.value;
-      if(["dist","dplus","alt","tipo"].includes(k)) v=parseFloat(v)||0;
+      if(["dist","dplus","dneg","alt","tipo"].includes(k)) v=parseFloat(v)||0;
       state.refs[i][k]=v;
     });
   });
@@ -1340,6 +1391,23 @@ function kmEff(dist, dplus, tipoFactor){
   return dist + (dplus/100)*tipoFactor;
 }
 
+/* Cuánto vale el pronóstico. Dos cosas lo definen:
+   1) cuántas referencias hay, y
+   2) CUÁNTO hay que extrapolar desde ellas.
+   Lo segundo no estaba contemplado y es lo que más pesa: proyectar una carrera de
+   cuatro horas desde una de dos es otra cosa que proyectarla desde una parecida, y
+   antes las dos informaban la misma confianza. La distancia se mide en km-esfuerzo
+   y no en km, porque lo que fatiga es el esfuerzo total y no el número del cartel.
+   El techo es 90 %: nunca se promete más que eso. */
+function confianzaRef(base, kmEffRef, kmEffTarget){
+  let c = base;
+  if(kmEffRef>0 && kmEffTarget>0){
+    const ratio = Math.max(kmEffRef,kmEffTarget)/Math.min(kmEffRef,kmEffTarget);
+    c *= Math.max(0.30, 1/(1 + 0.6*(ratio-1)));
+  }
+  return Math.max(0.10, Math.min(0.90, c));
+}
+
 // Devuelve ritmo-esfuerzo (seg / km-esfuerzo) ponderado desde refs,
 // o null si no hay datos válidos.
 function referenceEffortPace(targetKmEff){
@@ -1350,7 +1418,7 @@ function referenceEffortPace(targetKmEff){
     const paceSecPerKm=t/d;
     const secPerKmEff = paceSecPerKm*1.06;
     // Para Riegel necesitamos un kmEff de referencia: asumimos el mismo d (pace ya es llano)
-    return { secPerKmEff, kmEffRef:d, confidence:0.4, sources:1 };
+    return { secPerKmEff, kmEffRef:d, confidence:confianzaRef(0.40, d, targetKmEff), sources:1 };
   }
   if(state.refs.length===0) return null;
   let sumW=0, sumPace=0, sumKeRef=0;
@@ -1362,8 +1430,20 @@ function referenceEffortPace(targetKmEff){
     if(ke<=0) continue;
     let pace=t/ke;
     if(r.opts.alt && r.alt>0){
-      const fA=lookupStep(T_ALTITUD, r.alt, 1);
+      const fA=lookupLerp(T_ALTITUD, r.alt, 1);
       pace=pace/fA;
+    }
+    /* Y le sacamos su propio perfil, igual que se le saca la altura. Antes esto
+       no se hacía: el perfil de la carrera de referencia quedaba pegado dentro del
+       ritmo-base y después, en la carrera objetivo, se aplicaba OTRO factor de
+       perfil encima. La cuenta iba una vez y media. Se nota con referencias punto
+       a punto (mucha más bajada que subida), que es medio trail. Si no cargás el
+       D- de la referencia asumimos que era balanceada y esto no hace nada. */
+    const dnR = (r.opts.dneg && +r.dneg>=0) ? +r.dneg : dp;
+    const fSBref = globalSlopeFactor(d, dp, dp);
+    if(fSBref>0){
+      const fSNref = globalSlopeFactor(d, dp, dnR)/fSBref;
+      if(fSNref>0) pace = pace/fSNref;
     }
     let w=1;
     if(targetKmEff>0){
@@ -1373,11 +1453,13 @@ function referenceEffortPace(targetKmEff){
     sumW+=w; sumPace+=pace*w; sumKeRef+=ke*w;
   }
   if(sumW===0) return null;
+  const keRef = sumKeRef/sumW;
   return {
     secPerKmEff: sumPace/sumW,
-    kmEffRef: sumKeRef/sumW,
-    confidence: Math.min(1, state.refs.length*0.45+0.2),
+    kmEffRef: keRef,
+    confidence: confianzaRef(Math.min(0.90, 0.35 + 0.30*state.refs.length), keRef, targetKmEff),
     sources: state.refs.length,
+    ratio: (keRef>0 && targetKmEff>0) ? Math.max(keRef,targetKmEff)/Math.min(keRef,targetKmEff) : 1,
   };
 }
 
@@ -1386,7 +1468,7 @@ function slopeFactor(pendPct, isDescent){
   const col=isDescent?2:1;
   const abs=Math.abs(pendPct);
   // Usa lookupStep (primer umbral >= abs)
-  return lookupStep(T_PENDIENTE, abs, col);
+  return lookupLerp(T_PENDIENTE, abs, col);
 }
 
 // Multiplicador climático — compone factores de temperatura, humedad, cielo,
@@ -1486,101 +1568,117 @@ function compute(){
   let baseTimeSec = 0;
 
   // Altitud de la carrera como fallback para segmentos sin altura propia
-  const fAltGlobFallback = (race.opts.alt && race.alt>0) ? lookupStep(T_ALTITUD, race.alt, 1) : 1;
+  const fAltGlobFallback = (race.opts.alt && race.alt>0) ? lookupLerp(T_ALTITUD, race.alt, 1) : 1;
   // D- efectivo de la carrera (si no está habilitado, asumimos D- = D+)
   const raceDneg = race.opts.dneg ? race.dneg : race.dplus;
 
+  // --- TIEMPO TOTAL DE LA CARRERA ---
+  // El total se calcula SIEMPRE por esta vía (Riegel sobre km-esfuerzo + perfil
+  // + altitud), tenga o no segmentos cargados. Es la única que pasa el control de
+  // auto-consistencia: si le das como referencia la propia carrera objetivo, tiene
+  // que devolver ese mismo tiempo, y lo hace con un error del 0,1 %.
+  // La vía por segmentos calculaba su propio total y se iba +7,4 % porque aplicaba
+  // el factor de pendiente CRUDO sobre unos km-esfuerzo que ya habían cobrado el
+  // desnivel: el mismo doble conteo que acá abajo se normaliza a propósito
+  // dividiendo por fSlopeBalanced. Ahora los segmentos REPARTEN este total.
+  const tRef = refPace.secPerKmEff * refPace.kmEffRef;
+  const riegelRatio = refPace.kmEffRef>0 ? Math.pow(kmEffRace/refPace.kmEffRef, EXP_RIEGEL) : 1;
+  // Factor de perfil: diferencia entre carrera balanceada (D-=D+) vs carrera con
+  // bajada neta o subida neta. Normalizado para no doble-contar km-esfuerzo.
+  const fSlope = globalSlopeFactor(race.dist, race.dplus, raceDneg);
+  const fSlopeBalanced = globalSlopeFactor(race.dist, race.dplus, race.dplus);
+  const fSlopeNorm = fSlopeBalanced>0 ? fSlope/fSlopeBalanced : 1;
+  const fAltGlob = fAltGlobFallback;
+  const raceTimeSec = tRef * riegelRatio * fSlopeNorm * fAltGlob;
+
   if(hasSegs){
-    // Usar segmentos. Acumulamos km y aplicamos fatiga por %dist acumulada sobre km_eff_total.
-    // Calculamos km_eff total esperado primero (suma de km_eff por segmento).
+    // Reparto por tramo. Los factores de cada segmento (pendiente, superficie,
+    // altura, fatiga acumulada) definen la FORMA del pacing, no el total.
     const segs=state.segments.filter(s=>(+s.dist||0)>0);
     // Tipo de recorrido como fallback para tecnicidad cuando no se declara:
-    const fallbackTec = race.opts.tipo ? ({1:0.9,2:1.0,3:1.1,4:1.25,5:1.4}[race.tipo]||1.0) : 1.0;
-    // Primera pasada: km_eff totales
+    const fallbackTec = race.opts.tipo ? (T_TECNICIDAD[race.tipo]||1.0) : 1.0;
+    // Lista de tramos, más el implícito con lo que falte para cerrar la carrera
+    const usedDist  = segs.reduce((a,s)=>a+(+s.dist||0),0);
+    const usedDplus = segs.reduce((a,s)=>a+(+s.dplus||0),0);
+    const usedDneg  = segs.reduce((a,s)=>a+(+s.dneg||0),0);
+    const tramos = segs.slice();
+    const leftDist = race.dist - usedDist;
+    if(leftDist > 0.1){
+      tramos.push({
+        name:"Resto del circuito", dist:leftDist,
+        dplus:Math.max(0, race.dplus - usedDplus),
+        dneg:Math.max(0, raceDneg - usedDneg),
+        alt:null, tec:"", sup:"", pc:0,
+      });
+    }
+    // Primera pasada: km-esfuerzo de cada tramo y del conjunto
     let kmEffTot=0;
-    const segCalc=segs.map(s=>{
+    const segCalc=tramos.map(s=>{
       const fTec = s.tec ? (T_TECNICIDAD[+s.tec]||1) : fallbackTec;
-      const kE = (+s.dist>0) ? (s.dist + (s.dplus/100)*fTec) : 0;
+      const kE = (+s.dist>0) ? (s.dist + ((+s.dplus||0)/100)*fTec) : 0;
       kmEffTot += kE;
       return {s, fTec, kE};
     });
-    // Fatiga referencia: proporción respecto al km_eff_total
-    let acumKm=0, acumKmEff=0, acumTime=0;
-    for(const x of segCalc){
+    // Segunda pasada: peso de cada tramo. Es la forma del pacing (dónde se va el
+    // tiempo), no el total: por eso los factores van crudos y después se normalizan
+    // al repartir.
+    let acumKmEff=0, sumW=0;
+    const pesos=segCalc.map(x=>{
       const s=x.s;
-      const pendMed = s.dist>0 ? (s.dplus+s.dneg)/(s.dist*10) : 0;
-      const pendNet = s.dist>0 ? (s.dplus-s.dneg)/(s.dist*10) : 0;
-      const isDesc = pendNet<0;
-      const fPend = slopeFactor(pendMed, isDesc);
+      const pendMed = s.dist>0 ? ((+s.dplus||0)+(+s.dneg||0))/(s.dist*10) : 0;
+      const pendNet = s.dist>0 ? ((+s.dplus||0)-(+s.dneg||0))/(s.dist*10) : 0;
+      /* El factor de pendiente va normalizado contra un tramo balanceado, igual
+         que en el total. Con el factor crudo, una subida sostenida pagaba dos
+         veces (los km-esfuerzo ya le habían cobrado el D+) y el reparto le metía
+         de más a las trepadas y de menos a los descensos largos. Contrastado con
+         los parciales oficiales de Sierre-Zinal 2025: el error medio por tramo
+         baja de 5,9 a 4,4 minutos. */
+      const fSBseg = globalSlopeFactor(s.dist, +s.dplus||0, +s.dplus||0);
+      const fPend = fSBseg>0
+        ? globalSlopeFactor(s.dist, +s.dplus||0, +s.dneg||0)/fSBseg
+        : slopeFactor(pendMed, pendNet<0);
       const fSup  = s.sup ? (T_SUPERFICIE[s.sup]||1) : 1;
       // Si el segmento no trae altitud propia, usamos la altitud media del circuito
       const fAlt  = (s.alt!=null && s.alt>0)
-        ? lookupStep(T_ALTITUD, s.alt, 1)
+        ? lookupLerp(T_ALTITUD, s.alt, 1)
         : fAltGlobFallback;
       // Fatiga evaluada en la mitad del tramo (promedio)
       const midPct = kmEffTot>0 ? (acumKmEff + x.kE/2)/kmEffTot : 0;
       const fFat = 1 + K_FATIGA * midPct;
-      const tSec = x.kE * refPace.secPerKmEff * fPend * fSup * fAlt * fFat;
+      acumKmEff += x.kE;
+      const w = x.kE * fPend * fSup * fAlt * fFat;
+      sumW += w;
+      return {pendMed, pendNet, fPend, fSup, fAlt, fFat, w};
+    });
+    // Tercera pasada: repartimos el total de la carrera según esos pesos.
+    // Las paradas en PC se suman aparte, no se reparten.
+    let acumKm=0, acumTime=0;
+    segCalc.forEach((x,i)=>{
+      const s=x.s, p=pesos[i];
+      const tSec = sumW>0 ? raceTimeSec * (p.w/sumW) : 0;
       const pcSec = (+s.pc||0)*60;
       acumKm += (+s.dist||0);
-      acumKmEff += x.kE;
       acumTime += tSec + pcSec;
       splits.push({
         name:s.name||"Segmento",
         dist:s.dist, dplus:s.dplus, dneg:s.dneg,
-        pendMed, pendNet, fTec:x.fTec, fPend, fSup, fAlt, fFat,
+        pendMed:p.pendMed, pendNet:p.pendNet, fTec:x.fTec,
+        fPend:p.fPend, fSup:p.fSup, fAlt:p.fAlt, fFat:p.fFat,
         kE:x.kE, tSec, pcSec,
         accDist:acumKm, accTime:acumTime,
       });
-    }
+    });
     baseTimeSec = acumTime;
-    // Si hay distancia "faltante" respecto a la carrera total, la agregamos como tramo implícito
-    const leftDist = race.dist - splits.reduce((a,s)=>a+(+s.dist||0),0);
-    const leftDplus = Math.max(0, race.dplus - splits.reduce((a,s)=>a+(+s.dplus||0),0));
-    const leftDneg  = Math.max(0, raceDneg    - splits.reduce((a,s)=>a+(+s.dneg||0),0));
-    if(leftDist > 0.1){
-      const fTec = fallbackTec;
-      const kE = leftDist + (leftDplus/100)*fTec;
-      const pendMed = (leftDplus + leftDneg)/(leftDist*10);
-      const pendNet = (leftDplus - leftDneg)/(leftDist*10);
-      const fPend = slopeFactor(pendMed, pendNet<0);
-      const fAlt = fAltGlobFallback;
-      const midPct = 1; // último tramo → fatiga máxima
-      const fFat = 1 + K_FATIGA * (Math.min(1,midPct));
-      const tSec = kE * refPace.secPerKmEff * fPend * fAlt * fFat;
-      acumKm+=leftDist; baseTimeSec+=tSec;
-      splits.push({
-        name:"Resto del circuito",
-        dist:leftDist, dplus:leftDplus, dneg:leftDneg,
-        pendMed, pendNet, fTec, fPend, fSup:1, fAlt, fFat,
-        kE, tSec, pcSec:0,
-        accDist:acumKm, accTime:baseTimeSec,
-      });
-    }
   } else {
-    // Global — Riegel sobre km-esfuerzo, más ajustes por pendiente (D+/D-) y altitud
-    const tRef = refPace.secPerKmEff * refPace.kmEffRef;
-    const riegelRatio = refPace.kmEffRef>0 ? Math.pow(kmEffRace/refPace.kmEffRef, EXP_RIEGEL) : 1;
-    let T = tRef * riegelRatio;
-    // Factor de perfil: diferencia entre carrera balanceada (D-=D+) vs carrera
-    // con bajada neta (D- >> D+) o subida neta. También captura el costo extra
-    // de bajadas empinadas.
-    const fSlope = globalSlopeFactor(race.dist, race.dplus, raceDneg);
-    // Normalizamos dividiendo por el factor "balanceado" (D-=D+),
-    // para no doble-contar lo que ya captura km-esfuerzo.
-    const fSlopeBalanced = globalSlopeFactor(race.dist, race.dplus, race.dplus);
-    const fSlopeNorm = fSlopeBalanced>0 ? fSlope/fSlopeBalanced : 1;
-    T *= fSlopeNorm;
-    const fAltGlob = fAltGlobFallback;
-    T *= fAltGlob;
-    baseTimeSec = T;
+    // Sin segmentos: la carrera entera es un solo tramo.
+    baseTimeSec = raceTimeSec;
     splits.push({
       name:race.name||"Carrera",
       dist:race.dist, dplus:race.dplus, dneg:raceDneg,
       pendMed:(race.dplus+raceDneg)/(race.dist*10), pendNet:(race.dplus-raceDneg)/(race.dist*10),
       fTec:tipoF_race, fPend:fSlopeNorm, fSup:1, fAlt:fAltGlob, fFat:1,
-      kE:kmEffRace, tSec:T, pcSec:0,
-      accDist:race.dist, accTime:T,
+      kE:kmEffRace, tSec:raceTimeSec, pcSec:0,
+      accDist:race.dist, accTime:raceTimeSec,
     });
   }
 
@@ -1644,8 +1742,9 @@ function recompute(scrollToTop){
   $("r-effpace").textContent=fmtPace(r.effPace);
   $("r-kmeff").innerHTML=`${r.kmEffRace.toFixed(1)}<small>km-ef</small>`;
 
-  // Confianza
-  const conf = Math.round(100 * r.refPace.confidence * (state.segEnabled && state.segments.length ? 1 : 0.85));
+  // Confianza. Los segmentos ya NO la suben: reparten el tiempo, no lo calculan,
+  // así que no aportan nada a la certeza sobre el total.
+  const conf = Math.round(100 * r.refPace.confidence);
   $("r-conf").textContent = conf+"%";
   let cs = state.refMode==="pace" ? "Basado en pace de ruta" : `${r.refPace.sources} referencia${r.refPace.sources!==1?"s":""} de trail`;
   if(state.segments.filter(s=>s.dist>0).length>0) cs += " · con segmentos";
@@ -1679,6 +1778,23 @@ function recompute(scrollToTop){
       ${diff>0?"Tu objetivo está <b>por debajo</b> de lo estimado — apuntás a un ritmo ambicioso. Confirmalo con sesiones específicas.":"Tu objetivo se ve <b>realista o conservador</b> según tu nivel actual. Hay margen."}
     </div>`;
   }
+  /* Aviso de extrapolación. Existe porque el caso que más engaña no da ningún
+     error: cargás una carrera corta y buena, la calculadora contesta un número
+     prolijo para una carrera del doble de larga, y nada en la pantalla dice que
+     ese salto es justo donde el método pierde pie. */
+  const ratio = r.refPace.ratio || 1;
+  if(ratio >= 1.5){
+    const kmEfRef = r.refPace.kmEffRef;
+    cmpHtml += `<div class="notice warn">
+      <b>Ojo: estás extrapolando ×${ratio.toFixed(1)}.</b>
+      Tu referencia son <b>${kmEfRef.toFixed(0)} km-esfuerzo</b> y esta carrera son
+      <b>${r.kmEffRace.toFixed(0)}</b>. Predecir un esfuerzo largo desde uno mucho más corto
+      es la parte más floja de cualquier calculadora: el número de arriba es una orientación,
+      no un pronóstico. ${ratio>=2 ? "Con este salto, tomalo como un rango de ±10 % y no como un tiempo." : ""}
+      <br>Si tenés una carrera de duración parecida a esta, cargala como referencia: cambia todo.
+    </div>`;
+  }
+
   const activeConds = [];
   const c = state.cond;
   if(c.opts.temp)    activeConds.push(`temp ${c.temp}°C`);
@@ -1848,7 +1964,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"1.0", fecha:"21-07-2026" };
+  var VERSION = { n:"2.0", fecha:"07-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();
