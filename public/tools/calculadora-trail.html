@@ -316,6 +316,11 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 .result-hero .r-time{font-family:var(--font-mono);font-size:clamp(42px,7vw,72px);font-weight:700;letter-spacing:-.02em;line-height:1;position:relative;font-variant-numeric:tabular-nums;color:var(--red)}
 .result-hero .r-sub{margin-top:8px;font-size:14px;color:var(--txt-2);position:relative}
 
+/* Los ejemplos van en gris tenue y en cursiva: tienen que leerse como "acá va
+   un número tuyo", nunca como un dato ya cargado. */
+input::placeholder{color:var(--txt-4);opacity:.55;font-style:italic;font-weight:400}
+input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
+
 /* ---- La banda de incertidumbre ----
    La barra entera es el 80 % de los casos; la zona clara del medio, la mitad
    más probable. La marca del centro es el tiempo estimado. Es simétrica porque
@@ -699,8 +704,8 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
           Lo convertiremos a un equivalente de trail, pero la precisión baja: cuando tengas una carrera de trail real, cambiate a ese modo.
         </div>
         <div class="grid grid-2">
-          <div class="field"><div class="field-head"><span class="field-label">Distancia del test / carrera de ruta</span></div><input type="number" id="p_dist" value="21.1" step="0.1" min="1"><span class="unit">km</span></div>
-          <div class="field"><div class="field-head"><span class="field-label">Tiempo</span></div><input type="text" id="p_time" value="01:45:00" placeholder="hh:mm:ss"></div>
+          <div class="field"><div class="field-head"><span class="field-label">Distancia del test / carrera de ruta</span></div><input type="number" id="p_dist" step="0.1" min="1" placeholder="21.1"><span class="unit">km</span></div>
+          <div class="field"><div class="field-head"><span class="field-label">Tiempo</span></div><input type="text" id="p_time" placeholder="01:45:00"></div>
         </div>
       </div>
     </div>
@@ -716,14 +721,14 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
       <p class="card-sub">Cargá lo que sabés. La distancia y el desnivel positivo son obligatorios; todo lo demás es opcional y solo mejora la estimación.</p>
 
       <div class="grid grid-2">
-        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" value="Mi próxima carrera"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" placeholder="Mi próxima carrera"></div>
         <div class="field"><div class="field-head"><span class="field-label">Fecha (opcional)</span></div><input type="text" id="r_date" placeholder="dd/mm/aaaa"></div>
         <div class="field"><div class="field-head"><span class="field-label">Distancia total
           <span class="tt"><span class="info">?</span><span class="tt-body">Distancia oficial del circuito según el organizador. Si hay varias variantes, cargá la que vas a correr.</span></span>
-        </span></div><input type="number" id="r_dist" step="0.1" min="1" value="42"><span class="unit">km</span></div>
+        </span></div><input type="number" id="r_dist" step="0.1" min="1" placeholder="42"><span class="unit">km</span></div>
         <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo (D+)
           <span class="tt"><span class="info">?</span><span class="tt-body">Metros totales de subida acumulada. Si el organizador publica "1800 m D+", cargá 1800. El D+ pesa más que la distancia pura: una carrera de 20 km con 1500 m equivale a 32 km-esfuerzo en tipo mixto. <b>Usá la misma fuente para las dos carreras</b>: las dos con el número del organizador, o las dos con el de tu reloj. Mezclarlas es el error más común y el más caro — la misma carrera puede figurar con 2905, 3043 o 3602 m según quién la midió.</span></span>
-        </span></div><input type="number" id="r_dplus" step="10" min="0" value="2000"><span class="unit">m</span></div>
+        </span></div><input type="number" id="r_dplus" step="10" min="0" placeholder="2000"><span class="unit">m</span></div>
       </div>
 
       <div class="divider"></div>
@@ -752,7 +757,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_dneg"></span>
           </div>
-          <input type="number" id="r_dneg" step="10" min="0" value="2000"><span class="unit">m</span>
+          <input type="number" id="r_dneg" step="10" min="0" placeholder="2000"><span class="unit">m</span>
         </div>
 
         <div class="field" data-optional="r_alt">
@@ -762,7 +767,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_alt"></span>
           </div>
-          <input type="number" id="r_alt" step="50" min="0" value="1000"><span class="unit">m s.n.m.</span>
+          <input type="number" id="r_alt" step="50" min="0" placeholder="1000"><span class="unit">m s.n.m.</span>
         </div>
 
         <div class="field" data-optional="r_obj">
@@ -772,7 +777,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_obj"></span>
           </div>
-          <input type="text" id="r_obj" value="05:00:00" placeholder="hh:mm:ss">
+          <input type="text" id="r_obj" placeholder="05:00:00">
         </div>
       </div>
     </div>
@@ -847,7 +852,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_temp"></span>
           </div>
-          <input type="number" id="c_temp" step="1" min="-20" max="50" value="20"><span class="unit">°C a la hora de la carrera</span>
+          <input type="number" id="c_temp" step="1" min="-20" max="50" placeholder="12"><span class="unit">°C a la hora de la carrera</span>
         </div>
 
         <div class="field" data-optional="c_hum">
@@ -857,7 +862,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_hum"></span>
           </div>
-          <input type="number" id="c_hum" step="5" min="0" max="100" value="60"><span class="unit">% HR</span>
+          <input type="number" id="c_hum" step="5" min="0" max="100" placeholder="60"><span class="unit">% HR</span>
         </div>
 
         <div class="field" data-optional="c_cielo">
@@ -965,7 +970,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_cruces"></span>
           </div>
-          <input type="number" id="c_cruces" min="0" step="1" value="0"><span class="unit">eventos (~2 min c/u)</span>
+          <input type="number" id="c_cruces" min="0" step="1" placeholder="0"><span class="unit">eventos (~2 min c/u)</span>
         </div>
 
         <div class="field" data-optional="c_desnudo">
@@ -975,7 +980,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_desnudo"></span>
           </div>
-          <input type="number" id="c_desnudo" min="0" step="1" value="0"><span class="unit">minutos totales</span>
+          <input type="number" id="c_desnudo" min="0" step="1" placeholder="0"><span class="unit">minutos totales</span>
         </div>
       </div>
     </div>
@@ -1183,26 +1188,26 @@ function lookupLerp(table, value, col){
 const state = {
   refMode:"race", // "race" | "pace"
   refs:[],
-  pace:{dist:21.1, time:"01:45:00"},
+  pace:{dist:0, time:""},
   race:{
-    name:"Mi próxima carrera", date:"",
-    dist:42, dplus:2000,
+    name:"", date:"",
+    dist:0, dplus:0,
     opts:{tipo:true, dneg:false, alt:false, obj:false},
-    tipo:3, dneg:2000, alt:1000, obj:"05:00:00",
+    tipo:3, dneg:0, alt:0, obj:"",
   },
   segEnabled:true,
   segments:[],
   cond:{
     opts:{temp:false, hum:false, cielo:false, viento:false, sol:false,
           noche:false, mochila:false, exp:false, cruces:false, desnudo:false},
-    temp:20, hum:60, cielo:"cloud", viento:"mod", sol:1,
+    temp:null, hum:null, cielo:"cloud", viento:"mod", sol:1,
     noche:0, mochila:1.00, exp:1.00, cruces:0, desnudo:0,
   },
 };
 
 function emptyRef(){
-  return {name:"Carrera pasada", dist:21, dplus:600, tipo:3, time:"02:15:00",
-          opts:{tipo:true, alt:false, dneg:false, sup:false}, alt:500, dneg:600, sup:"tierra"};
+  return {name:"", dist:0, dplus:0, tipo:3, time:"",
+          opts:{tipo:true, alt:false, dneg:false, sup:false}, alt:0, dneg:0, sup:"tierra"};
 }
 function emptySeg(){
   return {name:"Segmento", dist:0, dplus:0, dneg:0, alt:null, tec:"", sup:"", pc:0};
@@ -1240,10 +1245,10 @@ function renderRefs(){
         ${state.refs.length>1?`<button class="btn btn-ghost btn-sm" data-del="${i}">Eliminar</button>`:""}
       </div>
       <div class="grid grid-2">
-        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" data-k="name" data-i="${i}" value="${r.name.replace(/"/g,'&quot;')}"></div>
-        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time}" placeholder="hh:mm:ss"></div>
-        <div class="field"><div class="field-head"><span class="field-label">Distancia</span></div><input type="number" data-k="dist" data-i="${i}" step="0.1" min="1" value="${r.dist}"><span class="unit">km</span></div>
-        <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo</span></div><input type="number" data-k="dplus" data-i="${i}" step="10" min="0" value="${r.dplus}"><span class="unit">m</span></div>
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" data-k="name" data-i="${i}" value="${r.name.replace(/"/g,'&quot;')}" placeholder="Carrera pasada"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time}" placeholder="02:15:00"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Distancia</span></div><input type="number" data-k="dist" data-i="${i}" step="0.1" min="1" value="${r.dist||""}" placeholder="21"><span class="unit">km</span></div>
+        <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo</span></div><input type="number" data-k="dplus" data-i="${i}" step="10" min="0" value="${r.dplus||""}" placeholder="600"><span class="unit">m</span></div>
         <div class="field ${r.opts.tipo?"":"disabled"}" data-opt="tipo" data-i="${i}">
           <div class="field-head">
             <span class="field-label">Tipo de recorrido
@@ -1262,7 +1267,7 @@ function renderRefs(){
             </span>
             <span class="toggle ${r.opts.dneg?"on":""}" data-toptionref="dneg" data-i="${i}"></span>
           </div>
-          <input type="number" data-k="dneg" data-i="${i}" step="10" min="0" value="${r.dneg}"><span class="unit">m</span>
+          <input type="number" data-k="dneg" data-i="${i}" step="10" min="0" value="${r.dneg||""}" placeholder="600"><span class="unit">m</span>
         </div>
         <div class="field ${r.opts.alt?"":"disabled"}" data-opt="alt" data-i="${i}">
           <div class="field-head">
@@ -1271,7 +1276,7 @@ function renderRefs(){
             </span>
             <span class="toggle ${r.opts.alt?"on":""}" data-toptionref="alt" data-i="${i}"></span>
           </div>
-          <input type="number" data-k="alt" data-i="${i}" step="50" min="0" value="${r.alt}"><span class="unit">m s.n.m.</span>
+          <input type="number" data-k="alt" data-i="${i}" step="50" min="0" value="${r.alt||""}" placeholder="500"><span class="unit">m s.n.m.</span>
         </div>
       </div>
     `;
@@ -1338,8 +1343,10 @@ function bindTogglesOnce(root){
 }
 
 // Condiciones bindings
-$("c_temp").addEventListener("input",e=>state.cond.temp=+e.target.value);
-$("c_hum").addEventListener("input",e=>state.cond.hum=+e.target.value);
+/* Vacío guarda null, no 0: 0 grados es un dato legítimo y no puede confundirse
+   con "no lo cargué". Lo mismo con la humedad. */
+$("c_temp").addEventListener("input",e=>state.cond.temp = e.target.value==="" ? null : +e.target.value);
+$("c_hum").addEventListener("input",e=>state.cond.hum = e.target.value==="" ? null : +e.target.value);
 $("c_cielo").addEventListener("change",e=>state.cond.cielo=e.target.value);
 $("c_viento").addEventListener("change",e=>state.cond.viento=e.target.value);
 $("c_sol").addEventListener("change",e=>state.cond.sol=+e.target.value);
@@ -1492,7 +1499,7 @@ function referenceEffortPace(targetKmEff){
   for(const r of state.refs){
     const t=parseTime(r.time), d=+r.dist||0, dp=+r.dplus||0;
     if(t<=0||d<=0) continue;
-    const tipoF = r.opts.tipo ? (T_RECORRIDO[r.tipo]||1) : 1.16;
+    const tipoF = r.opts.tipo ? (T_RECORRIDO[r.tipo]||T_RECORRIDO[3]) : T_RECORRIDO[3];
     const ke=kmEff(d,dp,tipoF);
     if(ke<=0) continue;
     let pace=t/ke;
@@ -1547,7 +1554,7 @@ function climateMultiplier(cond){
   let m = 1;
   const o = cond.opts;
 
-  if(o.temp){
+  if(o.temp && cond.temp != null){
     const t = cond.temp;
     if(t > 15){
       m *= 1 + 0.005 * (t - 15);
@@ -1557,7 +1564,7 @@ function climateMultiplier(cond){
     }
   }
 
-  if(o.hum && o.temp && cond.temp > 18 && cond.hum > 60){
+  if(o.hum && o.temp && cond.temp != null && cond.hum != null && cond.temp > 18 && cond.hum > 60){
     // Humedad solo penaliza con calor; efecto crece con ambas
     const extraT = Math.min(1, (cond.temp - 18) / 15);
     m *= 1 + 0.003 * (cond.hum - 60) * extraT;
@@ -1574,7 +1581,7 @@ function climateMultiplier(cond){
     m *= (windMult[cond.viento] || 1);
   }
 
-  if(o.sol && o.temp && cond.temp > 18){
+  if(o.sol && o.temp && cond.temp != null && cond.temp > 18){
     // Radiación solar solo suma con calor
     const solBoost = [0, 0.01, 0.025, 0.04][cond.sol] || 0;
     m *= 1 + solBoost;
@@ -1615,7 +1622,10 @@ function compute(){
   if(!(race.dist>0)) errs.push("Cargá la distancia de la carrera objetivo.");
   if(!(race.dplus>=0)) errs.push("Cargá el desnivel positivo de la carrera.");
 
-  const tipoF_race = race.opts.tipo ? (T_RECORRIDO[race.tipo]||1.16) : 1.16;
+  /* Cuando el toggle está apagado se usa el valor de "mixto", que es el que está
+     calibrado. Antes acá había un 1.16 escrito a mano — la constante VIEJA — así
+     que apagar el toggle te devolvía silenciosamente al motor sin recalibrar. */
+  const tipoF_race = race.opts.tipo ? (T_RECORRIDO[race.tipo]||T_RECORRIDO[3]) : T_RECORRIDO[3];
   const kmEffRace = kmEff(race.dist, race.dplus, tipoF_race);
 
   const refPace = referenceEffortPace(kmEffRace);
@@ -1791,7 +1801,9 @@ function recompute(scrollToTop){
   const r = compute();
   const eWrap=$("out-errors");
   if(!r.ok){
-    eWrap.innerHTML = `<div class="notice warn"><b>Faltan datos para calcular:</b><br>${r.errs.map(x=>"• "+x).join("<br>")}</div>`;
+    /* Arranca vacía a propósito, así que este cartel es lo primero que se ve.
+       Tiene que sonar a "empecemos" y no a "algo se rompió". */
+    eWrap.innerHTML = `<div class="notice"><b>Para calcular necesito dos cosas:</b><br>${r.errs.map(x=>"• "+x).join("<br>")}</div>`;
     $("r-time").textContent="--:--:--";
     $("r-banda").hidden=true;
     $("r-sub").textContent="Completá los campos marcados";
@@ -1921,7 +1933,7 @@ function recompute(scrollToTop){
     <div class="hint">
       <b>Factores aplicados:</b>
       <ul style="margin:8px 0 0 18px;line-height:1.7">
-        <li>Tipo de recorrido: <b>${state.race.opts.tipo?state.race.tipo:"—"}</b> (factor ${(T_RECORRIDO[state.race.tipo]||1.16).toFixed(2)})</li>
+        <li>Tipo de recorrido: <b>${state.race.opts.tipo?state.race.tipo:"3 (por defecto)"}</b> (factor ${(state.race.opts.tipo?(T_RECORRIDO[state.race.tipo]||T_RECORRIDO[3]):T_RECORRIDO[3]).toFixed(2)})</li>
         <li>Desnivel negativo: <b>${state.race.opts.dneg?state.race.dneg+" m":"asumido = D+"}</b></li>
         <li>Altitud media del circuito: <b>${state.race.opts.alt?state.race.alt+" m":"—"}</b></li>
         <li>Multiplicador condiciones del día: <b>×${r.condMult.toFixed(3)}</b> <span style="color:var(--txt-4)">(${condDetail})</span></li>
@@ -2019,13 +2031,17 @@ function applyStateToUI(){
   $$("#ref-mode-switch .mode-opt").forEach(b=>b.classList.toggle("active", b.dataset.mode===state.refMode));
   $("ref-mode-race").classList.toggle("hidden", state.refMode!=="race");
   $("ref-mode-pace").classList.toggle("hidden", state.refMode!=="pace");
-  $("p_dist").value=state.pace.dist; $("p_time").value=state.pace.time;
+  /* El 0 no se escribe: se deja el campo vacío y que se vea el ejemplo en gris.
+     Un 0 escrito parece un dato cargado, y la idea es que nadie confunda un
+     número de ejemplo con el suyo. */
+  const val = v => (v === 0 || v == null || v === "") ? "" : v;
+  $("p_dist").value=val(state.pace.dist); $("p_time").value=val(state.pace.time);
 
   // race
-  $("r_name").value=state.race.name; $("r_date").value=state.race.date||"";
-  $("r_dist").value=state.race.dist; $("r_dplus").value=state.race.dplus;
-  $("r_tipo").value=state.race.tipo; $("r_dneg").value=state.race.dneg;
-  $("r_alt").value=state.race.alt; $("r_obj").value=state.race.obj;
+  $("r_name").value=val(state.race.name); $("r_date").value=state.race.date||"";
+  $("r_dist").value=val(state.race.dist); $("r_dplus").value=val(state.race.dplus);
+  $("r_tipo").value=state.race.tipo; $("r_dneg").value=val(state.race.dneg);
+  $("r_alt").value=val(state.race.alt); $("r_obj").value=val(state.race.obj);
   $$("[data-optional]").forEach(f=>{
     const opt=f.dataset.optional;
     const tog=f.querySelector(".toggle");
@@ -2040,16 +2056,16 @@ function applyStateToUI(){
   segTog.classList.toggle("on", state.segEnabled);
 
   // condiciones
-  $("c_temp").value=state.cond.temp;
-  $("c_hum").value=state.cond.hum;
+  $("c_temp").value=state.cond.temp==null?"":state.cond.temp;
+  $("c_hum").value=state.cond.hum==null?"":state.cond.hum;
   $("c_cielo").value=state.cond.cielo;
   $("c_viento").value=state.cond.viento;
   $("c_sol").value=state.cond.sol;
   $("c_noche").value=state.cond.noche;
   $("c_mochila").value=state.cond.mochila;
   $("c_exp").value=state.cond.exp;
-  $("c_cruces").value=state.cond.cruces;
-  $("c_desnudo").value=state.cond.desnudo;
+  $("c_cruces").value=state.cond.cruces||"";
+  $("c_desnudo").value=state.cond.desnudo||"";
 
   renderRefs(); renderSegments();
   bindTogglesOnce(document);
@@ -2074,7 +2090,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"3.0", fecha:"07-08-2026" };
+  var VERSION = { n:"3.1", fecha:"07-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();
