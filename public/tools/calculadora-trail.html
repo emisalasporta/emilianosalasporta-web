@@ -1154,8 +1154,13 @@ function fmtTime(sec){
 }
 function fmtPace(secPerKm){
   if(!isFinite(secPerKm)||secPerKm<=0) return "—";
-  const m=Math.floor(secPerKm/60), s=Math.round(secPerKm%60);
-  return m+":"+String(s).padStart(2,"0");
+  /* Se redondea a segundos ENTEROS primero y recién ahí se parte en minutos.
+     Al revés (floor de los minutos + round de los segundos) salía "5:60":
+     359,7 s/km daba minuto 5 y segundo 60, que no existe. Pasaba en uno de
+     cada ciento y pico de ritmos, así que en la tabla de tramos aparecía cada
+     tanto y quedaba como un error de la calculadora. */
+  const tot=Math.round(secPerKm);
+  return Math.floor(tot/60)+":"+String(tot%60).padStart(2,"0");
 }
 function lookupStep(table, value, col){
   // Busca el primer umbral >= value; si no, el último
@@ -1193,7 +1198,12 @@ const state = {
     name:"", date:"",
     dist:0, dplus:0,
     opts:{tipo:true, dneg:false, alt:false, obj:false},
-    tipo:3, dneg:0, alt:0, obj:"",
+    /* dneg arranca en null y no en 0, por lo mismo que la temperatura: vacío
+       significa "no lo cargué" y hay que asumir D- = D+. Con 0, prender el
+       toggle sin escribir nada le decía al motor "esta carrera no baja nada"
+       y el pronóstico se iba cinco minutos para arriba sin que nadie tocara
+       un número. */
+    tipo:3, dneg:null, alt:0, obj:"",
   },
   segEnabled:true,
   segments:[],
@@ -1207,7 +1217,7 @@ const state = {
 
 function emptyRef(){
   return {name:"", dist:0, dplus:0, tipo:3, time:"",
-          opts:{tipo:true, alt:false, dneg:false, sup:false}, alt:0, dneg:0, sup:"tierra"};
+          opts:{tipo:true, alt:false, dneg:false}, alt:0, dneg:null};
 }
 function emptySeg(){
   return {name:"Segmento", dist:0, dplus:0, dneg:0, alt:null, tec:"", sup:"", pc:0};
@@ -1287,7 +1297,9 @@ function renderRefs(){
     inp.addEventListener("input",e=>{
       const i=+e.target.dataset.i, k=e.target.dataset.k;
       let v=e.target.value;
-      if(["dist","dplus","dneg","alt","tipo"].includes(k)) v=parseFloat(v)||0;
+      // El D- vacío es "no lo cargué" (se asume = D+), no "esta carrera no baja".
+      if(k==="dneg") v = v==="" ? null : (parseFloat(v)||0);
+      else if(["dist","dplus","alt","tipo"].includes(k)) v=parseFloat(v)||0;
       state.refs[i][k]=v;
     });
   });
@@ -1301,10 +1313,11 @@ function renderRefs(){
   }));
 }
 
+// Una sola. Antes, con la lista vacía agregaba DOS de un click.
 $("btn-add-ref").addEventListener("click",()=>{
-  if(state.refs.length===0) state.refs.push(emptyRef());
   state.refs.push(emptyRef());
   renderRefs();
+  scheduleRecompute();
 });
 
 // Pace mode inputs
@@ -1317,7 +1330,7 @@ $("r_date").addEventListener("input",e=>state.race.date=e.target.value);
 $("r_dist").addEventListener("input",e=>state.race.dist=+e.target.value||0);
 $("r_dplus").addEventListener("input",e=>state.race.dplus=+e.target.value||0);
 $("r_tipo").addEventListener("change",e=>state.race.tipo=+e.target.value);
-$("r_dneg").addEventListener("input",e=>state.race.dneg=+e.target.value||0);
+$("r_dneg").addEventListener("input",e=>state.race.dneg = e.target.value==="" ? null : (+e.target.value||0));
 $("r_alt").addEventListener("input",e=>state.race.alt=+e.target.value||0);
 $("r_obj").addEventListener("input",e=>state.race.obj=e.target.value);
 
@@ -1413,14 +1426,28 @@ function renderSegments(){
 function updateSegSum(){
   const totD=state.segments.reduce((a,s)=>a+(+s.dist||0),0);
   const totDP=state.segments.reduce((a,s)=>a+(+s.dplus||0),0);
+  /* El aviso de "te pasaste" va acá y no solo en el resultado: el que está
+     cargando tramos está mirando ESTA tabla, y si suma más kilómetros que la
+     carrera conviene que se entere en el momento y no tres pantallas después. */
+  const dRace=+state.race.dist||0, dpRace=+state.race.dplus||0;
+  let extra="";
+  if(state.segments.length && dRace>0){
+    if(totD > dRace + 0.1) extra = ` · <span style="color:var(--red)">te pasaste ${(totD-dRace).toFixed(1)} km de los ${dRace.toFixed(1)} de la carrera</span>`;
+    else if(totD < dRace - 0.1) extra = ` · <span style="color:var(--txt-4)">faltan ${(dRace-totD).toFixed(1)} km, se completan con «Resto del circuito»</span>`;
+    if(dpRace>0 && totDP > dpRace + 10) extra += ` · <span style="color:var(--red)">y ${Math.round(totDP-dpRace)} m de D+ de más</span>`;
+  }
   $("seg-sum").innerHTML = state.segments.length
-    ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>`
+    ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>${extra}`
     : "";
 }
-$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); });
+$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); scheduleRecompute(); });
+/* El scheduleRecompute() de acá NO es decorativo: sin él, borrar todos los
+   segmentos dejaba el panel de resultado mostrando los tramos viejos hasta que
+   tocaras cualquier otra cosa. El listener global de click solo escucha
+   .toggle, [data-del] y .mode-opt, y este botón no es ninguno de los tres. */
 $("btn-clear-seg").addEventListener("click",()=>{
   if(!confirm("¿Eliminar todos los segmentos?")) return;
-  state.segments=[]; renderSegments();
+  state.segments=[]; renderSegments(); scheduleRecompute();
 });
 
 /* ============================================================
@@ -1492,10 +1519,15 @@ function referenceEffortPace(targetKmEff){
     const paceSecPerKm=t/d;
     const secPerKmEff = paceSecPerKm*1.06;
     // Para Riegel necesitamos un kmEff de referencia: asumimos el mismo d (pace ya es llano)
-    return { secPerKmEff, kmEffRef:d, confidence:confianzaRef(0.40, d, targetKmEff), sources:1 };
+    /* El ratio también se devuelve acá. Antes no, y quedaba `undefined`: la banda
+       no se ensanchaba nunca en modo ruta, así que estimar 160 km desde un test
+       de 5 km (una extrapolación de ×46) informaba el mismo ±14,5 % que una
+       carrera parecida, y el aviso de extrapolación tampoco salía. */
+    return { secPerKmEff, kmEffRef:d, confidence:confianzaRef(0.40, d, targetKmEff), sources:1,
+             ratio: (d>0 && targetKmEff>0) ? Math.max(d,targetKmEff)/Math.min(d,targetKmEff) : 1 };
   }
   if(state.refs.length===0) return null;
-  let sumW=0, sumPace=0, sumKeRef=0;
+  let sumW=0, sumPace=0, sumKeRef=0, validas=0;
   for(const r of state.refs){
     const t=parseTime(r.time), d=+r.dist||0, dp=+r.dplus||0;
     if(t<=0||d<=0) continue;
@@ -1513,7 +1545,7 @@ function referenceEffortPace(targetKmEff){
        perfil encima. La cuenta iba una vez y media. Se nota con referencias punto
        a punto (mucha más bajada que subida), que es medio trail. Si no cargás el
        D- de la referencia asumimos que era balanceada y esto no hace nada. */
-    const dnR = (r.opts.dneg && +r.dneg>=0) ? +r.dneg : dp;
+    const dnR = (r.opts.dneg && r.dneg!=null && r.dneg!=="") ? +r.dneg : dp;
     const fSBref = globalSlopeFactor(d, dp, dp);
     if(fSBref>0){
       const fSNref = globalSlopeFactor(d, dp, dnR)/fSBref;
@@ -1524,15 +1556,23 @@ function referenceEffortPace(targetKmEff){
       const ratio=Math.max(ke,targetKmEff)/Math.min(ke,targetKmEff);
       w=Math.max(0.35, 1/ratio);
     }
-    sumW+=w; sumPace+=pace*w; sumKeRef+=ke*w;
+    sumW+=w; sumPace+=pace*w; sumKeRef+=ke*w; validas++;
   }
   if(sumW===0) return null;
   const keRef = sumKeRef/sumW;
+  /* `validas` y NO state.refs.length. Una referencia a la que le falta el tiempo
+     o la distancia no aporta un solo dato: el `continue` de arriba la saltea y
+     no entra en el promedio. Pero la CANTIDAD salía del largo del array, así
+     que apretar "Agregar carrera" cuatro veces y no completarlas angostaba la
+     banda de ±16,2 % a ±9,5 % y la pantalla llegaba a decir "5 carreras de
+     referencia cargadas: es la banda más angosta que este método sabe dar".
+     La calculadora mintiendo sobre su propia certeza, que es exactamente lo
+     que la banda vino a evitar. */
   return {
     secPerKmEff: sumPace/sumW,
     kmEffRef: keRef,
-    confidence: confianzaRef(Math.min(0.90, 0.35 + 0.30*state.refs.length), keRef, targetKmEff),
-    sources: state.refs.length,
+    confidence: confianzaRef(Math.min(0.90, 0.35 + 0.30*validas), keRef, targetKmEff),
+    sources: validas,
     ratio: (keRef>0 && targetKmEff>0) ? Math.max(keRef,targetKmEff)/Math.min(keRef,targetKmEff) : 1,
   };
 }
@@ -1598,20 +1638,37 @@ function climateMultiplier(cond){
 // Factor por perfil de pendiente global cuando no hay segmentos:
 // reparte distancia en subida + bajada + llano según D+ y D-,
 // y aplica slopeFactor a cada parte. Devuelve un factor medio ponderado.
+/* La distancia se reparte entre subida y bajada EN PROPORCIÓN AL DESNIVEL, que
+   es la misma proporción con la que después se pesan los dos factores.
+
+   Antes no era así y las dos mitades de la cuenta se contradecían: las
+   pendientes se calculaban como si la subida y la bajada ocuparan media
+   carrera CADA UNA (fija, sin importar cuánto desnivel hubiera de cada lado),
+   pero los factores se promediaban por la proporción de desnivel. En una
+   carrera punto a punto eso rompía: 500 m de subida y 2500 de bajada en 31 km
+   daban una "bajada del 16 %" cuando el recorrido promedia 9,6 %, y la
+   calculadora contestaba que bajar 2000 m netos te hacía QUINCE MINUTOS más
+   lento que la misma carrera balanceada. Al repartir la distancia en
+   proporción al desnivel, las dos partes comparten la pendiente media del
+   recorrido, que es lo único que se puede afirmar sin un track.
+
+   Con D- = D+ el resultado es idéntico al de antes (era el caso balanceado, y
+   es el único que estaba bien), así que esto NO toca la calibración de la
+   constante de 0,80 ni la cobertura de la banda: las 208 predicciones se
+   corrieron todas con referencia y objetivo balanceados, donde este factor se
+   cancela contra sí mismo. Dicho de otro modo, y conviene tenerlo presente:
+   el tratamiento del D- nunca estuvo validado contra datos, ni antes ni ahora.
+   Lo que se arregló es una inconsistencia interna, no un número medido. */
 function globalSlopeFactor(dist, dplus, dneg){
   if(dist <= 0) return 1;
-  // Asumimos que subida y bajada cubren cada una la mitad de la distancia
-  // total dedicada a desnivel. El resto es llano.
-  // Pendientes medias aproximadas (en %)
-  const pendAsc = dplus / (dist * 5); // (dplus_m / (dist_km * 1000 / 2)) * 100
-  const pendDsc = dneg  / (dist * 5);
-  const fAsc = slopeFactor(pendAsc, false);
-  const fDsc = slopeFactor(pendDsc, true);
-  // Fracciones: estimamos proporcionalmente al desnivel
   const total = dplus + dneg;
   if(total <= 0) return 1;
   const wAsc = dplus / total;
   const wDsc = dneg  / total;
+  // Pendiente media del recorrido, en %. La comparten las dos partes.
+  const pend = total / (dist * 10);
+  const fAsc = slopeFactor(pend, false);
+  const fDsc = slopeFactor(pend, true);
   return fAsc * wAsc + fDsc * wDsc;
 }
 
@@ -1642,12 +1699,13 @@ function compute(){
   const hasSegs = state.segEnabled && state.segments.some(s=>(+s.dist||0)>0);
   const splits=[];
 
-  let baseTimeSec = 0;
+  let baseTimeSec = 0, pcFijoSec = 0;
 
   // Altitud de la carrera como fallback para segmentos sin altura propia
   const fAltGlobFallback = (race.opts.alt && race.alt>0) ? lookupLerp(T_ALTITUD, race.alt, 1) : 1;
-  // D- efectivo de la carrera (si no está habilitado, asumimos D- = D+)
-  const raceDneg = race.opts.dneg ? race.dneg : race.dplus;
+  // D- efectivo de la carrera. Si el toggle está apagado O el campo está vacío,
+  // asumimos D- = D+ (ver el comentario del `dneg:null` en el estado).
+  const raceDneg = (race.opts.dneg && race.dneg!=null && race.dneg!=="") ? +race.dneg : race.dplus;
 
   // --- TIEMPO TOTAL DE LA CARRERA ---
   // El total se calcula SIEMPRE por esta vía (Riegel sobre km-esfuerzo + perfil
@@ -1729,23 +1787,32 @@ function compute(){
     });
     // Tercera pasada: repartimos el total de la carrera según esos pesos.
     // Las paradas en PC se suman aparte, no se reparten.
-    let acumKm=0, acumTime=0;
+    let acumKm=0, acumTime=0, pcTot=0;
     segCalc.forEach((x,i)=>{
       const s=x.s, p=pesos[i];
       const tSec = sumW>0 ? raceTimeSec * (p.w/sumW) : 0;
       const pcSec = (+s.pc||0)*60;
       acumKm += (+s.dist||0);
-      acumTime += tSec + pcSec;
+      acumTime += tSec;
+      pcTot += pcSec;
       splits.push({
         name:s.name||"Segmento",
         dist:s.dist, dplus:s.dplus, dneg:s.dneg,
         pendMed:p.pendMed, pendNet:p.pendNet, fTec:x.fTec,
         fPend:p.fPend, fSup:p.fSup, fAlt:p.fAlt, fFat:p.fFat,
         kE:x.kE, tSec, pcSec,
-        accDist:acumKm, accTime:acumTime,
+        accDist:acumKm, accTime:acumTime+pcTot,
       });
     });
+    /* `baseTimeSec` es SOLO tiempo de carrera; las paradas van aparte en
+       `pcFijoSec`. Antes las paradas estaban acá adentro y después el total las
+       multiplicaba por el factor de condiciones junto con todo lo demás,
+       mientras que los tramos de la pantalla no lo hacían. Resultado: con 20
+       minutos de PC y viento extremo, la suma de los tramos y el número grande
+       de arriba se separaban dos minutos. Y además no tiene sentido: estar
+       parado en un puesto de control no se hace más lento porque haya viento. */
     baseTimeSec = acumTime;
+    pcFijoSec = pcTot;
   } else {
     // Sin segmentos: la carrera entera es un solo tramo.
     baseTimeSec = raceTimeSec;
@@ -1767,7 +1834,7 @@ function compute(){
   if(state.cond.opts.cruces) extraSec += state.cond.cruces * 120;
   if(state.cond.opts.desnudo) extraSec += state.cond.desnudo * 60;
 
-  const totalSec = baseTimeSec * condMult + extraSec;
+  const totalSec = baseTimeSec * condMult + pcFijoSec + extraSec;
 
   // Reescalar splits con multiplicador (excluyendo pc y extras explícitos)
   let runAcc=0;
@@ -1789,8 +1856,8 @@ function compute(){
   return {
     ok:true,
     totalSec, pace, effPace, kmEffRace,
-    splits, refPace, condMult, extraSec, banda,
-    raceDist:race.dist, raceDplus:race.dplus,
+    splits, refPace, condMult, extraSec, banda, hasSegs,
+    raceDist:race.dist, raceDplus:race.dplus, raceDneg,
   };
 }
 
@@ -1865,7 +1932,9 @@ function recompute(scrollToTop){
   const conf = Math.round(100 * r.refPace.confidence);
   $("r-conf").textContent = conf+"%";
   let cs = state.refMode==="pace" ? "Basado en pace de ruta" : `${r.refPace.sources} referencia${r.refPace.sources!==1?"s":""} de trail`;
-  if(state.segments.filter(s=>s.dist>0).length>0) cs += " · con segmentos";
+  /* `r.hasSegs` y no "hay filas cargadas": decía "· con segmentos" aunque el
+     toggle de «usar segmentos» estuviera apagado y el cálculo los ignorara. */
+  if(r.hasSegs) cs += " · con segmentos";
   $("r-conf-sub").textContent=cs;
 
   // SPLITS
@@ -1917,25 +1986,52 @@ function recompute(scrollToTop){
     </div>`;
   }
 
+  /* Cada renglón se escribe SOLO si el dato existe. Con el toggle prendido y el
+     campo vacío salía "temp null°C" y "hum null%" en la lista de factores. */
   const activeConds = [];
   const c = state.cond;
-  if(c.opts.temp)    activeConds.push(`temp ${c.temp}°C`);
-  if(c.opts.hum)     activeConds.push(`hum ${c.hum}%`);
+  if(c.opts.temp && c.temp!=null) activeConds.push(`temp ${c.temp}°C`);
+  if(c.opts.hum && c.hum!=null)   activeConds.push(`hum ${c.hum}%`);
   if(c.opts.cielo)   activeConds.push({clear:"soleado",part:"parcial",cloud:"nublado",light:"llovizna",rain:"lluvia",storm:"tormenta",snow:"nieve"}[c.cielo]||c.cielo);
   if(c.opts.viento)  activeConds.push({none:"sin viento",light:"viento leve",mod:"viento mod.",strong:"viento fuerte",extreme:"viento extremo"}[c.viento]||c.viento);
   if(c.opts.sol)     activeConds.push(`sol ${["sombra","parcial","expuesto","pleno"][c.sol]||""}`);
-  if(c.opts.noche && c.noche>0) activeConds.push(`noche ${Math.round(c.noche*100)}%`);
+  /* Se muestra la etiqueta que el usuario eligió, no el número interno: el
+     desplegable dice "~25 % de noche" pero el valor que usa el motor es 0,15,
+     así que el resumen contestaba "noche 15%" y parecía que no le había hecho
+     caso. */
+  if(c.opts.noche && c.noche>0) activeConds.push(
+    ({"0.15":"~25 % de noche","0.35":"~50 % de noche","0.70":"mayormente de noche","1.00":"toda de noche"})[(+c.noche).toFixed(2)] || `noche ${Math.round(c.noche*100)}%`);
   if(c.opts.mochila) activeConds.push(`mochila ×${c.mochila}`);
   if(c.opts.exp)     activeConds.push(`exp ×${c.exp}`);
   const condDetail = activeConds.length ? activeConds.join(" · ") : "sin ajustes climáticos/corredor";
+
+  /* AVISOS DE CONTROLES QUE ESTÁN PRENDIDOS Y NO HACEN NADA.
+     La humedad y el sol solo pesan cuando además hay calor cargado (la humedad
+     no molesta a 8 °C, y el sol tampoco). Eso está bien, pero antes el toggle
+     quedaba encendido, el multiplicador seguía en ×1.000 y nada en la pantalla
+     lo explicaba: parecía que el control estaba roto. Lo mismo con los
+     segmentos que suman más que la carrera, que se cargaban sin una palabra. */
+  const mudos = [];
+  const sinCalor = !(state.cond.opts.temp && state.cond.temp != null && state.cond.temp > 18);
+  if(state.cond.opts.hum && sinCalor) mudos.push("La <b>humedad</b> está activada pero no cambia nada: solo pesa con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
+  if(state.cond.opts.sol && sinCalor) mudos.push("La <b>exposición al sol</b> está activada pero no cambia nada: solo suma con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
+  if(state.cond.opts.temp && state.cond.temp == null) mudos.push("La <b>temperatura</b> está activada pero el campo está vacío.");
+  if(state.cond.opts.hum && state.cond.hum == null) mudos.push("La <b>humedad</b> está activada pero el campo está vacío.");
+  if(state.race.opts.dneg && (state.race.dneg == null || state.race.dneg === "")) mudos.push("El <b>desnivel negativo</b> está activado pero está vacío: se asume que baja lo mismo que sube.");
+  if(state.race.opts.alt && !(state.race.alt > 0)) mudos.push("La <b>altitud media</b> está activada pero está vacía.");
+  if(state.segments.length && !state.segEnabled) mudos.push(`Tenés <b>${state.segments.length} segmento${state.segments.length===1?"":"s"}</b> cargado${state.segments.length===1?"":"s"} pero «usar segmentos» está apagado: no se están usando.`);
+  const sumaSeg = state.segments.reduce((a,s)=>a+(+s.dist||0),0);
+  if(r.hasSegs && sumaSeg > state.race.dist + 0.1)
+    mudos.push(`Los segmentos suman <b>${sumaSeg.toFixed(1)} km</b> y la carrera son <b>${state.race.dist.toFixed(1)} km</b>. El total sigue siendo el de la carrera; los tramos solo lo reparten, así que los parciales van a quedar corridos.`);
+  if(mudos.length) cmpHtml += `<div class="notice warn"><b>Ojo con esto:</b><ul style="margin:8px 0 0 18px;line-height:1.7">${mudos.map(m=>"<li>"+m+"</li>").join("")}</ul></div>`;
 
   cmpHtml += `
     <div class="hint">
       <b>Factores aplicados:</b>
       <ul style="margin:8px 0 0 18px;line-height:1.7">
         <li>Tipo de recorrido: <b>${state.race.opts.tipo?state.race.tipo:"3 (por defecto)"}</b> (factor ${(state.race.opts.tipo?(T_RECORRIDO[state.race.tipo]||T_RECORRIDO[3]):T_RECORRIDO[3]).toFixed(2)})</li>
-        <li>Desnivel negativo: <b>${state.race.opts.dneg?state.race.dneg+" m":"asumido = D+"}</b></li>
-        <li>Altitud media del circuito: <b>${state.race.opts.alt?state.race.alt+" m":"—"}</b></li>
+        <li>Desnivel negativo: <b>${Math.round(r.raceDneg)} m</b>${(state.race.opts.dneg && state.race.dneg!=null && state.race.dneg!=="")?"":" <span style=\"color:var(--txt-4)\">(asumido = D+)</span>"}</li>
+        <li>Altitud media del circuito: <b>${(state.race.opts.alt && state.race.alt>0)?state.race.alt+" m":"—"}</b></li>
         <li>Multiplicador condiciones del día: <b>×${r.condMult.toFixed(3)}</b> <span style="color:var(--txt-4)">(${condDetail})</span></li>
         <li>Tiempo extra por cruces + PCs: <b>+${fmtTime(r.extraSec)}</b></li>
         <li>Exponente de Riegel: <b>${EXP_RIEGEL}</b> · k fatiga: <b>${K_FATIGA}</b></li>
@@ -2090,7 +2186,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"3.1", fecha:"07-08-2026" };
+  var VERSION = { n:"4.0", fecha:"07-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();

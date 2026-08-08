@@ -253,8 +253,81 @@ console.log("\n=== E · COHERENCIA DE LO QUE MUESTRA EN PANTALLA ===");
   base(); ref(REF_FER);
   api.state.cond.opts.desnudo = true; api.state.cond.desnudo = 20;
   const r = calc();
-  chk("las paradas en PC NO se multiplican por el clima",
+  chk("el campo global de PCs no se multiplica por el clima",
       Math.abs(r.extraSec - 1200) < 1, `extraSec ${r.extraSec}s`);
+}
+{
+  /* Esto es lo que el test de arriba PARECÍA probar y no probaba: el campo `pc`
+     de CADA TRAMO. Ése sí se multiplicaba por el clima dentro del total pero no
+     en la lista de tramos, así que con paradas cargadas y viento fuerte la suma
+     de los tramos y el número grande no daban lo mismo. Lo cazó el banco de
+     interfaz, no éste, y por eso el test ahora está acá también. */
+  base(); ref(REF_FER); api.state.segEnabled = true; segsSZ();
+  api.state.segments[0].pc = 20;                    // 20 min parado en el primer PC
+  const sinClima = calc();
+  api.state.cond.opts.viento = true; api.state.cond.viento = "extreme";
+  const conClima = calc();
+  const ult = conClima.splits[conClima.splits.length - 1];
+  chk("con paradas por tramo + clima, los tramos suman el total",
+      Math.abs(ult.accTimeAdj - conClima.totalSec) < 2,
+      `${hms(ult.accTimeAdj)} vs ${hms(conClima.totalSec)}`);
+  chk("estar parado en un PC no se hace más lento por el viento",
+      Math.abs((conClima.totalSec - sinClima.totalSec * 1) - (conClima.totalSec - sinClima.totalSec)) < 1e-9 &&
+      Math.abs(conClima.splits.reduce((a, s) => a + s.pcSec, 0) - 1200) < 1,
+      `paradas ${conClima.splits.reduce((a, s) => a + s.pcSec, 0)}s`);
+}
+{
+  /* Referencias a medio llenar. No aportan un dato y antes contaban igual: la
+     banda se angostaba y la pantalla llegaba a decir "5 carreras de referencia
+     cargadas" con una sola completa. */
+  base(); ref(REF_FER);
+  const solaUna = calc();
+  api.state.refs.push({ name: "", dist: 0, dplus: 0, tipo: 3, time: "", opts: { tipo: true, alt: false, dneg: false }, alt: 0, dneg: null });
+  api.state.refs.push({ name: "", dist: 0, dplus: 0, tipo: 3, time: "", opts: { tipo: true, alt: false, dneg: false }, alt: 0, dneg: null });
+  api.state.refs.push({ name: "", dist: 0, dplus: 0, tipo: 3, time: "", opts: { tipo: true, alt: false, dneg: false }, alt: 0, dneg: null });
+  api.state.refs.push({ name: "", dist: 0, dplus: 0, tipo: 3, time: "", opts: { tipo: true, alt: false, dneg: false }, alt: 0, dneg: null });
+  const conVacias = calc();
+  chk("las referencias vacías no se cuentan", conVacias.refPace.sources === 1, `sources ${conVacias.refPace.sources}`);
+  chk("las referencias vacías no angostan la banda",
+      Math.abs(conVacias.banda.p80 - solaUna.banda.p80) < 1e-9,
+      `${(solaUna.banda.p80*100).toFixed(1)} % → ${(conVacias.banda.p80*100).toFixed(1)} %`);
+  chk("las referencias vacías no suben la confianza",
+      Math.abs(conVacias.refPace.confidence - solaUna.refPace.confidence) < 1e-9,
+      `${solaUna.refPace.confidence.toFixed(3)} → ${conVacias.refPace.confidence.toFixed(3)}`);
+}
+{
+  /* El factor de perfil. Con D- = D+ tiene que dar EXACTAMENTE lo mismo que la
+     fórmula vieja (es el caso con el que se calibró la constante de 0,80), y
+     con perfiles desbalanceados la curva tiene que ser ordenada. */
+  const vieja = (dist, dplus, dneg) => {
+    if (dist <= 0) return 1;
+    const fA = api.slopeFactor(dplus / (dist * 5), false), fD = api.slopeFactor(dneg / (dist * 5), true);
+    const t = dplus + dneg; if (t <= 0) return 1;
+    return fA * (dplus / t) + fD * (dneg / t);
+  };
+  const iguales = [[31.2, 2148, 2148], [21, 600, 600], [42, 1000, 1000], [160, 9000, 9000], [10, 0, 0]]
+    .every(([d, p, n]) => Math.abs(vieja(d, p, n) - api.globalSlopeFactor(d, p, n)) < 1e-12);
+  chk("con D- = D+ el factor de perfil no cambió (la calibración sigue valiendo)", iguales);
+
+  const curva = [0, 500, 1000, 2148, 3000, 5000, 7000].map(dn => {
+    base({ dneg: dn, opts: { tipo: true, dneg: true, alt: false, obj: false } }); ref(REF_FER);
+    return T(calc());
+  });
+  chk("más D- nunca da mejor tiempo (curva ordenada)",
+      curva.every((x, i) => i === 0 || x >= curva[i - 1] - 0.5), curva.map(hms).join(" → "));
+
+  base({ dist: 31.2, dplus: 500, dneg: 500, opts: { tipo: true, dneg: true, alt: false, obj: false } }); ref(REF_FER);
+  const bal = T(calc());
+  base({ dist: 31.2, dplus: 500, dneg: 2500, opts: { tipo: true, dneg: true, alt: false, obj: false } }); ref(REF_FER);
+  const p2p = T(calc());
+  chk("una carrera punto a punto no sale absurdamente más lenta que la balanceada",
+      (p2p - bal) / bal < 0.06, `${hms(bal)} → ${hms(p2p)} (+${(100 * (p2p - bal) / bal).toFixed(1)} %)`);
+}
+{
+  // Ritmos con segundos "60": no existen.
+  const feos = [];
+  for (let s = 150; s <= 900; s += 0.1) if (/:60$/.test(api.fmtPace(s))) feos.push(s.toFixed(1));
+  chk("ningún ritmo se muestra con segundos ':60'", feos.length === 0, feos.slice(0, 5).join(" "));
 }
 
 console.log("\n=== F · REALIDAD (contra resultados de verdad) ===");

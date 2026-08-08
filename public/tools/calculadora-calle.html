@@ -237,6 +237,11 @@ select option:checked,select option:hover{background-color:var(--red);color:var(
 
 /* Las flechitas de subir/bajar de los campos numericos las dibuja el
    navegador y no se les puede dar estilo: son de otra epoca. Fuera. */
+/* Los ejemplos van en gris tenue y en cursiva: tienen que leerse como "acá va
+   un número tuyo", nunca como un dato ya cargado. */
+input::placeholder{color:var(--txt-4);opacity:.55;font-style:italic;font-weight:400}
+input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
+
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none;margin:0}
@@ -763,7 +768,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
                 <span class="tt"><span class="info">?</span><span class="tt-body">Velocidad sostenida en tu test máximo de 5–8 min (o velocidad final en un test progresivo). Se traduce a tu <b>VDOT</b> y desde ahí calculamos cualquier distancia.</span></span>
               </span>
             </div>
-            <input type="number" id="v_speed" step="0.1" min="5" max="28" value="16.0"><span class="unit">km/h</span>
+            <input type="number" id="v_speed" step="0.1" min="5" max="28" placeholder="16.0"><span class="unit">km/h</span>
           </div>
           <div class="field">
             <div class="field-head">
@@ -771,7 +776,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
                 <span class="tt"><span class="info">?</span><span class="tt-body">Ritmo al que mantuviste la VAM (se actualiza automático). También podés editarlo directamente si conocés el ritmo y no la velocidad.</span></span>
               </span>
             </div>
-            <input type="text" id="v_pace" value="3:45" placeholder="min:seg /km"><span class="unit">min/km</span>
+            <input type="text" id="v_pace" placeholder="3:45"><span class="unit">min/km</span>
           </div>
         </div>
         <div class="hint" style="margin-top:10px">
@@ -785,8 +790,8 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
           Útil si hiciste un <b>rodaje sostenido</b> o un <b>test de campo</b> reciente (ej.: 10 km a ritmo controlado, media maratón de entrenamiento). Lo tratamos como una carrera previa.
         </div>
         <div class="grid grid-2">
-          <div class="field"><div class="field-head"><span class="field-label">Distancia del test</span></div><input type="number" id="p_dist" value="10" step="0.1" min="1"><span class="unit">km</span></div>
-          <div class="field"><div class="field-head"><span class="field-label">Tiempo</span></div><input type="text" id="p_time" value="00:45:00" placeholder="hh:mm:ss"></div>
+          <div class="field"><div class="field-head"><span class="field-label">Distancia del test</span></div><input type="number" id="p_dist" step="0.1" min="1" placeholder="10"><span class="unit">km</span></div>
+          <div class="field"><div class="field-head"><span class="field-label">Tiempo</span></div><input type="text" id="p_time" placeholder="00:45:00"></div>
         </div>
       </div>
     </div>
@@ -802,13 +807,13 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
       <p class="card-sub">Sólo la distancia es obligatoria. El resto afina la estimación.</p>
 
       <div class="grid grid-2">
-        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" value="Mi próxima carrera"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" placeholder="Mi próxima carrera"></div>
         <div class="field"><div class="field-head"><span class="field-label">Fecha (opcional)</span></div><input type="text" id="r_date" placeholder="dd/mm/aaaa"></div>
         <div class="field">
           <div class="field-head"><span class="field-label">Distancia total
             <span class="tt"><span class="info">?</span><span class="tt-body">Distancia oficial del circuito. No hay restricciones: 3K, 5K, 10K, 15K, 21.097K, 42.195K, 50K, 100K, 160K o lo que sea. Si la carrera declara "21K" pero el GPS promedia 21.3, cargá la oficial.</span></span>
           </span></div>
-          <input type="number" id="r_dist" step="0.1" min="0.5" value="21.097"><span class="unit">km</span>
+          <input type="number" id="r_dist" step="0.1" min="0.5" placeholder="21.097"><span class="unit">km</span>
           <div class="dist-pills">
             <button data-dist="5">5K</button>
             <button data-dist="10">10K</button>
@@ -827,7 +832,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_obj"></span>
           </div>
-          <input type="text" id="r_obj" value="01:45:00" placeholder="hh:mm:ss">
+          <input type="text" id="r_obj" placeholder="01:45:00">
         </div>
       </div>
 
@@ -841,7 +846,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_dplus"></span>
           </div>
-          <input type="number" id="r_dplus" step="5" min="0" value="150"><span class="unit">m</span>
+          <input type="number" id="r_dplus" step="5" min="0" placeholder="150"><span class="unit">m</span>
         </div>
         <div class="field" data-optional="r_dneg">
           <div class="field-head">
@@ -850,7 +855,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_dneg"></span>
           </div>
-          <input type="number" id="r_dneg" step="5" min="0" value="150"><span class="unit">m</span>
+          <input type="number" id="r_dneg" step="5" min="0" placeholder="150"><span class="unit">m</span>
         </div>
         <div class="field" data-optional="r_alt">
           <div class="field-head">
@@ -859,7 +864,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="r_alt"></span>
           </div>
-          <input type="number" id="r_alt" step="50" min="0" value="100"><span class="unit">m s.n.m.</span>
+          <input type="number" id="r_alt" step="50" min="0" placeholder="100"><span class="unit">m s.n.m.</span>
         </div>
         <div class="field" data-optional="r_sup">
           <div class="field-head">
@@ -954,7 +959,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_temp"></span>
           </div>
-          <input type="number" id="c_temp" step="1" min="-20" max="50" value="22"><span class="unit">°C a la hora de la largada</span>
+          <input type="number" id="c_temp" step="1" min="-20" max="50" placeholder="22"><span class="unit">°C a la hora de la largada</span>
         </div>
         <div class="field" data-optional="c_hum">
           <div class="field-head">
@@ -963,7 +968,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_hum"></span>
           </div>
-          <input type="number" id="c_hum" step="5" min="0" max="100" value="70"><span class="unit">% HR</span>
+          <input type="number" id="c_hum" step="5" min="0" max="100" placeholder="70"><span class="unit">% HR</span>
         </div>
         <div class="field" data-optional="c_cielo">
           <div class="field-head">
@@ -1065,7 +1070,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             </span>
             <span class="toggle" data-toggle="c_stops"></span>
           </div>
-          <input type="number" id="c_stops" min="0" step="10" value="0"><span class="unit">segundos totales</span>
+          <input type="number" id="c_stops" min="0" step="10" placeholder="0"><span class="unit">segundos totales</span>
         </div>
       </div>
     </div>
@@ -1364,8 +1369,13 @@ function fmtTime(sec){
 }
 function fmtPace(secPerKm){
   if(!isFinite(secPerKm)||secPerKm<=0) return "—";
-  const m=Math.floor(secPerKm/60), s=Math.round(secPerKm%60);
-  return m+":"+String(s).padStart(2,"0");
+  /* Se redondea a segundos ENTEROS primero y recién ahí se parte en minutos.
+     Al revés (floor de los minutos + round de los segundos) salía "5:60", que
+     no existe: 359,7 s/km daba minuto 5 y segundo 60. Acá encima era peor que
+     en trail, porque el ritmo de la VAM se escribe en un campo que después se
+     vuelve a leer: "5:60" se releía como 6:00 y la velocidad se corría sola. */
+  const tot=Math.round(secPerKm);
+  return Math.floor(tot/60)+":"+String(tot%60).padStart(2,"0");
 }
 function fmtPaceShort(secPerKm){ return fmtPace(secPerKm); }
 function speedFromPace(secPerKm){ return 3600/secPerKm; }
@@ -1374,32 +1384,39 @@ function paceFromSpeed(kmh){ return 3600/kmh; }
 // ============================================================
 // STATE
 // ============================================================
+/* Todo arranca VACÍO, igual que en la calculadora de trail. Antes venía con un
+   ejemplo cargado (media maratón, 10K en 45 min, 22 °C) que se veía exactamente
+   igual que un dato propio: el que entraba entendía un resultado prolijo como
+   si fuera suyo. Los ejemplos ahora viven en los `placeholder`, en gris.
+   Los campos numéricos opcionales arrancan en null y no en 0, porque vacío
+   significa "no lo cargué" y 0 es un dato de verdad (0 °C existe, y una
+   carrera con 0 m de D+ también). */
 const state = {
   refMode:"race",
   refs:[],
-  vam:{speed:16.0},
-  pace:{dist:10, time:"00:45:00"},
+  vam:{speed:0},
+  pace:{dist:0, time:""},
   race:{
-    name:"Mi próxima carrera", date:"",
-    dist:21.097,
+    name:"", date:"",
+    dist:0,
     opts:{dplus:false, dneg:false, alt:false, sup:false, obj:false},
-    dplus:150, dneg:150, alt:100, sup:"asfalto", obj:"01:45:00",
+    dplus:null, dneg:null, alt:0, sup:"asfalto", obj:"",
   },
   segEnabled:false,
   segments:[],
   cond:{
     opts:{temp:false, hum:false, cielo:false, viento:false, sol:false,
           exp:false, grupo:false, strategy:false, stops:false},
-    temp:22, hum:70, cielo:"cloud", viento:"mod", sol:1,
+    temp:null, hum:null, cielo:"cloud", viento:"mod", sol:1,
     exp:"experimentado", grupo:"solo", strategy:"even", stops:0,
   },
 };
 
 function emptyRef(){
   return {
-    name:"Carrera previa", dist:10, time:"00:45:00",
+    name:"", dist:0, time:"",
     opts:{dplus:false, alt:false},
-    dplus:30, alt:50,
+    dplus:null, alt:0,
   };
 }
 function emptySeg(){
@@ -1445,11 +1462,11 @@ function renderRefs(){
         ${state.refs.length>1?`<button class="btn btn-ghost btn-sm" data-del="${i}">Eliminar</button>`:""}
       </div>
       <div class="grid grid-2">
-        <div class="field"><div class="field-head"><span class="field-label">Nombre</span></div><input type="text" data-k="name" data-i="${i}" value="${r.name.replace(/"/g,'&quot;')}"></div>
-        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time}" placeholder="hh:mm:ss"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Nombre</span></div><input type="text" data-k="name" data-i="${i}" value="${(r.name||"").replace(/"/g,'&quot;')}" placeholder="Carrera previa"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time||""}" placeholder="00:45:00"></div>
         <div class="field">
           <div class="field-head"><span class="field-label">Distancia</span></div>
-          <input type="number" data-k="dist" data-i="${i}" step="0.1" min="0.5" value="${r.dist}"><span class="unit">km</span>
+          <input type="number" data-k="dist" data-i="${i}" step="0.1" min="0.5" value="${r.dist||""}" placeholder="10"><span class="unit">km</span>
         </div>
         <div class="field ${r.opts.dplus?"":"disabled"}" data-opt="dplus" data-i="${i}">
           <div class="field-head">
@@ -1458,7 +1475,7 @@ function renderRefs(){
             </span>
             <span class="toggle ${r.opts.dplus?"on":""}" data-toptionref="dplus" data-i="${i}"></span>
           </div>
-          <input type="number" data-k="dplus" data-i="${i}" step="5" min="0" value="${r.dplus}"><span class="unit">m</span>
+          <input type="number" data-k="dplus" data-i="${i}" step="5" min="0" value="${r.dplus==null?"":r.dplus}" placeholder="30"><span class="unit">m</span>
         </div>
         <div class="field ${r.opts.alt?"":"disabled"}" data-opt="alt" data-i="${i}">
           <div class="field-head">
@@ -1467,7 +1484,7 @@ function renderRefs(){
             </span>
             <span class="toggle ${r.opts.alt?"on":""}" data-toptionref="alt" data-i="${i}"></span>
           </div>
-          <input type="number" data-k="alt" data-i="${i}" step="50" min="0" value="${r.alt}"><span class="unit">m s.n.m.</span>
+          <input type="number" data-k="alt" data-i="${i}" step="50" min="0" value="${r.alt||""}" placeholder="50"><span class="unit">m s.n.m.</span>
         </div>
       </div>
     `;
@@ -1478,7 +1495,9 @@ function renderRefs(){
     inp.addEventListener("input",e=>{
       const i=+e.target.dataset.i, k=e.target.dataset.k;
       let v=e.target.value;
-      if(["dist","dplus","alt"].includes(k)) v=parseFloat(v)||0;
+      // El D+ vacío es "no lo cargué", no "esa carrera era llana".
+      if(k==="dplus") v = v==="" ? null : (parseFloat(v)||0);
+      else if(["dist","alt"].includes(k)) v=parseFloat(v)||0;
       state.refs[i][k]=v;
     });
   });
@@ -1492,10 +1511,11 @@ function renderRefs(){
   }));
 }
 
+// Una sola. Antes, con la lista vacía agregaba DOS de un click.
 $("btn-add-ref").addEventListener("click",()=>{
-  if(state.refs.length===0) state.refs.push(emptyRef());
   state.refs.push(emptyRef());
   renderRefs();
+  scheduleRecompute();
 });
 
 // VAM mode — sincronizar velocidad <-> pace
@@ -1525,8 +1545,9 @@ $("p_time").addEventListener("input",e=>state.pace.time=e.target.value);
 $("r_name").addEventListener("input",e=>state.race.name=e.target.value);
 $("r_date").addEventListener("input",e=>state.race.date=e.target.value);
 $("r_dist").addEventListener("input",e=>state.race.dist=+e.target.value||0);
-$("r_dplus").addEventListener("input",e=>state.race.dplus=+e.target.value||0);
-$("r_dneg").addEventListener("input",e=>state.race.dneg=+e.target.value||0);
+// Vacío = "no lo cargué" (null), NO "esta carrera es llana" (0).
+$("r_dplus").addEventListener("input",e=>state.race.dplus = e.target.value==="" ? null : (+e.target.value||0));
+$("r_dneg").addEventListener("input",e=>state.race.dneg = e.target.value==="" ? null : (+e.target.value||0));
 $("r_alt").addEventListener("input",e=>state.race.alt=+e.target.value||0);
 $("r_sup").addEventListener("change",e=>state.race.sup=e.target.value);
 $("r_obj").addEventListener("input",e=>state.race.obj=e.target.value);
@@ -1561,8 +1582,12 @@ function bindTogglesOnce(root){
 // ============================================================
 // CONDICIONES
 // ============================================================
-$("c_temp").addEventListener("input",e=>state.cond.temp=+e.target.value);
-$("c_hum").addEventListener("input",e=>state.cond.hum=+e.target.value);
+/* Vacío guarda null, no 0: 0 grados es un dato legítimo y no puede confundirse
+   con "no lo cargué". Antes, borrar el campo de temperatura con el toggle
+   prendido le decía al motor "hoy hay 0 °C" y metía la penalización por frío
+   sin que nadie hubiera escrito nada. */
+$("c_temp").addEventListener("input",e=>state.cond.temp = e.target.value==="" ? null : (+e.target.value||0));
+$("c_hum").addEventListener("input",e=>state.cond.hum = e.target.value==="" ? null : (+e.target.value||0));
 $("c_cielo").addEventListener("change",e=>state.cond.cielo=e.target.value);
 $("c_viento").addEventListener("change",e=>state.cond.viento=e.target.value);
 $("c_sol").addEventListener("change",e=>state.cond.sol=+e.target.value);
@@ -1619,14 +1644,26 @@ function renderSegments(){
 function updateSegSum(){
   const totD=state.segments.reduce((a,s)=>a+(+s.dist||0),0);
   const totDP=state.segments.reduce((a,s)=>a+(+s.dplus||0),0);
+  /* El aviso de "te pasaste" va acá y no solo en el resultado: el que está
+     cargando tramos está mirando ESTA tabla. */
+  const dRace=+state.race.dist||0;
+  let extra="";
+  if(state.segments.length && dRace>0){
+    if(totD > dRace + 0.05) extra = ` · <span style="color:var(--red)">te pasaste ${(totD-dRace).toFixed(2)} km de los ${dRace.toFixed(2)} de la carrera</span>`;
+    else if(totD < dRace - 0.05) extra = ` · <span style="color:var(--txt-4)">faltan ${(dRace-totD).toFixed(2)} km, se completan con «Resto del circuito»</span>`;
+  }
   $("seg-sum").innerHTML = state.segments.length
-    ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>`
+    ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>${extra}`
     : "";
 }
-$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); });
+$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); scheduleRecompute(); });
+/* El scheduleRecompute() de acá NO es decorativo: sin él, borrar todos los
+   tramos dejaba el panel de resultado mostrando los tramos viejos hasta que
+   tocaras cualquier otra cosa. El listener global de click solo escucha
+   .toggle, [data-del] y .mode-opt, y este botón no es ninguno de los tres. */
 $("btn-clear-seg").addEventListener("click",()=>{
   if(!confirm("¿Eliminar todos los tramos?")) return;
-  state.segments=[]; renderSegments();
+  state.segments=[]; renderSegments(); scheduleRecompute();
 });
 // Autocompletar en tramos de 5 km (o acorde a la distancia)
 $("btn-auto-split").addEventListener("click",()=>{
@@ -1694,7 +1731,7 @@ function refToFlatSeaLevel(r){
   const t = parseTime(r.time), d = +r.dist||0;
   if(t<=0 || d<=0) return null;
   let adjTime = t;
-  if(r.opts.dplus && r.dplus>0){
+  if(r.opts.dplus && r.dplus!=null && r.dplus>0){
     // asumimos circuito balanceado (D- = D+) salvo que se declare otra cosa
     const fSlope = globalSlopeFactor(d, r.dplus, r.dplus);
     if(fSlope > 0) adjTime /= fSlope;
@@ -1766,7 +1803,8 @@ function climateMultiplier(cond, raceSecBase){
   let m = 1;
   const o = cond.opts;
 
-  if(o.temp){
+  // Los `!= null` son el guardián de "el toggle está prendido pero el campo vacío".
+  if(o.temp && cond.temp != null){
     const tOpt = tempOptimal(raceSecBase);
     const sens = tempSensitivity(raceSecBase);
     const t = cond.temp;
@@ -1777,7 +1815,7 @@ function climateMultiplier(cond, raceSecBase){
       m *= 1 + 0.002 * ((tOpt - 7) - t);      // frío penaliza menos
     }
   }
-  if(o.hum && o.temp && cond.temp > 18 && cond.hum > 60){
+  if(o.hum && o.temp && cond.temp != null && cond.hum != null && cond.temp > 18 && cond.hum > 60){
     const extraT = Math.min(1, (cond.temp - 18) / 14);
     m *= 1 + 0.0025 * (cond.hum - 60) * extraT;
   }
@@ -1790,18 +1828,16 @@ function climateMultiplier(cond, raceSecBase){
     const windMult = {none:1.00, light:1.005, mod:1.02, strong:1.045, extreme:1.085, favor:0.99};
     m *= (windMult[cond.viento] || 1);
   }
-  if(o.sol && o.temp && cond.temp > 18){
+  if(o.sol && o.temp && cond.temp != null && cond.temp > 18){
     const solBoost = [0, 0.01, 0.025, 0.04][cond.sol] || 0;
     m *= 1 + solBoost;
   }
   return m;
 }
 
-// Experiencia
-const EXP_FACTORS = {
-  debut_42:1.06, debut_21:1.025, debut_10:1.01, debut_short:1.005,
-  nuevo:1.01, experimentado:1.00, veterano:0.995,
-};
+/* Experiencia. (Acá vivía una tabla EXP_FACTORS que no usaba nadie: las claves
+   ni siquiera coincidían con las del desplegable. Se sacó para que no quede un
+   número a la vista que parece la fuente de verdad y no lo es.) */
 function experienceFactor(cond, distKm){
   if(!cond.opts.exp) return 1;
   const exp = cond.exp;
@@ -1855,12 +1891,14 @@ function compute(){
   if(!baseSeaFlat) return {ok:false, errs:["No se pudo calcular. Revisá los datos."]};
 
   // Contribución de cada factor global al tiempo base:
-  const raceDneg = race.opts.dneg ? race.dneg : (race.opts.dplus ? race.dplus : 0);
-  const raceDplus = race.opts.dplus ? race.dplus : 0;
+  // Toggle apagado O campo vacío = "no lo cargué". El D- por defecto es el D+.
+  const cargado = v => v != null && v !== "";
+  const raceDplus = (race.opts.dplus && cargado(race.dplus)) ? +race.dplus : 0;
+  const raceDneg  = (race.opts.dneg  && cargado(race.dneg))  ? +race.dneg  : raceDplus;
 
   const hasSegs = state.segEnabled && state.segments.some(s=>(+s.dist||0) > 0);
 
-  let baseTimeSec = 0;
+  let baseTimeSec = 0, paradasSec = 0;
   const splits = [];
 
   // Climate necesita duración estimada para óptimo: usamos baseSeaFlat como primer estimador.
@@ -1890,7 +1928,7 @@ function compute(){
     // implícito en Daniels).
     const paceFlatRace = baseSeaFlat / race.dist; // seg/km
 
-    let acumKm = 0, acumTime = 0;
+    let acumKm = 0, acumTime = 0, stopTot = 0;
     for(const s of segs){
       const distM = s.dist * 1000;
       const dp = +s.dplus || 0;
@@ -1914,13 +1952,20 @@ function compute(){
       const tSec = s.dist * paceFlatRace * fSlope * fSup * fAlt;
       const stopSec = (+s.stop||0) * 60;
       acumKm += s.dist;
-      acumTime += tSec + stopSec;
+      /* Las paradas van aparte del tiempo de carrera. Antes estaban acá adentro
+         y después el total las multiplicaba por el factor de condiciones junto
+         con todo lo demás, mientras que la lista de tramos no lo hacía: con
+         paradas cargadas y viento fuerte, la suma de los tramos y el número
+         grande de arriba no daban lo mismo. Y además no tiene sentido, estar
+         parado atándose un cordón no se hace más lento porque haya viento. */
+      acumTime += tSec;
+      stopTot += stopSec;
       splits.push({
         name: s.name || "Tramo",
         dist: s.dist, dplus: dp, dneg: dn,
         fSlope, fSup, fAlt,
         tSec, stopSec,
-        accDist: acumKm, accTime: acumTime,
+        accDist: acumKm, accTime: acumTime + stopTot,
       });
     }
     // Si queda distancia por cubrir, la agregamos con factores globales.
@@ -1937,10 +1982,11 @@ function compute(){
         dist: leftDist, dplus: leftDplus, dneg: leftDneg,
         fSlope, fSup: fSupGlob, fAlt: fAltGlob,
         tSec, stopSec: 0,
-        accDist: acumKm, accTime: acumTime,
+        accDist: acumKm, accTime: acumTime + stopTot,
       });
     }
     baseTimeSec = acumTime;
+    paradasSec = stopTot;
   } else {
     // Global. Partimos del baseSeaFlat y aplicamos pendiente + superficie + altitud globales.
     const fSlope = (raceDplus || raceDneg) ? globalSlopeFactor(race.dist, raceDplus, raceDneg) : 1;
@@ -1958,7 +2004,7 @@ function compute(){
   // Factores globales que multiplican el total:
   const condMult = climateEst * fExp * fDraft;
   const extraSec = state.cond.opts.stops ? (+state.cond.stops||0) : 0;
-  const totalSec = baseTimeSec * condMult + extraSec;
+  const totalSec = baseTimeSec * condMult + paradasSec + extraSec;
 
   // Ajustar splits con multiplicador de condiciones (para mostrar tiempos realistas por tramo):
   let runAcc = 0;
@@ -1989,14 +2035,14 @@ function compute(){
       const tRiegel = flat.time * Math.pow(race.dist/flat.dist, cAvg);
       // aplicar los mismos ajustes globales
       riegelSec = tRiegel * ((raceDplus||raceDneg) ? globalSlopeFactor(race.dist, raceDplus, raceDneg) : 1)
-                  * fSupGlob * fAltGlob * condMult + extraSec;
+                  * fSupGlob * fAltGlob * condMult + paradasSec + extraSec;
     }
   }
 
   return {
     ok:true,
     totalSec, pace, avgKmh, vdot, vamKmh, pctVam: pct,
-    splits, refInfo: ref, condMult, extraSec,
+    splits, refInfo: ref, condMult, extraSec, hasSegs,
     raceDist: race.dist, raceDplus, raceDneg,
     baseSeaFlat, fSupGlob, fAltGlob,
     riegelSec,
@@ -2034,14 +2080,17 @@ function recompute(scrollToTop){
   $("r-pctvam").innerHTML = `${r.pctVam.toFixed(1)}<small>%</small>`;
 
   // Confianza
+  /* `r.hasSegs` y no "hay filas cargadas": un tramo con la distancia en blanco,
+     o la tabla entera con el toggle apagado, no aportan nada al cálculo y sin
+     embargo subían la confianza y ponían "· con tramos" en pantalla. */
   const baseConf = r.refInfo.confidence;
   let conf = baseConf;
-  if(state.segEnabled && state.segments.length>0) conf = Math.min(1, conf + 0.05);
+  if(r.hasSegs) conf = Math.min(1, conf + 0.05);
   if(Object.values(state.cond.opts).filter(v=>v).length >= 3) conf = Math.min(1, conf + 0.03);
   $("r-conf").textContent = Math.round(conf*100) + "%";
   let cs = `${r.refInfo.source}`;
   if(r.refInfo.sources > 1) cs += ` (${r.refInfo.sources} refs)`;
-  if(state.segEnabled && state.segments.length>0) cs += " · con tramos";
+  if(r.hasSegs) cs += " · con tramos";
   $("r-conf-sub").textContent = cs;
 
   // Splits
@@ -2151,9 +2200,31 @@ function renderCompare(r){
     </div>`;
   }
 
+  /* AVISOS DE CONTROLES QUE ESTÁN PRENDIDOS Y NO HACEN NADA.
+     La humedad y el sol solo pesan cuando además hay calor cargado (la humedad
+     no molesta a 8 °C, y el sol tampoco). Eso está bien, pero antes el toggle
+     quedaba encendido, el multiplicador seguía en ×1.000 y nada en la pantalla
+     lo explicaba: parecía que el control estaba roto. */
+  const mudos = [];
+  const sinCalor = !(c.opts.temp && c.temp != null && c.temp > 18);
+  if(c.opts.hum && sinCalor) mudos.push("La <b>humedad</b> está activada pero no cambia nada: solo pesa con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
+  if(c.opts.sol && sinCalor) mudos.push("La <b>exposición al sol</b> está activada pero no cambia nada: solo suma con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
+  if(c.opts.temp && c.temp == null) mudos.push("La <b>temperatura</b> está activada pero el campo está vacío.");
+  if(c.opts.hum && c.hum == null) mudos.push("La <b>humedad</b> está activada pero el campo está vacío.");
+  if(state.race.opts.dplus && state.race.dplus == null) mudos.push("El <b>desnivel positivo</b> está activado pero está vacío: se calcula como carrera llana.");
+  if(state.race.opts.dneg && state.race.dneg == null) mudos.push("El <b>desnivel negativo</b> está activado pero está vacío: se asume que baja lo mismo que sube.");
+  if(state.race.opts.alt && !(state.race.alt > 0)) mudos.push("La <b>altitud media</b> está activada pero está vacía.");
+  if(state.segments.length && !state.segEnabled) mudos.push(`Tenés <b>${state.segments.length} tramo${state.segments.length===1?"":"s"}</b> cargado${state.segments.length===1?"":"s"} pero «usar tramos» está apagado: no se están usando.`);
+  const sumaSeg = state.segments.reduce((a,s)=>a+(+s.dist||0),0);
+  if(r.hasSegs && sumaSeg > state.race.dist + 0.05)
+    mudos.push(`Los tramos suman <b>${sumaSeg.toFixed(2)} km</b> y la carrera son <b>${state.race.dist.toFixed(2)} km</b>. El pronóstico se hace sobre los tramos, así que va a dar el tiempo de una carrera más larga que la tuya.`);
+  if(mudos.length) html += `<div class="notice warn"><b>Ojo con esto:</b><ul style="margin:8px 0 0 18px;line-height:1.7">${mudos.map(m=>"<li>"+m+"</li>").join("")}</ul></div>`;
+
   const conds = [];
-  if(c.opts.temp) conds.push(`temp ${c.temp}°C`);
-  if(c.opts.hum) conds.push(`hum ${c.hum}%`);
+  // Cada renglón se escribe SOLO si el dato existe: con el toggle prendido y el
+  // campo vacío salía "temp null°C" y "hum null%".
+  if(c.opts.temp && c.temp != null) conds.push(`temp ${c.temp}°C`);
+  if(c.opts.hum && c.hum != null) conds.push(`hum ${c.hum}%`);
   if(c.opts.cielo) conds.push({clear:"soleado",part:"parcial",cloud:"nublado",light:"llovizna",rain:"lluvia",storm:"tormenta",snow:"nieve"}[c.cielo]);
   if(c.opts.viento) conds.push({none:"sin viento",light:"viento leve",mod:"viento mod.",strong:"viento fuerte",extreme:"viento extremo",favor:"viento a favor"}[c.viento]);
   if(c.opts.sol) conds.push(`sol ${["sombra","parcial","expuesto","pleno"][c.sol]||""}`);
@@ -2168,11 +2239,11 @@ function renderCompare(r){
         <li>Calibración: <b>${r.refInfo.source}</b> — ${r.refInfo.detail}</li>
         <li>VDOT calibrado: <b>${r.vdot.toFixed(1)}</b> · VAM equiv.: <b>${r.vamKmh.toFixed(1)} km/h</b></li>
         <li>Tiempo base llano+nivel del mar: <b>${fmtTime(r.baseSeaFlat)}</b> (${fmtPace(r.baseSeaFlat/r.raceDist)}/km)</li>
-        <li>D+/D−: <b>${state.race.opts.dplus ? state.race.dplus+" m" : "—"}</b> / <b>${state.race.opts.dneg ? state.race.dneg+" m" : (state.race.opts.dplus ? "igual a D+" : "—")}</b></li>
-        <li>Altitud: <b>${state.race.opts.alt ? state.race.alt+" m (×"+r.fAltGlob.toFixed(3)+")" : "a nivel del mar"}</b></li>
+        <li>D+/D−: <b>${r.raceDplus ? Math.round(r.raceDplus)+" m" : "—"}</b> / <b>${r.raceDneg ? Math.round(r.raceDneg)+" m" : "—"}</b>${(r.raceDplus && !(state.race.opts.dneg && state.race.dneg!=null)) ? ' <span style="color:var(--txt-4)">(D− asumido = D+)</span>' : ""}</li>
+        <li>Altitud: <b>${(state.race.opts.alt && state.race.alt>0) ? state.race.alt+" m (×"+r.fAltGlob.toFixed(3)+")" : "a nivel del mar"}</b></li>
         <li>Superficie: <b>${state.race.opts.sup ? state.race.sup : "asfalto"}</b> (×${r.fSupGlob.toFixed(3)})</li>
         <li>Multiplicador condiciones (clima + exp + pelotón): <b>×${r.condMult.toFixed(3)}</b> <span style="color:var(--txt-4)">(${condDetail})</span></li>
-        <li>Paradas totales: <b>${c.opts.stops?c.stops+" s":"—"}</b></li>
+        <li>Paradas totales: <b>${fmtTime(r.extraSec + r.splits.reduce((a,s)=>a+(s.stopSec||0),0))}</b></li>
         ${r.riegelSec ? `<li>Crosscheck Riegel: <b>${fmtTime(r.riegelSec)}</b> (diferencia con VDOT: ${(Math.abs(r.riegelSec-r.totalSec)/r.totalSec*100).toFixed(1)} %)</li>` : ""}
       </ul>
     </div>`;
@@ -2268,16 +2339,20 @@ function applyStateToUI(){
   $("ref-mode-race").classList.toggle("hidden", state.refMode!=="race");
   $("ref-mode-vam").classList.toggle("hidden", state.refMode!=="vam");
   $("ref-mode-pace").classList.toggle("hidden", state.refMode!=="pace");
-  $("v_speed").value = state.vam.speed;
-  $("v_pace").value = fmtPace(paceFromSpeed(state.vam.speed));
-  $("p_dist").value=state.pace.dist; $("p_time").value=state.pace.time;
+  /* El 0 no se escribe: se deja el campo vacío y que se vea el ejemplo en gris.
+     Un 0 escrito parece un dato cargado, y la idea es que nadie confunda un
+     número de ejemplo con el suyo. */
+  const val = v => (v === 0 || v == null || v === "") ? "" : v;
+  $("v_speed").value = val(state.vam.speed);
+  $("v_pace").value = state.vam.speed > 0 ? fmtPace(paceFromSpeed(state.vam.speed)) : "";
+  $("p_dist").value=val(state.pace.dist); $("p_time").value=val(state.pace.time);
 
   // race
-  $("r_name").value=state.race.name; $("r_date").value=state.race.date||"";
-  $("r_dist").value=state.race.dist;
-  $("r_dplus").value=state.race.dplus; $("r_dneg").value=state.race.dneg;
-  $("r_alt").value=state.race.alt; $("r_sup").value=state.race.sup;
-  $("r_obj").value=state.race.obj;
+  $("r_name").value=val(state.race.name); $("r_date").value=state.race.date||"";
+  $("r_dist").value=val(state.race.dist);
+  $("r_dplus").value=val(state.race.dplus); $("r_dneg").value=val(state.race.dneg);
+  $("r_alt").value=val(state.race.alt); $("r_sup").value=state.race.sup;
+  $("r_obj").value=val(state.race.obj);
   $$("[data-optional]").forEach(f=>{
     const opt=f.dataset.optional;
     const tog=f.querySelector(".toggle");
@@ -2291,15 +2366,15 @@ function applyStateToUI(){
   segTog.classList.toggle("on", state.segEnabled);
 
   // condiciones
-  $("c_temp").value=state.cond.temp;
-  $("c_hum").value=state.cond.hum;
+  $("c_temp").value=state.cond.temp==null?"":state.cond.temp;
+  $("c_hum").value=state.cond.hum==null?"":state.cond.hum;
   $("c_cielo").value=state.cond.cielo;
   $("c_viento").value=state.cond.viento;
   $("c_sol").value=state.cond.sol;
   $("c_exp").value=state.cond.exp;
   $("c_grupo").value=state.cond.grupo;
   $("c_strategy").value=state.cond.strategy;
-  $("c_stops").value=state.cond.stops;
+  $("c_stops").value=state.cond.stops||"";
 
   renderRefs(); renderSegments();
   bindTogglesOnce(document);
@@ -2323,7 +2398,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"1.0", fecha:"21-07-2026" };
+  var VERSION = { n:"2.0", fecha:"07-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();

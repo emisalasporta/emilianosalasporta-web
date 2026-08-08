@@ -8,6 +8,9 @@
   "scripts": {
     "dev": "astro dev",
     "check-offline": "node scripts/check-offline.mjs",
+    "test": "node scripts/test-calculadora-trail.mjs && node scripts/validar-calculadora-trail.mjs",
+    "test-motor": "node scripts/test-calculadora-trail.mjs",
+    "test-calibracion": "node scripts/validar-calculadora-trail.mjs",
     "prebuild": "node scripts/check-offline.mjs",
     "build": "astro build",
     "preview": "astro preview",
