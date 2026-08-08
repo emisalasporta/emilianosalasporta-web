@@ -261,6 +261,55 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
   .stepper{opacity:.85}
   .stp{width:32px;height:32px}
 }
+
+/* ---- Todo lo que se toca con el dedo ----
+   Los campos van a 16px en el celular a propósito: por debajo de 16, iOS hace
+   zoom solo al tocar un input y después te deja la página corrida. Es el umbral
+   exacto de Safari, no un gusto de tamaño. Y las pestañas achican para que
+   entren más en pantalla. Mismo criterio que en trail y calle. */
+@media(max-width:720px){
+  .field input[type=text],.field input[type=number],.field input[type=date],.field select{
+    font-size:16px;padding:7px 0;
+  }
+  .tabs{gap:2px;padding:5px}
+  .tab{min-width:auto;flex:1 0 auto;padding:12px 11px;font-size:12px;gap:0}
+  .tab svg{display:none}
+
+  /* ---- La tabla de ritmos en el celular ----
+     Son cinco columnas y 520 px: en un teléfono se veían DOS, y la que quedaba
+     afuera era «% VAM · zona», que es justo la que dice en qué zona cae cada
+     distancia y la razón de ser de la tabla. Nadie iba a scrollear para
+     encontrarla. Acá cada fila pasa a ser una ficha encabezada por la distancia,
+     con el resto rotulado debajo. El rótulo sale del `data-label` de cada celda:
+     si agregás una columna, acordate de ponérselo. Es lo mismo que se hizo con
+     la tabla de segmentos de la calculadora de trail. */
+  table.tabla.tabla-ritmos,table.tabla.tabla-ritmos tbody,table.tabla.tabla-ritmos tr,table.tablatable.tabla.tabla-ritmos td{display:block;width:auto;min-width:0}
+  table.tabla.tabla-ritmos thead,table.tabla.tabla-ritmos colgroup{display:none}
+  table.tabla.tabla-ritmos tr{
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    background:var(--bg-3);padding:10px 12px;margin-bottom:10px;
+  }
+  table.tabla.tabla-ritmos tr:last-child{margin-bottom:0}
+  .tabla-ritmos td{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:5px 0;border:none;text-align:right;
+  }
+  table.tabla.tabla-ritmos td::before{
+    content:attr(data-label);flex:0 0 auto;text-align:left;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.3px;
+    text-transform:uppercase;color:var(--txt-3);font-weight:600;
+  }
+  /* La distancia hace de título de la ficha. */
+  table.tabla.tabla-ritmos td:first-child{
+    display:block;text-align:left;font-weight:700;font-size:15px;
+    padding:0 0 6px;margin-bottom:4px;border-bottom:1px solid var(--border);
+  }
+  table.tabla.tabla-ritmos td:first-child::before{content:none}
+  table.tabla.tabla-ritmos .rango{display:block;text-align:right}
+  /* Una fila de "no hay datos" ocupa la ficha entera, sin rótulo. */
+  table.tabla.tabla-ritmos td[colspan]{display:block;text-align:center}
+  table.tabla.tabla-ritmos td[colspan]::before{content:none}
+}
 .field .unit{font-family:var(--font-mono);font-size:11px;color:var(--txt-4);font-weight:500}
 .field-hint{font-size:11px;color:var(--txt-4);margin-top:6px;line-height:1.45}
 
@@ -484,13 +533,12 @@ table.tabla tr:last-child td{border-bottom:none}
 table.tabla tr.destacada td{background:rgba(47,184,255,.06)}
 table.tabla.tabla-ritmos{table-layout:fixed}
 table.tabla.tabla-ritmos th,table.tabla.tabla-ritmos td{white-space:normal}
-/* En pantalla angosta el reparto por porcentaje aprieta los numeros hasta
-   recortarlos. Ahi conviene soltar el ancho fijo y dejar que la tabla scrollee
-   adentro de su caja, que para eso .tabla-wrap tiene overflow-x. */
-@media(max-width:620px){
-  table.tabla.tabla-ritmos{table-layout:auto;min-width:520px}
-  table.tabla.tabla-ritmos th,table.tabla.tabla-ritmos td{white-space:nowrap;padding-left:10px;padding-right:10px}
-}
+/* Antes acá había un `min-width:520px` para pantalla angosta: se soltaba el
+   ancho fijo y la tabla scrolleaba dentro de .tabla-wrap. Resolvía que los
+   números no se recortaran, pero traía algo peor: en un teléfono se veían DOS
+   de las cinco columnas, y la que quedaba afuera era «% VAM · zona», que es la
+   razón de ser de la tabla. Nadie iba a scrollear para encontrarla.
+   Lo reemplaza el bloque de fichas de abajo (ver el @media de 720). */
 table.tabla td .rango{
   display:block;margin-top:3px;
   font-family:var(--font-mono);font-size:10.5px;font-weight:400;
@@ -2372,6 +2420,12 @@ details.mas .mas-body p:last-child{margin-bottom:0}
     <summary>Qué cambió en esta versión</summary>
     <div class="mas-body">
       <p>
+        <b>v2.1 · 07-08-2026.</b> Arreglos para usarla en el <b>celular</b>. Los campos ahora se
+        escriben sin que el teléfono haga zoom solo cada vez que tocás uno (pasaba en iPhone con
+        cualquier campo de menos de 16 px, y después te dejaba la página corrida), y las pestañas
+        de arriba achicaron para que entren más en pantalla. Los números y las zonas no cambiaron.
+      </p>
+      <p>
         <b>v2.0 · 28-07-2026.</b> Se corrigió la <b>escala de esfuerzo 0-10</b> de las zonas, que no
         coincidía ni con lo medido ni con la infografía propia. Queda 1-2 · 2-4 · 4-6 · 6-8 · 8-10:
         el primer umbral se percibe alrededor de 4 y el segundo alrededor de 6, y los bordes se
@@ -2463,7 +2517,7 @@ const $ = (id) => document.getElementById(id);
    descargado mostraba siempre la fecha del día en que lo abrías y parecía
    recién actualizado para siempre. Al tocar la calculadora, subí esto y sumá
    una línea en el desplegable "Qué cambió". */
-const VERSION = { n:"2.0", fecha:"28-07-2026" };
+const VERSION = { n:"2.1", fecha:"07-08-2026" };
 
 // ============================================================
 // 1 · LA CURVA DE RESISTENCIA
@@ -3409,11 +3463,11 @@ function pintarRitmos(){
     const rango = (v)=>b ? [v*(1-b[0]), v*(1+b[1])] : null;
     const rRit = rango(segKm), rTie = rango(seg);
     return `<tr class="${d.destacada ? "destacada" : ""}">
-      <td>${d.n}</td>
-      <td class="hi">${fmtRitmo(segKm)}${rRit ? `<span class="rango">${fmtRitmo(rRit[0])} a ${fmtRitmo(rRit[1])}</span>` : ""}</td>
-      <td>${fmtTiempo(seg)}${rTie ? `<span class="rango">${fmtTiempo(rTie[0])} a ${fmtTiempo(rTie[1])}</span>` : ""}</td>
-      <td>${fmt1(r.kmh)}</td>
-      <td>${fmt1(r.pct)} %${zEtq(r.pct)}</td>
+      <td data-label="Distancia">${d.n}</td>
+      <td class="hi" data-label="Ritmo · min/km">${fmtRitmo(segKm)}${rRit ? `<span class="rango">${fmtRitmo(rRit[0])} a ${fmtRitmo(rRit[1])}</span>` : ""}</td>
+      <td data-label="Tiempo">${fmtTiempo(seg)}${rTie ? `<span class="rango">${fmtTiempo(rTie[0])} a ${fmtTiempo(rTie[1])}</span>` : ""}</td>
+      <td data-label="km/h">${fmt1(r.kmh)}</td>
+      <td data-label="% VAM · zona">${fmt1(r.pct)} %${zEtq(r.pct)}</td>
     </tr>`;
   }).join("");
 

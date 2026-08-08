@@ -297,6 +297,65 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 }
 .seg-row-del:hover{color:var(--red);background:rgba(47,184,255,.08)}
 
+/* ---- La tabla de segmentos en el CELULAR ----
+   Nueve columnas son 721 px. En un teléfono de 375 el contenedor scrollea (eso
+   estaba bien), pero veías TRES columnas y, al correrte a la derecha para cargar
+   la superficie, perdías de vista en qué tramo estabas. Así que en pantalla
+   angosta la tabla deja de ser tabla: cada fila se convierte en una ficha con
+   los rótulos al costado. El rótulo sale del `data-label` de cada celda, que lo
+   escribe renderSegments(). Si agregás una columna, acordate del data-label o el
+   campo queda sin nombre en el celular. */
+@media(max-width:720px){
+  .seg-table-wrap{overflow-x:visible;border:none;background:transparent}
+  .seg-table,.seg-table tbody,.seg-table tr,.seg-table td{display:block;width:100%}
+  .seg-table thead{display:none}
+  .seg-table tr{
+    background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:8px 12px 10px;margin-bottom:10px;
+  }
+  .seg-table tr:last-child{margin-bottom:0}
+  .seg-table td{
+    display:flex;align-items:center;gap:10px;
+    padding:6px 0;border-bottom:none;white-space:normal;text-align:left;
+  }
+  .seg-table td::before{
+    content:attr(data-label);flex:0 0 40%;
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.3px;
+    text-transform:uppercase;color:var(--txt-3);
+  }
+  .seg-table td input,.seg-table td select{flex:1 1 auto;min-width:0}
+  .seg-table input[type=number]{text-align:left}
+  .seg-table .seg-name{min-width:0}
+  /* La ✕ va sola, abajo a la derecha de la ficha y sin rótulo. */
+  .seg-table td:last-child{justify-content:flex-end;padding:2px 0 0}
+  .seg-table td:last-child::before{content:none}
+  .seg-row-del{font-size:20px;padding:6px 10px}
+}
+
+/* ---- Todo lo que se toca con el dedo ----
+   Los campos van a 16px en el celular a propósito: por debajo de 16, iOS hace
+   zoom solo al tocar un input y después te deja la página corrida. Y los
+   controles crecen porque 18 px de alto es un blanco difícil con el pulgar. */
+@media(max-width:720px){
+  .field input[type=text],.field input[type=number],.field input[type=time],.field select{
+    font-size:16px;padding:7px 0;
+  }
+  .seg-table input,.seg-table select{font-size:16px;padding:9px 10px}
+  .toggle{width:46px;height:26px}
+  .toggle::after{width:18px;height:18px;top:3px;left:3px}
+  .toggle.on::after{left:24px}
+  /* El interruptor SE VE de 46x26 pero se TOCA de 62x48. La zona invisible de
+     ::before es lo que hace la diferencia entre errarle con el pulgar y no.
+     No se agranda el dibujo porque a mayor tamaño el switch queda tosco. */
+  .toggle::before{content:"";position:absolute;top:-11px;bottom:-11px;left:-8px;right:-8px}
+  .btn{padding:13px 18px}
+  .btn-sm{padding:11px 14px}
+  /* Las pestañas: más chicas y sin ícono, así entran más en pantalla. */
+  .tabs{gap:2px;padding:5px}
+  .tab{min-width:auto;flex:1 0 auto;padding:12px 11px;font-size:12px;gap:0}
+  .tab svg{display:none}
+}
+
 /* ========== RESULT ========== */
 /* El acento es SEÑAL, no relleno: el panel es superficie oscura con borde
    neón y el TIEMPO en acento. Así el dato clave es lo único que brilla y
@@ -434,10 +493,24 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
   z-index:9999;text-align:left;font-weight:400;text-transform:none;letter-spacing:0;
   box-shadow:var(--shadow);pointer-events:none;white-space:normal;
 }
+/* `.abierto` lo pone el script del final al TOCAR el "?".
+   En un teléfono no existe "pasar el mouse", así que con solo :hover las 19
+   explicaciones de esta calculadora eran inalcanzables: el dedo no puede
+   hacer hover. Ahora se abren con un toque y se cierran tocando afuera. */
 .tt:hover .tt-body,
-.tt:focus-within .tt-body{
+.tt:focus-within .tt-body,
+.tt.abierto .tt-body{
   opacity:1;visibility:visible;
   transition:opacity var(--trans), visibility 0s linear 0s;
+}
+
+/* En pantalla angosta el globito deja de colgar centrado del "?" (que está
+   pegado al borde derecho, así que se salía) y pasa a ocupar el ancho del
+   campo. Para eso `.tt` se vuelve `static` y el ancla pasa a ser el `.field`,
+   que ya es `position:relative`. */
+@media(max-width:720px){
+  .tt{position:static}
+  .tt-body{left:12px;right:12px;transform:none;min-width:0;max-width:none;font-size:13px}
 }
 
 /* Segmentos actions */
@@ -1375,12 +1448,12 @@ function renderSegments(){
   state.segments.forEach((s,i)=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${s.name.replace(/"/g,'&quot;')}"></td>
-      <td><input type="number" step="0.1" min="0" data-k="dist" data-i="${i}" value="${s.dist||""}"></td>
-      <td><input type="number" step="5" min="0" data-k="dplus" data-i="${i}" value="${s.dplus||""}"></td>
-      <td><input type="number" step="5" min="0" data-k="dneg" data-i="${i}" value="${s.dneg||""}"></td>
-      <td><input type="number" step="50" min="0" data-k="alt" data-i="${i}" value="${s.alt==null?"":s.alt}" placeholder="—"></td>
-      <td>
+      <td data-label="Tramo"><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${s.name.replace(/"/g,'&quot;')}"></td>
+      <td data-label="Dist (km)"><input type="number" step="0.1" min="0" data-k="dist" data-i="${i}" value="${s.dist||""}"></td>
+      <td data-label="D+ (m)"><input type="number" step="5" min="0" data-k="dplus" data-i="${i}" value="${s.dplus||""}"></td>
+      <td data-label="D− (m)"><input type="number" step="5" min="0" data-k="dneg" data-i="${i}" value="${s.dneg||""}"></td>
+      <td data-label="Alt media (m)"><input type="number" step="50" min="0" data-k="alt" data-i="${i}" value="${s.alt==null?"":s.alt}" placeholder="—"></td>
+      <td data-label="Tecnicidad">
         <select data-k="tec" data-i="${i}">
           <option value="">—</option>
           <option value="1" ${s.tec=="1"?"selected":""}>1 – Muy corrible</option>
@@ -1390,7 +1463,7 @@ function renderSegments(){
           <option value="5" ${s.tec=="5"?"selected":""}>5 – Muy técnico</option>
         </select>
       </td>
-      <td>
+      <td data-label="Superficie">
         <select data-k="sup" data-i="${i}">
           <option value="">—</option>
           <option value="tierra" ${s.sup=="tierra"?"selected":""}>Tierra compacta</option>
@@ -1402,8 +1475,8 @@ function renderSegments(){
           <option value="nieve" ${s.sup=="nieve"?"selected":""}>Nieve / hielo</option>
         </select>
       </td>
-      <td><input type="number" step="1" min="0" data-k="pc" data-i="${i}" value="${s.pc||0}"></td>
-      <td><button class="seg-row-del" data-del="${i}" title="Eliminar">✕</button></td>
+      <td data-label="PC (min)"><input type="number" step="1" min="0" data-k="pc" data-i="${i}" value="${s.pc||0}"></td>
+      <td><button class="seg-row-del" data-del="${i}" title="Eliminar este tramo">✕</button></td>
     `;
     tb.appendChild(tr);
   });
@@ -2186,7 +2259,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"4.0", fecha:"07-08-2026" };
+  var VERSION = { n:"4.1", fecha:"07-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();
@@ -2232,6 +2305,34 @@ init();
   window.addEventListener('message', function (e) {
     if (e.data && e.data.tipo === 'pedir-alto') enviar(true);
   });
+})();
+</script>
+
+<script>
+/* Los globitos de ayuda, en el celular.
+   Solo se abrían con :hover, y en una pantalla táctil el dedo no hace hover:
+   las 19 explicaciones de esta calculadora eran invisibles en un teléfono.
+   Va delegado y en fase de captura para que tocar el "?" no toque tambien el
+   interruptor que está al lado. Se cierra tocando en cualquier otro lado. */
+(function () {
+  function cerrar() {
+    var a = document.querySelector('.tt.abierto');
+    if (a) a.classList.remove('abierto');
+  }
+  document.addEventListener('click', function (e) {
+    var info = e.target.closest ? e.target.closest('.tt .info') : null;
+    if (!info) { cerrar(); return; }
+    var tt = info.closest('.tt');
+    if (!tt) { cerrar(); return; }
+    e.preventDefault();
+    e.stopPropagation();
+    var yaEstaba = tt.classList.contains('abierto');
+    cerrar();
+    if (!yaEstaba) tt.classList.add('abierto');
+  }, true);
+  /* Y que se pueda llegar con el teclado, que además es lo que hace que
+     :focus-within sirva de algo. */
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrar(); });
 })();
 </script>
 </body>
