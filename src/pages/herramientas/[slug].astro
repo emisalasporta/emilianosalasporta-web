@@ -19,6 +19,18 @@ const bytes = readFileSync(tool.file);
 const pesoKB = Math.round(bytes.byteLength / 1024);
 const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 8);
 
+/* La versión sale del propio archivo, del mismo `VERSION` que la calculadora
+   escribe en su pie. Existe porque estas herramientas SE DESCARGAN: el sello
+   del pie le dice al que tiene una copia guardada cuál tiene, pero sin esto no
+   había contra qué compararlo — tenía que bajarla de nuevo para enterarse de si
+   había cambiado. Se lee acá en el build y no se duplica a mano en ningún lado,
+   así que no se puede desincronizar. Si algún día el patrón no coincide, la
+   línea simplemente no se muestra: nunca hace fallar el build. */
+const mVer = bytes
+  .toString('utf8')
+  .match(/(?:var|const|let)\s+VERSION\s*=\s*\{\s*n\s*:\s*["']([^"']+)["']\s*,\s*fecha\s*:\s*["']([^"']+)["']/);
+const version = mVer ? { n: mVer[1], fecha: mVer[2] } : null;
+
 /* El hash va en la URL del iframe, no sólo en la de descarga: así el servidor
    puede cachear la calculadora por mucho tiempo (son 100-200 KB) y aún así,
    cuando subimos una versión nueva, cambia la URL y el navegador la baja sola.
@@ -59,6 +71,12 @@ const descripcionHtml = tool.description
           </a>
           <span class="muted tool-note">
             Es un solo archivo: bajalo, abrilo con cualquier navegador y funciona igual, sin conexión.
+            {version && (
+              <>
+                {' '}Ésta es la <b>versión {version.n}</b>, del {version.fecha}. Si ya tenías una
+                copia, mirá abajo de todo qué versión dice: si es otra, bajala de nuevo.
+              </>
+            )}
           </span>
         </p>
       </div>
