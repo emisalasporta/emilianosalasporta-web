@@ -227,6 +227,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.55);cursor:pointer}
 input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opacity(1)}
 .field .unit{font-size:12px;color:var(--txt-4);font-weight:500;margin-left:4px}
+/* Nota VISIBLE bajo un campo. Existe para el tipo de recorrido: es el control con
+   más palanca de la calculadora (11 % entre los extremos) y estaba explicado sólo
+   dentro del globito, que casi nadie abre. Lo aprendimos caro: ver AGENTS.md,
+   "Sierre-Zinal 2026". */
+.field-nota{margin-top:8px;font-size:12px;line-height:1.5;color:var(--txt-4)}
+.field-nota b{color:var(--txt-3);font-weight:600}
 
 /* Toggle switch */
 .toggle{
@@ -510,7 +516,11 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
    que ya es `position:relative`. */
 @media(max-width:720px){
   .tt{position:static}
-  .tt-body{left:12px;right:12px;transform:none;min-width:0;max-width:none;font-size:13px}
+  /* Y cuelga hacia ABAJO, no hacia arriba. Colgando hacia arriba, un globito
+     largo se sale por el techo de la pantalla si el campo está en la mitad
+     superior; hacia abajo siempre hay formulario debajo y la página scrollea. */
+  .tt-body{left:12px;right:12px;transform:none;min-width:0;max-width:none;font-size:13px;
+           bottom:auto;top:calc(100% + 8px)}
 }
 
 /* Segmentos actions */
@@ -810,7 +820,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="r_tipo">
           <div class="field-head">
             <span class="field-label">Tipo de recorrido
-              <span class="tt"><span class="info">?</span><span class="tt-body">Define el "costo" de cada 100 m de desnivel. <b>1-Muy corrible</b>: camino ancho, senderos fluidos (100 m D+ ≈ 0,69 km de llano). <b>3-Mixto</b> (default): típico trail (0,80 km). <b>5-Alpino</b>: rocoso, pasamanos, escalada suave (0,91 km). El valor del medio está calibrado contra 208 predicciones de carreras reales; el paso entre un tipo y el siguiente es criterio, no medición.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Cuánto te cuesta cada 100 m de subida, en kilómetros de llano. Lo que pesa es la <b>diferencia</b> con tus carreras de referencia: si son parecidas, dejá todo en 3 y no cambia nada.<br><br><b>1</b> (0,69) camino ancho y firme, se corre casi todo<br><b>2</b> (0,75) sendero bueno con algún tramo roto<br><b>3</b> (0,80) trail típico: se corre y se camina<br><b>4</b> (0,86) piedra suelta, raíces, barro<br><b>5</b> (0,91) roca, cadenas, trepada<br><br>El 0,80 del medio está calibrado contra 208 predicciones reales; el paso de un nivel al siguiente es criterio, no medición.</span></span>
             </span>
             <span class="toggle on" data-toggle="r_tipo"></span>
           </div>
@@ -821,6 +831,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
             <option value="4">4 – Técnico dominante (caminar estratégico)</option>
             <option value="5">5 – Muy técnico / alpino</option>
           </select>
+          <div class="field-nota">Es el control que <b>más mueve el pronóstico</b>: entre 1 y 5 hay un 11 % de diferencia, 26 minutos en una carrera de cuatro horas. Sierre-Zinal es un 1; Zegama, un 4.</div>
         </div>
 
         <div class="field" data-optional="r_dneg">
@@ -1335,7 +1346,7 @@ function renderRefs(){
         <div class="field ${r.opts.tipo?"":"disabled"}" data-opt="tipo" data-i="${i}">
           <div class="field-head">
             <span class="field-label">Tipo de recorrido
-              <span class="tt"><span class="info">?</span><span class="tt-body">Qué tan técnico fue el circuito de esa carrera. Es clave para que el sistema entienda a qué ritmo corriste <b>realmente</b>: 2h en 21 km con 1500 m D+ alpino valen más que los mismos 21 km con 300 m D+ en camino.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Qué tan técnico fue el circuito de <b>esta</b> carrera: 1 camino ancho, 3 trail típico, 5 roca y trepada. Lo que importa es la <b>diferencia</b> con la carrera que querés estimar. Si las dos son parecidas, dejá las dos en 3. Si acá corriste sendero técnico y la nueva es de camino ancho, decilo: es el dato que más cambia el pronóstico, y no ponerlo hace que la calculadora te dé un tiempo más lento del que vas a hacer.</span></span>
             </span>
             <span class="toggle ${r.opts.tipo?"on":""}" data-toptionref="tipo" data-i="${i}"></span>
           </div>
@@ -2092,6 +2103,21 @@ function recompute(scrollToTop){
   if(state.cond.opts.hum && state.cond.hum == null) mudos.push("La <b>humedad</b> está activada pero el campo está vacío.");
   if(state.race.opts.dneg && (state.race.dneg == null || state.race.dneg === "")) mudos.push("El <b>desnivel negativo</b> está activado pero está vacío: se asume que baja lo mismo que sube.");
   if(state.race.opts.alt && !(state.race.alt > 0)) mudos.push("La <b>altitud media</b> está activada pero está vacía.");
+  /* Altitud cargada de un solo lado. Es un sesgo silencioso y SIEMPRE en la misma
+     dirección: si declarás que la carrera nueva es en altura pero no declarás la
+     altura de tus referencias, la calculadora te penaliza por el oxígeno sin
+     descontarte el que ya estabas pagando. Medido: +1,4 % hacia lento. */
+  if(state.refMode==="race" && state.race.opts.alt && state.race.alt>1200){
+    const sinAlt = state.refs.filter(r=>{ const t=parseTime(r.time), d=+r.dist||0;
+      return t>0 && d>0 && !(r.opts.alt && r.alt>0); }).length;
+    if(sinAlt>0) mudos.push(`Declaraste que esta carrera es en altura (${state.race.alt} m) pero ${sinAlt===1?"una de tus referencias no tiene":`${sinAlt} de tus referencias no tienen`} altitud cargada. La calculadora te cobra la altura de esta carrera sin descontarte la de ${sinAlt===1?"aquélla":"aquéllas"}, así que el tiempo sale <b>más lento de lo que corresponde</b>. Si esas carreras también fueron en altura, cargásela${sinAlt===1?"":"s"}.`);
+  }
+  /* Y el caso inverso: referencias en altura y carrera nueva al nivel del mar. */
+  if(state.refMode==="race" && !(state.race.opts.alt && state.race.alt>0)){
+    const enAltura = state.refs.filter(r=>{ const t=parseTime(r.time), d=+r.dist||0;
+      return t>0 && d>0 && r.opts.alt && r.alt>1200; }).length;
+    if(enAltura>0) mudos.push(`${enAltura===1?"Una de tus referencias fue":`${enAltura} de tus referencias fueron`} en altura y esta carrera no tiene altitud cargada. Si también es en altura, cargala: si no, la calculadora asume que corrés al nivel del mar y te da un tiempo <b>optimista</b>.`);
+  }
   if(state.segments.length && !state.segEnabled) mudos.push(`Tenés <b>${state.segments.length} segmento${state.segments.length===1?"":"s"}</b> cargado${state.segments.length===1?"":"s"} pero «usar segmentos» está apagado: no se están usando.`);
   const sumaSeg = state.segments.reduce((a,s)=>a+(+s.dist||0),0);
   if(r.hasSegs && sumaSeg > state.race.dist + 0.1)
@@ -2259,7 +2285,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"4.1", fecha:"07-08-2026" };
+  var VERSION = { n:"4.2", fecha:"08-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();

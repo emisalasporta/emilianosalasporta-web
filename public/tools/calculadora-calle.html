@@ -538,7 +538,10 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
    `static` y el ancla es el `.field`, que ya es `position:relative`. */
 @media(max-width:720px){
   .tt{position:static}
-  .tt-body{left:12px;right:12px;transform:none;min-width:0;max-width:none;font-size:13px}
+  /* Cuelga hacia ABAJO, no hacia arriba: colgando hacia arriba un globito largo
+     se sale por el techo de la pantalla. Igual que en la de trail. */
+  .tt-body{left:12px;right:12px;transform:none;min-width:0;max-width:none;font-size:13px;
+           bottom:auto;top:calc(100% + 8px)}
 }
 
 /* Segmentos actions */
@@ -2468,7 +2471,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"2.1", fecha:"07-08-2026" };
+  var VERSION = { n:"2.2", fecha:"08-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();
