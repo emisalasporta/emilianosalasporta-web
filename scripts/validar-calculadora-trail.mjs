@@ -61,7 +61,7 @@ vm.createContext(ctx);
 
 const API = `;globalThis.__api = { state, compute, kmEff, referenceEffortPace, climateMultiplier,
   globalSlopeFactor, slopeFactor, lookupStep, parseTime, fmtTime, fmtPace,
-  T_ALTITUD, T_PENDIENTE, T_RECORRIDO, T_TECNICIDAD, EXP_RIEGEL, K_FATIGA };`;
+  T_ALTITUD, T_PENDIENTE, T_RECORRIDO, EXP_RIEGEL, K_FATIGA };`;
 
 try {
   vm.runInContext(motor + API, ctx);

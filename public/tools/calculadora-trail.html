@@ -178,7 +178,20 @@ body{
 /* Cuando un field está deshabilitado atenuamos el valor pero mantenemos
    el toggle y los tooltips CLICKEABLES. Si bloqueamos todo el field,
    no se puede volver a habilitar y los hovers no funcionan. */
-.field.disabled{opacity:.6}
+/* El selector "Carrera previa / Ritmo de ruta" no marcaba cual estaba activo:
+   los dos botones se veian exactamente iguales y el que entraba no tenia forma
+   de saber en que modo estaba. La de ruta ya tenia esta regla. */
+.mode-opt.active{border-color:var(--red);color:var(--red);background:rgba(47,184,255,.10)}
+.mode-opt.active::before{content:"✓";margin-right:6px;font-weight:700}
+
+/* Se atenúan las PIEZAS, no el campo entero. Con opacity en el contenedor, el
+   globito de ayuda heredaba la transparencia y se leía el formulario a través
+   del texto, y el rótulo quedaba en 2,85:1 de contraste. Doce de los catorce
+   campos opcionales arrancan apagados, así que era casi toda la pantalla. */
+.field.disabled > input,
+.field.disabled > select,
+.field.disabled > .unit{opacity:.55}
+.field.disabled .field-label{opacity:.85}
 .field.disabled > input,
 .field.disabled > select,
 .field.disabled .field-label{pointer-events:none}
@@ -195,6 +208,13 @@ body{
   font-size:10px;cursor:help;flex-shrink:0;
 }
 .field-label .info:hover{background:var(--red);color:var(--on-accent)}
+/* El dibujo sigue midiendo 15 px (mas grande queda tosco al lado del rotulo)
+   pero el area que responde al dedo pasa a 44, que es el minimo con el que se
+   le acierta sin mirar. Mismo truco que el de los interruptores. */
+.field-label .info::before{content:"";position:absolute;left:50%;top:50%;
+  width:44px;height:44px;transform:translate(-50%,-50%)}
+.field-label .info{position:relative}
+.field-label .info:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 .field input[type=text],.field input[type=number],.field input[type=time],.field select{
   width:100%;background:transparent;border:none;outline:none;
   color:var(--txt-1);font-family:var(--font-mono);font-size:15px;font-weight:600;
@@ -297,6 +317,12 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 .seg-table input:focus,.seg-table select:focus{border-color:var(--red)}
 .seg-table input[type=number]{text-align:right}
 .seg-table .seg-name{min-width:120px}
+/* Los dos desplegables piden su ancho: con la tabla a width:100 % las columnas se
+   achican hasta cortar el texto de la opcion elegida, y a 1280 px "4 - Tecnico"
+   se veia partido, y a 768 px se cortaba "Nieve / hielo". 158 px es lo que pide
+   la opcion mas larga con su padding y su flechita. El contenedor ya scrollea de
+   costado si no entran. */
+.seg-table select{min-width:158px}
 .seg-row-del{
   background:transparent;border:none;color:var(--txt-4);cursor:pointer;
   font-size:16px;line-height:1;padding:4px 8px;border-radius:6px;transition:all var(--trans);
@@ -325,7 +351,10 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
     padding:6px 0;border-bottom:none;white-space:normal;text-align:left;
   }
   .seg-table td::before{
-    content:attr(data-label);flex:0 0 40%;
+    /* 36 % y no 40: el rotulo mas largo ("ALT MEDIA (M)") pide 90 px y con el 40 %
+       al desplegable le quedaban 118 px utiles, siete menos de los que necesita
+       "Nieve / hielo". Medido a 375 px. */
+    content:attr(data-label);flex:0 0 36%;
     font-family:var(--font-mono);font-size:11px;letter-spacing:.3px;
     text-transform:uppercase;color:var(--txt-3);
   }
@@ -336,6 +365,17 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
   .seg-table td:last-child{justify-content:flex-end;padding:2px 0 0}
   .seg-table td:last-child::before{content:none}
   .seg-row-del{font-size:20px;padding:6px 10px}
+}
+
+/* En pantallas de 320 px el rotulo al costado se come el 36 % y al desplegable le
+   quedan 94 px utiles: "Nieve / hielo" y "4 - Tecnico" salian cortados. En 320 y
+   en 360 (que es medio parque de Android) el rotulo pasa ARRIBA del control y el
+   control usa el ancho entero. A 375 entra al costado y se deja asi, porque apilar
+   suma 20 px por campo y son ocho campos por ficha. */
+@media(max-width:374px){
+  .seg-table td{flex-direction:column;align-items:stretch;gap:4px}
+  .seg-table td::before{flex:none;width:auto}
+  .seg-table td:last-child{flex-direction:row}
 }
 
 /* ---- Todo lo que se toca con el dedo ----
@@ -383,7 +423,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 
 /* Los ejemplos van en gris tenue y en cursiva: tienen que leerse como "acá va
    un número tuyo", nunca como un dato ya cargado. */
-input::placeholder{color:var(--txt-4);opacity:.55;font-style:italic;font-weight:400}
+input::placeholder{color:var(--txt-4);opacity:.85;font-style:italic;font-weight:400}
 input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
 
 /* ---- La banda de incertidumbre ----
@@ -396,7 +436,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
   border:1px solid var(--border-2)}
 .rb-inner{position:absolute;top:0;bottom:0;left:25%;width:50%;
   background:linear-gradient(90deg,rgba(47,184,255,.35),rgba(47,184,255,.55),rgba(47,184,255,.35))}
-.rb-mark{position:absolute;top:-3px;bottom:-3px;left:calc(50% - 1px);width:2px;
+.rb-mark{position:absolute;top:-3px;height:18px;left:calc(50% - 1px);width:2px;
   background:var(--red);box-shadow:0 0 8px rgba(47,184,255,.8);border-radius:2px}
 .rb-ends{display:flex;justify-content:space-between;margin-top:7px;
   font-family:var(--font-mono);font-size:12px;color:var(--txt-3);font-variant-numeric:tabular-nums}
@@ -407,9 +447,28 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
 .rb-cta b{color:var(--red)}
 @media(max-width:520px){ .r-banda{max-width:100%} .rb-txt{font-size:12px} }
 
+/* ---- El desglose del tiempo ----
+   Dos columnas: qué es y cuánto pesa. Los renglones intermedios van en color
+   sólo por el signo (suma tiempo o lo descuenta); el primero y el último, que
+   son tiempos y no diferencias, van en el tamaño grande. */
+.dz-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:baseline;
+  padding:10px 0;border-bottom:1px solid var(--border)}
+.dz-row:last-child{border-bottom:none}
+.dz-n{font-size:13px;color:var(--txt-2);line-height:1.45}
+.dz-s{display:block;font-size:11.5px;color:var(--txt-4);margin-top:3px;line-height:1.45}
+.dz-v{font-family:var(--font-mono);font-size:14px;font-variant-numeric:tabular-nums;
+  color:var(--txt-2);white-space:nowrap;font-weight:600}
+.dz-v.mas{color:var(--yellow)}
+.dz-v.menos{color:var(--green)}
+.dz-v.cero{color:var(--txt-4);font-weight:500}
+.dz-base .dz-n,.dz-total .dz-n{font-weight:700;color:var(--txt-1)}
+.dz-base .dz-v,.dz-total .dz-v{font-size:17px;font-weight:700;color:var(--txt-1)}
+.dz-total{border-top:1px solid var(--border-2);border-bottom:none;margin-top:6px;padding-top:13px}
+@media(max-width:520px){ .dz-n{font-size:12.5px} .dz-v{font-size:13px} }
+
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
 .kpi{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px}
-.kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px}
+.kpi .k-l{font-family:var(--font-mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--txt-4);margin-bottom:6px;min-height:1.55em}
 .kpi .k-v{font-family:var(--font-mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
 .kpi .k-s{font-size:12px;color:var(--txt-3);margin-top:2px}
 .kpi .k-v small{font-size:13px;color:var(--txt-3);font-weight:500;margin-left:4px}
@@ -417,7 +476,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
 .divider{height:1px;background:var(--border);margin:14px 0}
 
 /* Bars */
-.bar-row{display:grid;grid-template-columns:150px 1fr 80px;gap:12px;align-items:center;font-size:13px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 92px;gap:12px;align-items:center;font-size:13px}
 .bar-row .bar-name{color:var(--txt-2);font-weight:600;overflow:hidden;text-overflow:ellipsis}
 .bar-row .bar-bg{height:26px;background:var(--bg-3);border-radius:6px;overflow:hidden;position:relative}
 .bar-row .bar-fill{
@@ -426,8 +485,13 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
   color:var(--on-accent);font-size:11px;font-weight:600;min-width:max-content;
   transition:width .5s cubic-bezier(.4,0,.2,1);
 }
-.bar-row .bar-val{font-family:var(--font-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--txt-2);font-weight:600}
-@media(max-width:600px){.bar-row{grid-template-columns:1fr;gap:4px}.bar-row .bar-val{text-align:left}}
+.bar-row .bar-val{font-family:var(--font-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--txt-1);font-weight:700;font-size:13px;line-height:1.25}
+/* Arriba el tiempo del tramo (lo que se tarda en hacerlo) y abajo, más chico, el
+   acumulado desde la largada. Antes solo estaba el acumulado. */
+.bar-row .bar-acc{display:block;font-weight:500;font-size:11.5px;color:var(--txt-4)}
+.bar-row.bar-extra .bar-name{color:var(--txt-4);font-weight:500;font-style:italic}
+.bar-row.bar-extra .bar-bg{background:transparent}
+@media(max-width:600px){.bar-row{grid-template-columns:1fr;gap:4px}.bar-row .bar-val{text-align:left}.bar-row .bar-acc{display:inline;margin-left:8px}}
 
 /* Notice */
 .notice{
@@ -489,6 +553,13 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
 
 /* Tooltip */
 .tt{position:relative;display:inline-block;cursor:help}
+/* El globito cuelga centrado del "?", asi que uno que este pegado al borde
+   derecho de la pantalla se sale y le agrega scroll horizontal a TODA la
+   pagina, aunque este cerrado (sigue ocupando lugar). Paso con el "?" de la
+   ultima tarjeta de KPI, que es la de mas a la derecha de la grilla: la pagina
+   quedaba 39 px mas ancha que la ventana. En las tarjetas el globito se ancla
+   al borde derecho y se abre hacia la izquierda. */
+.kpi .tt-body{left:auto;right:0;transform:none}
 .tt-body{
   position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
   background:var(--bg-1);border:1px solid var(--border-2);
@@ -506,6 +577,10 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
 .tt:hover .tt-body,
 .tt:focus-within .tt-body,
 .tt.abierto .tt-body{
+  /* Abierto TIENE que recibir el toque. Con pointer-events:none, tocar el texto
+     del globito accionaba el interruptor que quedaba tapado debajo y cambiaba el
+     pronostico. Ahora el toque cae en el globito y lo unico que hace es cerrarlo. */
+  pointer-events:auto;
   opacity:1;visibility:visible;
   transition:opacity var(--trans), visibility 0s linear 0s;
 }
@@ -627,6 +702,9 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
   .print-head .ph-txt{display:flex;flex-direction:column;gap:2px}
 
   /* --- 4. PROLIJIDAD EN PAPEL --- */
+  /* En papel el neon no existe: la marca del centro de la banda imprimia con
+     su resplandor y quedaba una mancha. */
+  .rb-mark{box-shadow:none!important}
   .card,.kpi,.result-hero,.notice,.bar-row,.seg-table tr{
     break-inside:avoid;page-break-inside:avoid;
   }
@@ -776,7 +854,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Agregar otra carrera de referencia
           </button>
-          <span class="hint">Si cargás más de una, promediamos con más peso a las recientes y parecidas.</span>
+          <span class="hint">Si cargás más de una, pesa más la que se parezca en tamaño de esfuerzo a la carrera que estimás. Cuantas más haya, más angosta es la banda del resultado.</span>
         </div>
       </div>
 
@@ -801,7 +879,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
         Datos de la carrera objetivo
       </h2>
-      <p class="card-sub">Cargá lo que sabés. La distancia y el desnivel positivo son obligatorios; todo lo demás es opcional y solo mejora la estimación.</p>
+      <p class="card-sub">La distancia y el desnivel positivo son obligatorios. Lo demás es opcional, pero el <b>tipo de recorrido</b> no es un detalle: es el control que más mueve el pronóstico de toda la calculadora.</p>
 
       <div class="grid grid-2">
         <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" id="r_name" placeholder="Mi próxima carrera"></div>
@@ -820,7 +898,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="r_tipo">
           <div class="field-head">
             <span class="field-label">Tipo de recorrido
-              <span class="tt"><span class="info">?</span><span class="tt-body">Cuánto te cuesta cada 100 m de subida, en kilómetros de llano. Lo que pesa es la <b>diferencia</b> con tus carreras de referencia: si son parecidas, dejá todo en 3 y no cambia nada.<br><br><b>1</b> (0,69) camino ancho y firme, se corre casi todo<br><b>2</b> (0,75) sendero bueno con algún tramo roto<br><b>3</b> (0,80) trail típico: se corre y se camina<br><b>4</b> (0,86) piedra suelta, raíces, barro<br><b>5</b> (0,91) roca, cadenas, trepada<br><br>El 0,80 del medio está calibrado contra 208 predicciones reales; el paso de un nivel al siguiente es criterio, no medición.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Cuánto te cuesta cada 100 m de subida, en kilómetros de llano. Lo que pesa es la <b>diferencia</b> con tus carreras de referencia: si son parecidas, dejá todo en 3 y no cambia nada.<br><br><b>1</b> (0,69) camino ancho y firme, se corre casi todo<br><b>2</b> (0,75) sendero bueno con algún tramo roto<br><b>3</b> (0,80) trail típico: se corre y se camina<br><b>4</b> (0,86) piedra suelta, raíces, barro<br><b>5</b> (0,91) roca, cadenas, trepada<br><br>El 0,80 del medio está calibrado contra 208 predicciones reales; el paso de un nivel al siguiente es criterio, no medición.<br><br><b>Ojo en modo «ritmo de ruta»</b>: ahí no hay carrera de referencia con la que comparar, así que este control pesa entero y mover un nivel cambia el pronóstico varios minutos.</span></span>
             </span>
             <span class="toggle on" data-toggle="r_tipo"></span>
           </div>
@@ -831,7 +909,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
             <option value="4">4 – Técnico dominante (caminar estratégico)</option>
             <option value="5">5 – Muy técnico / alpino</option>
           </select>
-          <div class="field-nota">Es el control que <b>más mueve el pronóstico</b>: entre 1 y 5 hay un 11 % de diferencia, 26 minutos en una carrera de cuatro horas. Sierre-Zinal es un 1; Zegama, un 4.</div>
+          <div class="field-nota">Es el control que <b>más mueve el pronóstico</b>: en una carrera de cuatro horas con bastante desnivel, ir del 1 al 5 son unos 25 minutos, y cuanto más trepa la carrera, más pesa. Sierre-Zinal es un 1; Zegama, un 4.</div>
         </div>
 
         <div class="field" data-optional="r_dneg">
@@ -857,7 +935,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="r_obj">
           <div class="field-head">
             <span class="field-label">Tiempo objetivo (comparar)
-              <span class="tt"><span class="info">?</span><span class="tt-body">Si tenés un tiempo objetivo en mente, lo comparamos con nuestra estimación.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Si hay un tiempo objetivo en mente, se compara contra la banda del resultado. <b>Escribilo completo</b>, en horas:minutos:segundos: «5:00» se lee como cinco minutos, no como cinco horas. Para cinco horas va <b>5:00:00</b>.</span></span>
             </span>
             <span class="toggle" data-toggle="r_obj"></span>
           </div>
@@ -874,13 +952,23 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         Segmentos (opcional)
       </h2>
-      <p class="card-sub">Si la organización te pasó los datos de cada tramo (o los podés estimar), cargalos acá para tener un pacing por puesto de control.
-        <b>Si no, dejá todo vacío</b> y usamos la carrera completa.</p>
+      <p class="card-sub">Si la organización pasó los datos de cada tramo (o se pueden estimar), cargalos acá para tener un pacing por puesto de control.
+        <b>Si no, dejá todo vacío</b> y se usa la carrera completa.</p>
+
+      <div class="notice">
+        <b>Qué hace cada columna con el pronóstico.</b>
+        <ul style="margin:8px 0 0 18px;line-height:1.7">
+          <li><b>Dist, D+ y D−</b> reparten el tiempo entre los tramos, y además son el <b>peso</b> con el que se promedian las tres columnas de arriba: el terreno se pondera por el D+ de cada tramo, y la superficie y la altitud por su km-esfuerzo. Si los tramos declaran cosas distintas entre sí, mover kilómetros o desnivel de uno a otro también cambia el total. Lo que falte para completar la carrera se carga a un tramo «Resto del circuito».</li>
+          <li><b>Terreno, Superficie y Alt media</b> sí cambian el tiempo total. Se leen contra la carrera de referencia, igual que el «tipo de recorrido» de la pestaña anterior: si un tramo no declara nada, hereda lo de la carrera y no mueve el pronóstico.<br><span style="color:var(--txt-4)">El terreno usa esa misma escala de 1 a 5, escrita corta para que entre en la tabla: <b>1</b> camino ancho, <b>2</b> sendero bueno, <b>3</b> trail típico, <b>4</b> piedra suelta y raíces, <b>5</b> roca y trepada.</span></li>
+          <li><b>PC</b> son los minutos parados en ese puesto: se suman al final y no los toca el clima.</li>
+        </ul>
+        Todo esto se ve renglón por renglón en <b>Resultado</b>, en «De dónde sale este tiempo».
+      </div>
 
       <div class="row" style="margin-bottom:12px;gap:14px">
-        <label class="row" style="gap:8px;font-size:13px;cursor:pointer">
-          <span class="toggle on" data-toggle="seg_enabled"></span>
-          <span>Usar segmentos para la estimación</span>
+        <label class="row" style="gap:8px;font-size:13px;cursor:pointer" id="seg-enabled-label">
+          <span class="toggle on" data-toggle="seg_enabled" tabindex="0" role="switch" aria-checked="true"></span>
+          <span>Usar los tramos para la estimación</span>
         </label>
       </div>
 
@@ -893,7 +981,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
               <th>D+ (m)</th>
               <th>D- (m)</th>
               <th>Alt media (m)</th>
-              <th>Tecnicidad</th>
+              <th>Terreno</th>
               <th>Superficie</th>
               <th>PC (min)</th>
               <th></th>
@@ -924,7 +1012,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
       <p class="card-sub">Ajustes que pueden afectar el ritmo. Activá sólo los que apliquen. Los valores se componen (multiplican) entre sí, por lo que reflejan mejor el efecto real que un único menú "clima".</p>
 
       <div class="notice">
-        <b>¿Cómo funciona?</b> Cada factor tiene un efecto cuantificado basado en estudios de fisiología deportiva (Ely 2007, Vihma 2010 para temperatura; Minetti 2002 para pendiente; Fulco 1998 para altitud). Activá el toggle y ajustá el valor: vas a ver el impacto reflejado en el panel <b>Resultado</b>.
+        <b>Cómo funciona.</b> Cada control de este panel multiplica el tiempo, salvo los dos últimos (cruces y minutos en puestos), que se suman aparte y no los toca el clima. Los de temperatura salen de Ely 2007 y Vihma 2010. Prendé el interruptor y elegí el valor: cuánto pesó cada uno sale renglón por renglón en <b>Resultado</b>, en «De dónde sale este tiempo». La pendiente y la altitud no viven acá: van en <b>Carrera objetivo</b> y en <b>Segmentos</b>.
       </div>
 
       <h3 style="font-size:13px;color:var(--txt-3);letter-spacing:.4px;text-transform:uppercase;margin:18px 0 10px">Clima</h3>
@@ -932,7 +1020,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="c_temp">
           <div class="field-head">
             <span class="field-label">Temperatura prevista
-              <span class="tt"><span class="info">?</span><span class="tt-body">Ideal para correr: <b>8–13 °C</b>. Cada grado sobre 15 °C suma ~0.5 % al tiempo; sobre 25 °C el efecto se acelera (calor). Debajo de 5 °C también penaliza (~0.3 %/°C) por rigidez muscular y más ropa.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Entre <b>5 y 15 °C</b> no penaliza nada. Cada grado por encima de 15 suma 0,5 % al tiempo, y por encima de 25 el efecto se acelera (0,8 % extra por grado). Por debajo de 5 °C penaliza 0,3 % por grado, por rigidez muscular y más ropa.</span></span>
             </span>
             <span class="toggle" data-toggle="c_temp"></span>
           </div>
@@ -942,7 +1030,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="c_hum">
           <div class="field-head">
             <span class="field-label">Humedad relativa
-              <span class="tt"><span class="info">?</span><span class="tt-body">Solo impacta con calor (&gt;18 °C). Sobre 60 % de humedad, cada 10 % extra reduce la capacidad de evaporar sudor y enfriarse. En clima fresco o nublado fresco, ignoralo.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Solo pesa con calor (por encima de 18 °C): sin temperatura cargada no hace nada. Sobre 60 % de humedad, cada 10 % extra suma hasta 3 %, y el efecto completo recién se alcanza a partir de 33 °C (entre 18 y 33 sube en proporción). El techo del ajuste es +12 %, con 100 % de humedad y mucho calor. En clima fresco, ignoralo.</span></span>
             </span>
             <span class="toggle" data-toggle="c_hum"></span>
           </div>
@@ -952,14 +1040,14 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="c_cielo">
           <div class="field-head">
             <span class="field-label">Cielo / precipitación
-              <span class="tt"><span class="info">?</span><span class="tt-body">Referencia: nublado fresco es ligeramente mejor que sol pleno (−1 %). Lluvia leve +2 % (suelo resbaladizo), lluvia intensa +5 %, tormenta/granizo +10 %, nieve +8 %.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Nublado descuenta 1 % contra sol pleno. Llovizna +2 % (suelo resbaladizo), lluvia persistente +4 %, tormenta o granizo +10 %, nieve cayendo +8 %. Las opciones neutras (soleado y parcialmente nublado) no cambian nada.</span></span>
             </span>
             <span class="toggle" data-toggle="c_cielo"></span>
           </div>
           <select id="c_cielo">
             <option value="clear">Soleado a pleno</option>
-            <option value="part">Parcialmente nublado</option>
-            <option value="cloud" selected>Nublado</option>
+            <option value="part" selected>Parcialmente nublado</option>
+            <option value="cloud">Nublado (-1 %)</option>
             <option value="light">Llovizna / lluvia leve</option>
             <option value="rain">Lluvia persistente</option>
             <option value="storm">Tormenta / granizo</option>
@@ -975,11 +1063,11 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
             <span class="toggle" data-toggle="c_viento"></span>
           </div>
           <select id="c_viento">
-            <option value="none">Sin viento / brisa (&lt;10 km/h)</option>
-            <option value="light">Leve (10–20 km/h)</option>
-            <option value="mod" selected>Moderado (20–35 km/h)</option>
-            <option value="strong">Fuerte (35–55 km/h)</option>
-            <option value="extreme">Extremo (&gt;55 km/h)</option>
+            <option value="none" selected>Sin viento / brisa (&lt;10 km/h)</option>
+            <option value="light">Leve (10–20 km/h) +0,5 %</option>
+            <option value="mod">Moderado (20–35 km/h) +2 %</option>
+            <option value="strong">Fuerte (35–55 km/h) +5 %</option>
+            <option value="extreme">Extremo (&gt;55 km/h) +10 %</option>
           </select>
         </div>
 
@@ -991,26 +1079,26 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
             <span class="toggle" data-toggle="c_sol"></span>
           </div>
           <select id="c_sol">
-            <option value="0">Sombra o bosque cerrado</option>
-            <option value="1" selected>Parcial (claros)</option>
-            <option value="2">Expuesto en su mayoría</option>
-            <option value="3">Totalmente expuesto (sin sombra)</option>
+            <option value="0" selected>Sombra o bosque cerrado</option>
+            <option value="1">Parcial (claros) +1 %</option>
+            <option value="2">Expuesto en su mayoría +2,5 %</option>
+            <option value="3">Totalmente expuesto +4 %</option>
           </select>
         </div>
 
         <div class="field" data-optional="c_noche">
           <div class="field-head">
             <span class="field-label">Porción nocturna
-              <span class="tt"><span class="info">?</span><span class="tt-body">Correr con frontal baja el ritmo por menor visibilidad del terreno: entre 4 % y 8 % más lento en la porción nocturna (más en tramos técnicos). Ignoralo si es 100 % de día.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Correr con frontal baja el ritmo por menor visibilidad del terreno: 6 % más lento en la porción nocturna que declares. Ignoralo si es 100 % de día.</span></span>
             </span>
             <span class="toggle" data-toggle="c_noche"></span>
           </div>
           <select id="c_noche">
             <option value="0">Toda de día</option>
-            <option value="0.15">~25 % de noche</option>
-            <option value="0.35">~50 % de noche</option>
-            <option value="0.70">Mayoritariamente nocturna</option>
-            <option value="1.00">Totalmente nocturna</option>
+            <option value="0.25">Un cuarto de noche</option>
+            <option value="0.50">Media carrera de noche</option>
+            <option value="0.75">Tres cuartos de noche</option>
+            <option value="1.00">Entera de noche</option>
           </select>
         </div>
       </div>
@@ -1020,7 +1108,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="c_mochila">
           <div class="field-head">
             <span class="field-label">Peso de mochila / equipo
-              <span class="tt"><span class="info">?</span><span class="tt-body">Cada kilo extra cuesta ~1 % en tiempo en terreno mixto (más en subidas). Si corrés con vaso, celu y 500 ml, eso es "mínima". Carreras con autosuficiencia (chaqueta, 1.5 L, comida) son "pesada".</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Cada kilo extra cuesta alrededor de 1 % de tiempo en terreno mixto, y más en las subidas. Vaso, teléfono y 500 ml es "mínima"; el material obligatorio de una carrera de montaña (chaqueta, 1 L, comida) cae en "media" o "pesada" según cuánto pese; "autosuficiencia total" es para las que exigen equipo de vivac.</span></span>
             </span>
             <span class="toggle" data-toggle="c_mochila"></span>
           </div>
@@ -1035,7 +1123,7 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
         <div class="field" data-optional="c_exp">
           <div class="field-head">
             <span class="field-label">Experiencia en trail
-              <span class="tt"><span class="info">?</span><span class="tt-body">Un corredor experimentado gestiona mejor bajadas técnicas, pacing en subida y alimentación. Un principiante suele pagar más caro los tramos complicados incluso con el mismo VO₂max.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Un corredor con oficio gestiona mejor las bajadas técnicas, el ritmo en subida y la alimentación. <b>Ojo con este control</b>: se aplica <b>encima</b> de la carrera de referencia, que ya se corrió con la experiencia que había entonces. Sirve para decir en qué cambiaste desde esa carrera, no para describirte hoy. Si la referencia es reciente, dejalo en «Experimentado» (×1,00) y no cambia nada.</span></span>
             </span>
             <span class="toggle" data-toggle="c_exp"></span>
           </div>
@@ -1083,8 +1171,10 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
       <div class="r-banda" id="r-banda" hidden>
         <div class="rb-bar">
           <div class="rb-inner" id="rb-inner"></div>
-          <div class="rb-mark"></div>
         </div>
+        <!-- La marca del tiempo estimado va FUERA de la barra: adentro la recortaba
+             el overflow:hidden que redondea las puntas, y se veia a la mitad. -->
+        <div class="rb-mark"></div>
         <div class="rb-ends"><span id="rb-lo">—</span><span id="rb-hi">—</span></div>
         <div class="rb-txt" id="rb-txt"></div>
         <div class="rb-cta" id="rb-cta" hidden></div>
@@ -1099,7 +1189,24 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
       <div class="kpi"><div class="k-l">Ritmo promedio</div><div class="k-v" id="r-pace">—</div><div class="k-s">min/km</div></div>
       <div class="kpi"><div class="k-l">Ritmo esfuerzo</div><div class="k-v" id="r-effpace">—</div><div class="k-s">min/km-esfuerzo</div></div>
       <div class="kpi"><div class="k-l">Km esfuerzo</div><div class="k-v" id="r-kmeff">—</div><div class="k-s">equivalentes</div></div>
-      <div class="kpi"><div class="k-l">Confianza</div><div class="k-v" id="r-conf">—</div><div class="k-s" id="r-conf-sub">—</div></div>
+      <div class="kpi"><div class="k-l">Calidad de la ref.
+        <span class="tt"><span class="info">?</span><span class="tt-body">No es la probabilidad de acertar: eso lo dice la banda de arriba. Mide otra cosa, <b>cuánto se parece la referencia cargada a esta carrera</b>. Sube con la cantidad de carreras de referencia y baja cuanto más grande es el salto de tamaño entre ellas y la carrera objetivo. El techo es 90 %.</span></span>
+      </div><div class="k-v" id="r-conf">—</div><div class="k-s" id="r-conf-sub">—</div></div>
+    </div>
+
+    <!-- DE DÓNDE SALE ESTE TIEMPO
+         Cada renglón es la diferencia que introduce un dato cargado, en el mismo
+         orden en que el motor los aplica, así que la suma cierra con el tiempo
+         estimado. Existe porque había controles en pantalla que no movían nada y
+         no había forma de darse cuenta: acá un control que no cambia el
+         pronóstico se ve en el acto, porque su renglón no aparece. -->
+    <div class="card" id="r-desglose-card">
+      <h2>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        De dónde sale este tiempo
+      </h2>
+      <div class="card-sub">Cada renglón es lo que suma o resta un dato cargado. Los renglones cierran con el tiempo estimado: si un control no aparece acá, no está cambiando el pronóstico.</div>
+      <div id="r-desglose"></div>
     </div>
 
     <div class="card" id="r-split-card">
@@ -1135,12 +1242,13 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
       <div class="hint" style="line-height:1.7;font-size:13px;color:var(--txt-2)">
         <p><b style="color:#fff">Base — fórmula de Riegel sobre km-esfuerzo:</b><br>
         <code style="color:var(--red)">T = T_ref × (KmEff_objetivo / KmEff_ref)^1.05</code><br>
-        donde <code>KmEff = distancia + (D+/100) × factor_recorrido</code>. Este "km-esfuerzo" convierte el desnivel en distancia equivalente según lo técnico que sea el circuito.</p>
+        donde <code>KmEff = distancia + (D+/100) × factor_recorrido</code>. Este "km-esfuerzo" convierte el desnivel en distancia equivalente según lo técnico que sea el circuito. El <code>factor_recorrido</code> va de 0,69 a 0,91 y es <b>el mismo</b> para la carrera entera y para cada tramo: 100 m de subida cuestan 0,80 km de llano en terreno mixto, calibrado contra 208 predicciones reales.</p>
         <p style="margin-top:10px"><b style="color:#fff">Factor de pendiente (D+/D-):</b> en modo global repartimos la distancia entre subida y bajada según la proporción de desnivel y aplicamos un costo distinto a cada una. Bajadas muy empinadas <b>penalizan</b> (carga excéntrica); bajadas suaves descuentan tiempo (Minetti 2002).</p>
-        <p style="margin-top:10px"><b style="color:#fff">Altitud:</b> sobre 1200 m aplicamos un factor creciente (+2 % a 1500 m, +5 % a 2300 m, +8 % a 2800 m, +12 % a 3300 m). Si la <b>referencia</b> fue en altura, descontamos ese efecto para tener tu ritmo real a nivel del mar (Fulco 1998).</p>
-        <p style="margin-top:10px"><b style="color:#fff">Clima — fórmula compuesta:</b> temperatura (óptimo 10–13 °C; +0.5 %/°C sobre 15 °C, extra sobre 25 °C), humedad relativa (solo con calor &gt;18 °C, cada 10 % sobre 60 % penaliza según temperatura), cielo/precipitación, viento y radiación solar se <b>multiplican</b> entre sí. Basado en Vihma 2010 y Ely 2007.</p>
-        <p style="margin-top:10px"><b style="color:#fff">Ajuste por segmentos:</b> si cargás tramos, cada uno multiplica por factores de pendiente, tecnicidad, superficie, altitud (usa la del tramo o cae a la altitud media del circuito como fallback) y fatiga acumulada <code>(1 + 0.06 × %dist_acumulada)</code>.</p>
-        <p style="margin-top:10px"><b style="color:#fff">Tiempos fijos:</b> puestos de control y cruces se <b>suman</b> al total (no multiplican). Mochila y experiencia se aplican como multiplicadores.</p>
+        <p style="margin-top:10px"><b style="color:#fff">Altitud:</b> sobre 1200 m se aplica un factor creciente (+2 % a 1800 m, +5 % a 2300 m, +8 % a 2800 m, +12 % a 3300 m, +18 % a 4500 m), interpolado entre esos puntos. Si la <b>referencia</b> fue en altura, descontamos ese efecto para tener tu ritmo real a nivel del mar (Fulco 1998).</p>
+        <p style="margin-top:10px"><b style="color:#fff">Clima — fórmula compuesta:</b> temperatura (sin penalización entre 5 y 15 °C; +0,5 %/°C sobre 15 °C y otro 0,8 %/°C sobre 25 °C), humedad relativa (solo con calor &gt;18 °C, cada 10 % sobre 60 % penaliza según temperatura), cielo/precipitación, viento y radiación solar se <b>multiplican</b> entre sí. Basado en Vihma 2010 y Ely 2007.</p>
+        <p style="margin-top:10px"><b style="color:#fff">Tramos:</b> hacen dos cosas distintas y conviene tenerlas separadas. <b>Terreno, superficie y altitud</b> de cada tramo cambian el tiempo total: entran por el mismo lugar que sus equivalentes de la carrera entera (los km-esfuerzo y los factores de arriba), ponderados por el peso de cada tramo. <b>La distancia, el D+ y el D−</b> de cada tramo reparten ese total entre los tramos, junto con la fatiga acumulada <code>(1 + 0.06 × %esfuerzo_acumulado)</code>, y además son el peso de esos promedios: el terreno se pondera por el D+ de cada tramo, y la superficie y la altitud por su km-esfuerzo. La pendiente de cada tramo queda fuera del total a propósito, porque la carrera de referencia se carga sin tramos y cobrarle a una lo que no se le descuenta a la otra inclinaría el resultado siempre para el mismo lado. Todo esto sale renglón por renglón en «De dónde sale este tiempo».</p>
+        <p style="margin-top:10px"><b style="color:#fff">Todo se lee contra la referencia:</b> el clima, la mochila y la experiencia se aplican sobre el ritmo que salió de tus carreras previas, y de esas carreras no se sabe con qué clima ni con qué mochila se corrieron. O sea que estos controles dicen <b>en qué se diferencia este día</b> de aquellos, no cómo va a ser el día en absoluto. Con la altitud pasa lo mismo y por eso tiene su propio campo en la referencia.</p>
+<p style="margin-top:10px"><b style="color:#fff">Tiempos fijos:</b> puestos de control y cruces se <b>suman</b> al total (no multiplican). Mochila y experiencia se aplican como multiplicadores.</p>
         <p style="margin-top:10px"><b style="color:#fff">Promedio de referencias:</b> si cargás varias carreras previas, cada una se pondera por lo parecido que es su km-esfuerzo a la carrera objetivo (dando más peso a referencias similares).</p>
       </div>
     </div>
@@ -1183,9 +1291,20 @@ input:-ms-input-placeholder{color:var(--txt-4);opacity:.55}
    queda entre 0,75 y 0,85 en los 14 casos. El exponente de Riegel se barrió igual
    y 1,05 ya estaba bien, así que no se tocó.
 
-   Se conservó la FORMA de las dos escalas (el paso entre un tipo de terreno y el
-   siguiente) porque de eso no hay datos: lo medido es el valor del medio. */
-const T_TECNICIDAD = {1:0.62, 2:0.69, 3:0.76, 4:0.86, 5:0.97};
+   Se conservó la FORMA de la escala (el paso entre un tipo de terreno y el
+   siguiente) porque de eso no hay datos: lo medido es el valor del medio.
+
+   HABÍA DOS ESCALAS PARA LA MISMA COSA, Y SE UNIFICARON EL 2026-08-10.
+   Existía además T_TECNICIDAD {1:0.62, 2:0.69, 3:0.76, 4:0.86, 5:0.97}, que era
+   la que usaba la tabla de segmentos, mientras el cálculo global usaba ésta. Las
+   dos contestan la misma pregunta (cuántos kilómetros de llano cuestan 100 m de
+   subida en tal terreno) y daban números distintos: con terreno mixto, 0,76 en
+   un lado y 0,80 en el otro. Consecuencia concreta: la suma de los km-esfuerzo
+   de los tramos no daba el km-esfuerzo de la carrera (47,7 contra 48,6 en un
+   caso de 31 km), así que las dos mitades del motor describían recorridos
+   distintos. La calibrada contra las 208 predicciones es ÉSTA, así que quedó
+   ésta sola. Un número a la vista que parece la fuente de verdad y no lo es es
+   peor que no tenerlo. */
 const T_RECORRIDO  = {1:0.69, 2:0.75, 3:0.80, 4:0.86, 5:0.91};
 const K_FATIGA     = 0.06;
 const EXP_RIEGEL   = 1.05;
@@ -1220,6 +1339,15 @@ const T_ALTITUD = [
 const $=id=>document.getElementById(id);
 const $$=sel=>document.querySelectorAll(sel);
 
+/* Todo lo que escribe el usuario (nombre de carrera, nombre de tramo) termina
+   dentro de un innerHTML. Sin esto, un tramo llamado «Subida "La Cruz"» partía
+   el atributo y rompía la fila, y uno llamado «<b>Cumbre» dejaba el resto de la
+   pantalla en negrita. No es un problema de seguridad (la calculadora corre
+   sola, con datos de quien la usa), es que la pantalla se desarma. */
+const esc = s => String(s==null?"":s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
 function parseTime(s){
   if(!s) return 0;
   s=String(s).trim();
@@ -1246,6 +1374,47 @@ function fmtPace(secPerKm){
   const tot=Math.round(secPerKm);
   return Math.floor(tot/60)+":"+String(tot%60).padStart(2,"0");
 }
+/* Las diferencias del desglose se escriben cortas: «+4:12» y no «+00:04:12»,
+   que en una columna de sumas y restas se lee como si fueran horas. Y una
+   diferencia por debajo del segundo se dice con palabras, porque un «+00:00:00»
+   parece un error de la calculadora cuando en realidad significa que ese control
+   está cargado y no cambia nada. */
+function fmtDelta(sec){
+  if(!isFinite(sec)) return "—";
+  const abs=Math.abs(Math.round(sec));
+  if(abs<1) return "sin efecto";
+  const h=Math.floor(abs/3600), m=Math.floor((abs%3600)/60), s=abs%60;
+  const cuerpo = h>0
+    ? h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+    : m+":"+String(s).padStart(2,"0");
+  return (sec>=0?"+":"−")+cuerpo;
+}
+
+/* El resumen de condiciones activas lo usan dos lugares (el desglose y la lista
+   de factores aplicados). Vivía escrito una sola vez adentro del render, así que
+   el desglose no podía decir POR QUÉ el clima sumaba lo que sumaba. */
+function detalleCondiciones(){
+  const c=state.cond, out=[];
+  /* Solo se lista lo que el motor USÓ. La humedad y el sol figuraban en
+     «Factores aplicados» aunque el motor los hubiera ignorado por falta de
+     calor, así que la pantalla decía que los había aplicado y el bloque de
+     abajo decía que no: dos renglones contradiciéndose. */
+  const conCalor = c.opts.temp && c.temp!=null && c.temp>18;
+  if(c.opts.temp && c.temp!=null) out.push(`temp ${c.temp} °C`);
+  if(c.opts.hum && c.hum!=null && conCalor && c.hum>60) out.push(`humedad ${c.hum} %`);
+  if(c.opts.cielo)   out.push({clear:"soleado",part:"parcialmente nublado",cloud:"nublado",light:"llovizna",rain:"lluvia",storm:"tormenta",snow:"nieve"}[c.cielo]||c.cielo);
+  if(c.opts.viento)  out.push({none:"sin viento",light:"viento leve",mod:"viento moderado",strong:"viento fuerte",extreme:"viento extremo"}[c.viento]||c.viento);
+  /* "A la sombra" vale 0, asi que no se lista: la regla de este bloque es que solo
+     entra lo que el motor USO. */
+  if(c.opts.sol && conCalor && +c.sol>0) out.push(`sol ${["a la sombra","parcial","expuesto","pleno"][c.sol]||""}`);
+  /* Se muestra la etiqueta que eligió el usuario, no el número interno. */
+  if(c.opts.noche && c.noche>0) out.push(
+    ({"0.25":"un cuarto de noche","0.50":"media carrera de noche","0.75":"tres cuartos de noche","1.00":"entera de noche"})[(+c.noche).toFixed(2)] || `${Math.round(c.noche*100)} % de noche`);
+  if(c.opts.mochila && c.mochila!==1) out.push(`mochila ×${c.mochila}`);
+  if(c.opts.exp && c.exp!==1)         out.push(`experiencia ×${c.exp}`);
+  return out;
+}
+
 function lookupStep(table, value, col){
   // Busca el primer umbral >= value; si no, el último
   for(const row of table){ if(value<=row[0]) return row[col]; }
@@ -1280,7 +1449,12 @@ const state = {
   pace:{dist:0, time:""},
   race:{
     name:"", date:"",
-    dist:0, dplus:0,
+    /* dplus arranca en null, igual que dneg y que la temperatura. Con 0, un campo
+       vacío significaba "esta carrera es llana" y el chequeo `dplus>=0` daba
+       verdadero siempre: el desnivel decía en pantalla que era obligatorio y
+       nunca se pedía. Un 42K de trail sin cargar el D+ salía casi hora y media
+       más rápido, sin un solo aviso. */
+    dist:0, dplus:null,
     opts:{tipo:true, dneg:false, alt:false, obj:false},
     /* dneg arranca en null y no en 0, por lo mismo que la temperatura: vacío
        significa "no lo cargué" y hay que asumir D- = D+. Con 0, prender el
@@ -1294,7 +1468,10 @@ const state = {
   cond:{
     opts:{temp:false, hum:false, cielo:false, viento:false, sol:false,
           noche:false, mochila:false, exp:false, cruces:false, desnudo:false},
-    temp:null, hum:null, cielo:"cloud", viento:"mod", sol:1,
+    /* sol arranca en 0 ("sombra"), que es el valor neutro, por lo mismo que
+       cielo y viento: prender un interruptor no puede cambiar el pronostico
+       antes de que elijas nada. */
+    temp:null, hum:null, cielo:"part", viento:"none", sol:0,
     noche:0, mochila:1.00, exp:1.00, cruces:0, desnudo:0,
   },
 };
@@ -1308,12 +1485,32 @@ function emptySeg(){
 }
 
 // -------- TABS --------
+/* Llevar la vista arriba al cambiar de pestaña.
+   Embebida en la web, el scroll lo tiene la página de afuera: el marco mide lo
+   que mide el contenido, así que acá adentro no hay nada que scrollear y
+   window.scrollTo no hace absolutamente nada. Tocar «Resultado» dejaba el
+   resultado mil píxeles arriba de la pantalla y parecía que el botón no
+   funcionaba. Ahora se le pide al padre; si no entiende el mensaje, no pasa
+   nada. Suelta (descargada) sigue scrolleando como siempre.
+
+   Ojo: esto NO puede vivir adentro de recompute(), que es donde estaba. Con la
+   calculadora a medio llenar, recompute() se va por el `return` del cartel de
+   error antes de llegar al final, así que no subía justo cuando más falta
+   hacía: cuando lo que hay para leer es el mensaje que dice qué falta. */
+function subirALaVista(){
+  if(window.parent !== window){
+    try{ window.parent.postMessage({tipo:"subir-herramienta"}, "*"); }catch(e){}
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
 $$(".tab").forEach(t=>t.addEventListener("click",()=>{
   $$(".tab").forEach(x=>x.classList.remove("active"));
   t.classList.add("active");
   const id=t.dataset.tab;
   $$(".panel").forEach(p=>p.classList.toggle("active", p.dataset.panel===id));
   if(id==="out") recompute(true);
+  subirALaVista();
 }));
 
 // -------- Referencia: modo switch --------
@@ -1339,8 +1536,10 @@ function renderRefs(){
         ${state.refs.length>1?`<button class="btn btn-ghost btn-sm" data-del="${i}">Eliminar</button>`:""}
       </div>
       <div class="grid grid-2">
-        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" data-k="name" data-i="${i}" value="${r.name.replace(/"/g,'&quot;')}" placeholder="Carrera pasada"></div>
-        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time}" placeholder="02:15:00"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Nombre de la carrera</span></div><input type="text" data-k="name" data-i="${i}" value="${esc(r.name)}" placeholder="Carrera pasada"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial
+          <span class="tt"><span class="info" tabindex="0" role="button" aria-label="Ayuda">?</span><span class="tt-body">En horas:minutos:segundos. <b>Escribilo completo</b>: «2:15» se lee como 2 minutos y 15 segundos, no como dos horas y cuarto, y con eso la calculadora contesta cualquier cosa. Para dos horas y cuarto va <b>2:15:00</b>.</span></span>
+        </span></div><input type="text" data-k="time" data-i="${i}" value="${esc(r.time)}" placeholder="02:15:00"></div>
         <div class="field"><div class="field-head"><span class="field-label">Distancia</span></div><input type="number" data-k="dist" data-i="${i}" step="0.1" min="1" value="${r.dist||""}" placeholder="21"><span class="unit">km</span></div>
         <div class="field"><div class="field-head"><span class="field-label">Desnivel positivo</span></div><input type="number" data-k="dplus" data-i="${i}" step="10" min="0" value="${r.dplus||""}" placeholder="600"><span class="unit">m</span></div>
         <div class="field ${r.opts.tipo?"":"disabled"}" data-opt="tipo" data-i="${i}">
@@ -1390,11 +1589,20 @@ function renderRefs(){
   wrap.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",e=>{
     state.refs.splice(+e.currentTarget.dataset.del,1); renderRefs();
   }));
-  wrap.querySelectorAll("[data-toptionref]").forEach(t=>t.addEventListener("click",e=>{
-    const i=+e.currentTarget.dataset.i, k=e.currentTarget.dataset.toptionref;
-    state.refs[i].opts[k]=!state.refs[i].opts[k];
-    renderRefs();
-  }));
+  wrap.querySelectorAll("[data-toptionref]").forEach(t=>{
+    t.setAttribute("tabindex","0"); t.setAttribute("role","switch");
+    t.setAttribute("aria-checked", t.classList.contains("on") ? "true" : "false");
+    const accionar=e=>{
+      const el=e.currentTarget;
+      const i=+el.dataset.i, k=el.dataset.toptionref;
+      state.refs[i].opts[k]=!state.refs[i].opts[k];
+      renderRefs();
+      scheduleRecompute();
+    };
+    t.addEventListener("click",accionar);
+    t.addEventListener("keydown",e=>{ if(e.key===" "||e.key==="Enter"||e.key==="Spacebar"){ e.preventDefault(); accionar(e); } });
+  });
+  marcarAyudas(wrap);
 }
 
 // Una sola. Antes, con la lista vacía agregaba DOS de un click.
@@ -1412,19 +1620,31 @@ $("p_time").addEventListener("input",e=>state.pace.time=e.target.value);
 $("r_name").addEventListener("input",e=>state.race.name=e.target.value);
 $("r_date").addEventListener("input",e=>state.race.date=e.target.value);
 $("r_dist").addEventListener("input",e=>state.race.dist=+e.target.value||0);
-$("r_dplus").addEventListener("input",e=>state.race.dplus=+e.target.value||0);
+$("r_dplus").addEventListener("input",e=>state.race.dplus = e.target.value==="" ? null : (+e.target.value||0));
 $("r_tipo").addEventListener("change",e=>state.race.tipo=+e.target.value);
 $("r_dneg").addEventListener("input",e=>state.race.dneg = e.target.value==="" ? null : (+e.target.value||0));
 $("r_alt").addEventListener("input",e=>state.race.alt=+e.target.value||0);
 $("r_obj").addEventListener("input",e=>state.race.obj=e.target.value);
 
 // Toggles genéricos — [data-toggle]
+/* Son <span>, así que por sí solos no reciben foco ni responden al teclado: la
+   calculadora entera era inalcanzable sin mouse. Se les pone tabindex, rol de
+   interruptor y su estado en aria-checked, y contestan a Enter y a la barra
+   espaciadora igual que a un clic. */
 function bindTogglesOnce(root){
   root.querySelectorAll("[data-toggle]:not([data-bound])").forEach(t=>{
     t.dataset.bound="1";
-    t.addEventListener("click",()=>{
+    if(!t.hasAttribute("tabindex")) t.setAttribute("tabindex","0");
+    if(!t.hasAttribute("role")) t.setAttribute("role","switch");
+    /* El estado inicial tambien se anuncia: con role=switch y sin aria-checked, el
+       lector de pantalla dice "interruptor" y no dice si esta prendido. */
+    t.setAttribute("aria-checked", t.classList.contains("on") ? "true" : "false");
+    const rotulo = t.closest(".field-head")?.querySelector(".field-label");
+    if(rotulo && !t.hasAttribute("aria-label")) t.setAttribute("aria-label", rotulo.textContent.replace(/\s*\?\s*$/,"").trim());
+    const accionar=()=>{
       const key=t.dataset.toggle;
       t.classList.toggle("on");
+      t.setAttribute("aria-checked", t.classList.contains("on") ? "true" : "false");
       const field=t.closest("[data-optional]");
       if(field) field.classList.toggle("disabled", !t.classList.contains("on"));
       // map to state
@@ -1435,7 +1655,32 @@ function bindTogglesOnce(root){
       } else if(key==="seg_enabled"){
         state.segEnabled=t.classList.contains("on");
       }
+      scheduleRecompute();
+    };
+    t.addEventListener("click",accionar);
+    t.addEventListener("keydown",e=>{
+      if(e.key===" "||e.key==="Enter"||e.key==="Spacebar"){ e.preventDefault(); accionar(); }
     });
+  });
+  /* Un <label> sin `for` no acciona nada, pero tiene cursor de mano y parece que
+     sí. El rótulo «Usar los tramos para la estimación» era eso: se tocaba y no
+     pasaba nada. */
+  root.querySelectorAll("label:not([data-bound-lbl])").forEach(l=>{
+    const t=l.querySelector("[data-toggle]");
+    if(!t) return;
+    l.dataset.boundLbl="1";
+    l.addEventListener("click",e=>{ if(!e.target.closest("[data-toggle]")) t.click(); });
+  });
+  marcarAyudas(root);
+}
+
+/* Los globitos «?» también son <span>. El CSS ya los abre con :focus-within, que
+   es justo lo que no servía de nada porque nada de esto podía recibir foco. */
+function marcarAyudas(root){
+  (root||document).querySelectorAll(".tt .info:not([tabindex])").forEach(i=>{
+    i.setAttribute("tabindex","0");
+    i.setAttribute("role","button");
+    i.setAttribute("aria-label","Ayuda");
   });
 }
 
@@ -1459,25 +1704,25 @@ function renderSegments(){
   state.segments.forEach((s,i)=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td data-label="Tramo"><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${s.name.replace(/"/g,'&quot;')}"></td>
+      <td data-label="Tramo"><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${esc(s.name)}"></td>
       <td data-label="Dist (km)"><input type="number" step="0.1" min="0" data-k="dist" data-i="${i}" value="${s.dist||""}"></td>
       <td data-label="D+ (m)"><input type="number" step="5" min="0" data-k="dplus" data-i="${i}" value="${s.dplus||""}"></td>
       <td data-label="D− (m)"><input type="number" step="5" min="0" data-k="dneg" data-i="${i}" value="${s.dneg||""}"></td>
       <td data-label="Alt media (m)"><input type="number" step="50" min="0" data-k="alt" data-i="${i}" value="${s.alt==null?"":s.alt}" placeholder="—"></td>
-      <td data-label="Tecnicidad">
+      <td data-label="Terreno">
         <select data-k="tec" data-i="${i}">
-          <option value="">—</option>
-          <option value="1" ${s.tec=="1"?"selected":""}>1 – Muy corrible</option>
-          <option value="2" ${s.tec=="2"?"selected":""}>2 – Corrible mod.</option>
-          <option value="3" ${s.tec=="3"?"selected":""}>3 – Mixto técnico</option>
-          <option value="4" ${s.tec=="4"?"selected":""}>4 – Técnico difícil</option>
-          <option value="5" ${s.tec=="5"?"selected":""}>5 – Muy técnico</option>
+          <option value="">De la carrera</option>
+          <option value="1" ${s.tec=="1"?"selected":""}>1 – Camino</option>
+          <option value="2" ${s.tec=="2"?"selected":""}>2 – Sendero</option>
+          <option value="3" ${s.tec=="3"?"selected":""}>3 – Mixto</option>
+          <option value="4" ${s.tec=="4"?"selected":""}>4 – Técnico</option>
+          <option value="5" ${s.tec=="5"?"selected":""}>5 – Alpino</option>
         </select>
       </td>
       <td data-label="Superficie">
         <select data-k="sup" data-i="${i}">
-          <option value="">—</option>
-          <option value="tierra" ${s.sup=="tierra"?"selected":""}>Tierra compacta</option>
+          <option value="">Normal</option>
+          <option value="tierra" ${s.sup=="tierra"?"selected":""}>Tierra firme</option>
           <option value="ripio" ${s.sup=="ripio"?"selected":""}>Ripio / grava</option>
           <option value="cesped" ${s.sup=="cesped"?"selected":""}>Césped corto</option>
           <option value="cespedalto" ${s.sup=="cespedalto"?"selected":""}>Césped alto</option>
@@ -1486,7 +1731,7 @@ function renderSegments(){
           <option value="nieve" ${s.sup=="nieve"?"selected":""}>Nieve / hielo</option>
         </select>
       </td>
-      <td data-label="PC (min)"><input type="number" step="1" min="0" data-k="pc" data-i="${i}" value="${s.pc||0}"></td>
+      <td data-label="PC (min)"><input type="number" step="1" min="0" data-k="pc" data-i="${i}" value="${s.pc||''}" placeholder="0"></td>
       <td><button class="seg-row-del" data-del="${i}" title="Eliminar este tramo">✕</button></td>
     `;
     tb.appendChild(tr);
@@ -1524,7 +1769,12 @@ function updateSegSum(){
     ? `Total cargado: <b>${totD.toFixed(1)} km</b> · <b>${Math.round(totDP)} m D+</b>${extra}`
     : "";
 }
-$("btn-add-seg").addEventListener("click",()=>{ state.segments.push(emptySeg()); renderSegments(); scheduleRecompute(); });
+$("btn-add-seg").addEventListener("click",()=>{
+  /* Numerado: con cuatro tramos llamados todos "Segmento", la lista de pacing
+     y el CSV no se podían leer. */
+  const s=emptySeg(); s.name="Tramo "+(state.segments.length+1);
+  state.segments.push(s); renderSegments(); scheduleRecompute();
+});
 /* El scheduleRecompute() de acá NO es decorativo: sin él, borrar todos los
    segmentos dejaba el panel de resultado mostrando los tramos viejos hasta que
    tocaras cualquier otra cosa. El listener global de click solo escucha
@@ -1655,7 +1905,12 @@ function referenceEffortPace(targetKmEff){
   return {
     secPerKmEff: sumPace/sumW,
     kmEffRef: keRef,
-    confidence: confianzaRef(Math.min(0.90, 0.35 + 0.30*validas), keRef, targetKmEff),
+    /* Sube parejo hasta la quinta referencia y ahi toca el techo. Antes era
+       0,35 + 0,30 por referencia, o sea que con DOS ya estaba clavada en 90 % y
+       no se movia mas, justo mientras el cartel de la banda pedia cargar mas
+       carreras: dos numeros de la misma pantalla diciendo cosas distintas. Es
+       un heuristico, no una medicion, y el que esta medido es la banda. */
+    confidence: confianzaRef(Math.min(0.90, 0.30 + 0.12*validas), keRef, targetKmEff),
     sources: validas,
     ratio: (keRef>0 && targetKmEff>0) ? Math.max(keRef,targetKmEff)/Math.min(keRef,targetKmEff) : 1,
   };
@@ -1746,6 +2001,12 @@ function climateMultiplier(cond){
 function globalSlopeFactor(dist, dplus, dneg){
   if(dist <= 0) return 1;
   const total = dplus + dneg;
+  /* Ojo con este 1: es el caso degenerado (sin desnivel de ningun lado) y NO
+     es continuo con el resto de la curva, asi que un tramo de D+ 0 y otro de
+     D+ 1 metro salen con factores que se diferencian un 3 %. Se probo
+     arreglarlo aca y rompe el test que fija que esta funcion sigue dando lo
+     mismo que antes de la recalibracion, que es lo que protege el 0,80. El
+     escalon se neutraliza donde molesta (el reparto entre tramos), abajo. */
   if(total <= 0) return 1;
   const wAsc = dplus / total;
   const wDsc = dneg  / total;
@@ -1761,13 +2022,17 @@ function compute(){
   const race=state.race;
 
   if(!(race.dist>0)) errs.push("Cargá la distancia de la carrera objetivo.");
-  if(!(race.dplus>=0)) errs.push("Cargá el desnivel positivo de la carrera.");
+  /* `== null` y no `>= 0`: el 0 es un dato legítimo (una carrera de llano) y
+     tiene que poder cargarse, pero el campo vacío ya no pasa. */
+  if(race.dplus == null || race.dplus === "") errs.push("Cargá el desnivel positivo (D+) de la carrera objetivo. Si es de llano, poné 0.");
+  else if(race.dplus < 0) errs.push("El desnivel positivo no puede ser negativo.");
+  const raceDplus = +race.dplus || 0;
 
   /* Cuando el toggle está apagado se usa el valor de "mixto", que es el que está
      calibrado. Antes acá había un 1.16 escrito a mano — la constante VIEJA — así
      que apagar el toggle te devolvía silenciosamente al motor sin recalibrar. */
   const tipoF_race = race.opts.tipo ? (T_RECORRIDO[race.tipo]||T_RECORRIDO[3]) : T_RECORRIDO[3];
-  const kmEffRace = kmEff(race.dist, race.dplus, tipoF_race);
+  const kmEffRace = kmEff(race.dist, raceDplus, tipoF_race);
 
   const refPace = referenceEffortPace(kmEffRace);
   if(!refPace){
@@ -1789,33 +2054,54 @@ function compute(){
   const fAltGlobFallback = (race.opts.alt && race.alt>0) ? lookupLerp(T_ALTITUD, race.alt, 1) : 1;
   // D- efectivo de la carrera. Si el toggle está apagado O el campo está vacío,
   // asumimos D- = D+ (ver el comentario del `dneg:null` en el estado).
-  const raceDneg = (race.opts.dneg && race.dneg!=null && race.dneg!=="") ? +race.dneg : race.dplus;
+  const raceDneg = (race.opts.dneg && race.dneg!=null && race.dneg!=="") ? +race.dneg : raceDplus;
 
-  // --- TIEMPO TOTAL DE LA CARRERA ---
-  // El total se calcula SIEMPRE por esta vía (Riegel sobre km-esfuerzo + perfil
-  // + altitud), tenga o no segmentos cargados. Es la única que pasa el control de
-  // auto-consistencia: si le das como referencia la propia carrera objetivo, tiene
-  // que devolver ese mismo tiempo, y lo hace con un error del 0,1 %.
-  // La vía por segmentos calculaba su propio total y se iba +7,4 % porque aplicaba
-  // el factor de pendiente CRUDO sobre unos km-esfuerzo que ya habían cobrado el
-  // desnivel: el mismo doble conteo que acá abajo se normaliza a propósito
-  // dividiendo por fSlopeBalanced. Ahora los segmentos REPARTEN este total.
+  /* --- TIEMPO TOTAL DE LA CARRERA ---
+     El total sale SIEMPRE por esta vía: Riegel sobre km-esfuerzo, por el perfil y
+     por la altitud. Es la única que pasa el control de auto-consistencia (darle
+     como referencia la propia carrera objetivo tiene que devolver ese mismo
+     tiempo, y lo hace con un error del 0,1 %).
+
+     Ojo con lo que sigue prohibido, porque ya se pagó: la rama de segmentos
+     calculaba ANTES su propio total por un camino paralelo y se iba +7,4 %,
+     porque aplicaba el factor de pendiente CRUDO sobre unos km-esfuerzo que ya
+     habían cobrado el desnivel. Eso es doble conteo y no vuelve.
+
+     Lo que sí cambió el 2026-08-10: lo que se declara tramo por tramo (terreno,
+     superficie y altitud) entra al total, pero POR ESTA MISMA VÍA, cambiando los
+     km-esfuerzo y los factores que ya existían acá. No hay una segunda cuenta.
+     Antes esas tres columnas movían el reparto entre tramos y no movían el
+     número grande ni un segundo: estaban en pantalla sin hacer nada. */
   const tRef = refPace.secPerKmEff * refPace.kmEffRef;
-  const riegelRatio = refPace.kmEffRef>0 ? Math.pow(kmEffRace/refPace.kmEffRef, EXP_RIEGEL) : 1;
+  const riegel = ke => (refPace.kmEffRef>0 && ke>0 ? Math.pow(ke/refPace.kmEffRef, EXP_RIEGEL) : 1);
   // Factor de perfil: diferencia entre carrera balanceada (D-=D+) vs carrera con
   // bajada neta o subida neta. Normalizado para no doble-contar km-esfuerzo.
-  const fSlope = globalSlopeFactor(race.dist, race.dplus, raceDneg);
-  const fSlopeBalanced = globalSlopeFactor(race.dist, race.dplus, race.dplus);
+  const fSlope = globalSlopeFactor(race.dist, raceDplus, raceDneg);
+  const fSlopeBalanced = globalSlopeFactor(race.dist, raceDplus, raceDplus);
   const fSlopeNorm = fSlopeBalanced>0 ? fSlope/fSlopeBalanced : 1;
   const fAltGlob = fAltGlobFallback;
-  const raceTimeSec = tRef * riegelRatio * fSlopeNorm * fAltGlob;
+
+  /* Lo que aportan los tramos, arriba de la carrera descrita en grande. Los tres
+     arrancan en neutro, así que sin segmentos (o con segmentos que no declaran
+     nada) el total es exactamente el de siempre. */
+  let fTerrenoSeg = 1;   // relación de Riegel entre el km-esfuerzo de los tramos y el global
+  let fSupSeg     = 1;   // superficie promedio de los tramos
+  let fAltSeg     = 1;   // altitud por tramo, contra la altitud media declarada
+  let kmEffUsado  = kmEffRace;
+  let hayTerrenoSeg = false, haySupSeg = false, hayAltSeg = false;
+  let fTerrenoEfectivo = tipoF_race;
+  let raceTimeSec = tRef * riegel(kmEffRace) * fSlopeNorm * fAltGlob;
 
   if(hasSegs){
     // Reparto por tramo. Los factores de cada segmento (pendiente, superficie,
     // altura, fatiga acumulada) definen la FORMA del pacing, no el total.
     const segs=state.segments.filter(s=>(+s.dist||0)>0);
-    // Tipo de recorrido como fallback para tecnicidad cuando no se declara:
-    const fallbackTec = race.opts.tipo ? (T_TECNICIDAD[race.tipo]||1.0) : 1.0;
+    /* Un tramo sin terreno declarado hereda el tipo de recorrido de la carrera,
+       en la MISMA escala. Así, con la tabla cargada y ninguna columna tocada, la
+       suma de los km-esfuerzo de los tramos da exactamente el km-esfuerzo de la
+       carrera y el total no se mueve. Antes el fallback salía de la otra escala
+       (0,76 contra 0,80) y las dos mitades del motor no cerraban. */
+    const fallbackTec = tipoF_race;
     // Lista de tramos, más el implícito con lo que falte para cerrar la carrera
     const usedDist  = segs.reduce((a,s)=>a+(+s.dist||0),0);
     const usedDplus = segs.reduce((a,s)=>a+(+s.dplus||0),0);
@@ -1825,7 +2111,7 @@ function compute(){
     if(leftDist > 0.1){
       tramos.push({
         name:"Resto del circuito", dist:leftDist,
-        dplus:Math.max(0, race.dplus - usedDplus),
+        dplus:Math.max(0, raceDplus - usedDplus),
         dneg:Math.max(0, raceDneg - usedDneg),
         alt:null, tec:"", sup:"", pc:0,
       });
@@ -1833,7 +2119,7 @@ function compute(){
     // Primera pasada: km-esfuerzo de cada tramo y del conjunto
     let kmEffTot=0;
     const segCalc=tramos.map(s=>{
-      const fTec = s.tec ? (T_TECNICIDAD[+s.tec]||1) : fallbackTec;
+      const fTec = s.tec ? (T_RECORRIDO[+s.tec]||fallbackTec) : fallbackTec;
       const kE = (+s.dist>0) ? (s.dist + ((+s.dplus||0)/100)*fTec) : 0;
       kmEffTot += kE;
       return {s, fTec, kE};
@@ -1852,9 +2138,16 @@ function compute(){
          de más a las trepadas y de menos a los descensos largos. Contrastado con
          los parciales oficiales de Sierre-Zinal 2025: el error medio por tramo
          baja de 5,9 a 4,4 minutos. */
-      const fSBseg = globalSlopeFactor(s.dist, +s.dplus||0, +s.dplus||0);
+      /* Un tramo sin D+ caia en el caso degenerado de globalSlopeFactor, que
+         devuelve 1 y no es continuo con el resto de la curva: cargar 0 o 1 metro
+         de subida le movia el peso un 3 %. Aca se usa el valor de un tramo llano
+         balanceado, que es la continuacion natural. */
+      const dpSeg = +s.dplus||0;
+      const fSBseg = dpSeg>0
+        ? globalSlopeFactor(s.dist, dpSeg, dpSeg)
+        : (slopeFactor(0,false)+slopeFactor(0,true))/2;
       const fPend = fSBseg>0
-        ? globalSlopeFactor(s.dist, +s.dplus||0, +s.dneg||0)/fSBseg
+        ? globalSlopeFactor(s.dist, dpSeg, +s.dneg||0)/fSBseg
         : slopeFactor(pendMed, pendNet<0);
       const fSup  = s.sup ? (T_SUPERFICIE[s.sup]||1) : 1;
       // Si el segmento no trae altitud propia, usamos la altitud media del circuito
@@ -1869,6 +2162,67 @@ function compute(){
       sumW += w;
       return {pendMed, pendNet, fPend, fSup, fAlt, fFat, w};
     });
+
+    /* --- LO QUE LOS TRAMOS LE AGREGAN AL TOTAL (2026-08-10) ---
+       Tres cosas de la tabla cambian el tiempo estimado, y las tres entran por
+       donde ya entraban sus equivalentes globales:
+
+         · TERRENO: cambia los km-esfuerzo, que es de donde sale el tiempo. Es el
+           mismo lugar por donde entra el "tipo de recorrido" de la carrera.
+         · SUPERFICIE: multiplica. No tiene equivalente global, así que se lee
+           contra la referencia (que se asume en terreno normal), igual que el
+           terreno. Sin declarar nada vale 1.
+         · ALTITUD: REEMPLAZA a la altitud media del circuito, no se multiplica
+           encima. Un tramo sin altura propia cae en la del circuito, así que
+           declararla en todos los tramos y en el circuito da lo mismo.
+
+       Todo se pondera por km-esfuerzo, que es el proxy de cuánto tiempo se pasa
+       en cada tramo. Y la PENDIENTE de cada tramo NO entra acá a propósito: la
+       referencia se carga en grande, sin tramos, así que cobrarle a esta carrera
+       la concentración del desnivel sin descontársela a la referencia sería un
+       sesgo en una sola dirección. La pendiente por tramo sigue moviendo el
+       reparto, que es lo único que está contrastado contra parciales reales. */
+    /* LA AUTORIDAD SOBRE EL TAMANO DE LA CARRERA ES DE LA CARRERA, NO DE LOS TRAMOS.
+       De los tramos se toma la MEZCLA de terreno (el promedio pesado por el desnivel de
+       cada uno), y esa mezcla se aplica al D+ y a la distancia que declaraste arriba.
+
+       La primera version sumaba los km-esfuerzo de los tramos y usaba esa suma como
+       tamano de la carrera. Se veia razonable y estaba mal: si los tramos cubrian toda la
+       distancia pero declaraban menos D+ que la carrera, el desnivel que faltaba
+       desaparecia del calculo, y subir el D+ de la carrera podia dar un tiempo MENOR. Lo
+       destapo el banco de invariantes barriendo escenarios al azar (77 de 400 daban la
+       monotonia dada vuelta). Asi no puede pasar: el tamano sale siempre de los campos de
+       la carrera y los tramos solo dicen COMO es ese terreno.
+
+       De paso, esto vuelve inofensivos a los tramos que suman de mas o de menos: el
+       promedio de una escala siempre cae adentro de la escala, asi que no hay forma de
+       inflar el pronostico cargando tramos de mas. */
+    let sKE=0, sSup=0, sAlt=0, sDp=0, sDpTec=0;
+    segCalc.forEach((x,i)=>{
+      sKE+=x.kE; sSup+=x.kE*pesos[i].fSup; sAlt+=x.kE*pesos[i].fAlt;
+      const dp=+x.s.dplus||0; sDp+=dp; sDpTec+=dp*x.fTec;
+    });
+    if(sKE>0){
+      /* El D+ que los tramos no declaran se cuenta al tipo de recorrido de la
+         carrera, no al promedio de los tramos. Sin esto, unos tramos que cubrian
+         toda la distancia pero solo la mitad del desnivel le pegaban su terreno a
+         TODO el D+ de la carrera: declarar 1000 m de los 2000 como alpino salia
+         igual que declarar los 2000. El tramo implicito del Resto ya cubre el caso
+         en que sobra distancia; esto cubre el caso en que sobra desnivel. */
+      const faltaDp = Math.max(0, raceDplus - sDp);
+      const baseDp = sDp + faltaDp;
+      const fTerrenoMedio = baseDp>0 ? (sDpTec + faltaDp*tipoF_race)/baseDp : tipoF_race;
+      fTerrenoEfectivo = fTerrenoMedio;
+      kmEffUsado = kmEff(race.dist, raceDplus, fTerrenoMedio);
+      fTerrenoSeg = riegel(kmEffRace)>0 ? riegel(kmEffUsado)/riegel(kmEffRace) : 1;
+      fSupSeg = sSup/sKE;
+      fAltSeg = fAltGlob>0 ? (sAlt/sKE)/fAltGlob : 1;
+    }
+    hayTerrenoSeg = segs.some(s=>!!s.tec);
+    haySupSeg     = segs.some(s=>!!s.sup);
+    hayAltSeg     = segs.some(s=>s.alt!=null && +s.alt>0);
+    raceTimeSec = tRef * riegel(kmEffRace) * fSlopeNorm * fAltGlob * fTerrenoSeg * fSupSeg * fAltSeg;
+
     // Tercera pasada: repartimos el total de la carrera según esos pesos.
     // Las paradas en PC se suman aparte, no se reparten.
     let acumKm=0, acumTime=0, pcTot=0;
@@ -1902,8 +2256,8 @@ function compute(){
     baseTimeSec = raceTimeSec;
     splits.push({
       name:race.name||"Carrera",
-      dist:race.dist, dplus:race.dplus, dneg:raceDneg,
-      pendMed:(race.dplus+raceDneg)/(race.dist*10), pendNet:(race.dplus-raceDneg)/(race.dist*10),
+      dist:race.dist, dplus:raceDplus, dneg:raceDneg,
+      pendMed:(raceDplus+raceDneg)/(race.dist*10), pendNet:(raceDplus-raceDneg)/(race.dist*10),
       fTec:tipoF_race, fPend:fSlopeNorm, fSup:1, fAlt:fAltGlob, fFat:1,
       kE:kmEffRace, tSec:raceTimeSec, pcSec:0,
       accDist:race.dist, accTime:raceTimeSec,
@@ -1927,21 +2281,77 @@ function compute(){
     runAcc += sp.tSecAdj + sp.pcSec;
     sp.accTimeAdj = runAcc;
   });
-  // Añadimos extras fijos al último split (para que cierre):
-  if(splits.length && extraSec>0){
-    splits[splits.length-1].accTimeAdj += extraSec;
-  }
+  /* Los cruces y los minutos de PC del panel de Condiciones NO se le suman al
+     ultimo tramo. Se hacia para que el acumulado cerrara con el total, y el
+     efecto era peor que el problema: el ultimo tramo mostraba un reloj que ya
+     incluia media hora que todavia no habia pasado, y la fila de extras que
+     esta justo abajo repetia el mismo numero, asi que parecia no sumar nada.
+     Ahora el acumulado del ultimo tramo es el reloj de verdad al terminarlo, y
+     el cierre lo aporta esa fila, que para eso existe. */
 
   const pace = totalSec / Math.max(race.dist,0.01); // seg/km real
-  const effPace = refPace.secPerKmEff * condMult;
+  /* Ritmo por km-esfuerzo DE ESTA CARRERA, no de la referencia. Antes acá se
+     mostraba el de la referencia multiplicado por las condiciones, y quedaba
+     descolgado de los dos KPI que tiene al lado: con "ritmo promedio" y "km
+     esfuerzo" en pantalla, el que hacía la cuenta encontraba una diferencia de
+     2 a 3 % que no se explicaba con nada (era el desgaste de Riegel, más las
+     paradas). Ahora los tres números cierran entre sí. */
+  const effPace = totalSec / Math.max(kmEffUsado, 0.01);
 
-  const banda = bandaDe(refPace.sources, refPace.ratio || 1);
+  /* El ratio de extrapolación se mide contra el km-esfuerzo que se usó de
+     verdad. Si los tramos declaran terreno, el tamaño del esfuerzo cambia, y la
+     banda y el aviso tienen que mirar ese número y no el de antes. */
+  const ratioUsado = (refPace.kmEffRef>0 && kmEffUsado>0)
+    ? Math.max(refPace.kmEffRef,kmEffUsado)/Math.min(refPace.kmEffRef,kmEffUsado)
+    : (refPace.ratio || 1);
+  const banda = bandaDe(refPace.sources, ratioUsado);
+
+  /* --- DE DÓNDE SALE ESTE TIEMPO ---
+     La cadena se arma con los MISMOS factores que acaban de calcular el total y
+     en el mismo orden en que se aplican, así que la suma de los renglones es el
+     tiempo estimado, exacto. No es una explicación aparte que pueda quedar
+     desincronizada: si mañana alguien agrega un factor y no lo suma acá, el
+     último renglón deja de cerrar y se ve. */
+  const dz = [];
+  let acc = tRef * riegel(kmEffRace);
+  dz.push({tipo:"base", nombre:"La referencia, llevada a esta distancia y este desnivel", seg:acc,
+    sub:`${race.dist.toFixed(1)} km y ${Math.round(raceDplus)} m de D+ en terreno tipo ${race.opts.tipo?race.tipo:3}: ${kmEffRace.toFixed(1)} km-esfuerzo.`
+      + (state.refMode==="pace" ? " El ritmo de ruta se convirtió a trail con un +6 % genérico." : "")});
+  const paso=(nombre,factor,sub,mostrar)=>{
+    const antes=acc; acc*=factor;
+    if(mostrar || Math.abs(acc-antes)>=1) dz.push({tipo:"paso", nombre, seg:acc-antes, sub:sub||""});
+  };
+  paso("Perfil del recorrido", fSlopeNorm,
+    `Baja ${Math.round(raceDneg)} m y sube ${Math.round(raceDplus)} m.`,
+    state.race.opts.dneg && state.race.dneg!=null && state.race.dneg!=="");
+  paso("Altitud media del circuito", fAltGlob,
+    (state.race.opts.alt && state.race.alt>0) ? `${Math.round(state.race.alt)} m sobre el nivel del mar.` : "",
+    !!(state.race.opts.alt && state.race.alt>0));
+  if(hasSegs){
+    paso("Terreno declarado tramo por tramo", fTerrenoSeg,
+      hayTerrenoSeg ? `Con la mezcla de terreno de los tramos, la carrera son ${kmEffUsado.toFixed(1)} km-esfuerzo en vez de ${kmEffRace.toFixed(1)}.` : "Ningún tramo declara terreno propio: heredan el de la carrera.",
+      hayTerrenoSeg);
+    paso("Superficie de los tramos", fSupSeg,
+      haySupSeg ? `Promedio ×${fSupSeg.toFixed(3)}.` : "Ningún tramo declara superficie.",
+      haySupSeg);
+    paso("Altitud tramo por tramo", fAltSeg,
+      hayAltSeg ? "Reemplaza a la altitud media del circuito." : "Ningún tramo declara altitud propia.",
+      hayAltSeg);
+  }
+  const detCond = detalleCondiciones();
+  paso("Condiciones del día", condMult, detCond.length?detCond.join(" · "):"Sin ajustes activados.", condMult!==1);
+  if(pcFijoSec+extraSec>0){
+    acc += pcFijoSec+extraSec;
+    dz.push({tipo:"paso", nombre:"Paradas en puestos de control y cruces", seg:pcFijoSec+extraSec,
+      sub:"Se suma, no multiplica: estar parado no se hace más lento por el clima."});
+  }
+  dz.push({tipo:"total", nombre:"Tiempo estimado", seg:acc, sub:""});
 
   return {
     ok:true,
-    totalSec, pace, effPace, kmEffRace,
-    splits, refPace, condMult, extraSec, banda, hasSegs,
-    raceDist:race.dist, raceDplus:race.dplus, raceDneg,
+    totalSec, pace, effPace, kmEffRace, kmEffUsado, desglose:dz, ratioUsado, fTerrenoEfectivo,
+    splits, refPace, condMult, extraSec, pcFijoSec, banda, hasSegs,
+    raceDist:race.dist, raceDplus, raceDneg,
   };
 }
 
@@ -1949,12 +2359,17 @@ function compute(){
    RENDER DE RESULTADO
    ============================================================ */
 function recompute(scrollToTop){
+  /* El pie de la tabla de tramos («Total cargado: X km · te pasaste Y») se
+     recalculaba solo al tocar la tabla. Si después cambiabas la distancia de la
+     carrera, el aviso se quedaba con el número viejo y contradecía a la pantalla
+     de resultado. Va acá porque acá pasa todo lo que cambia. */
+  updateSegSum();
   const r = compute();
   const eWrap=$("out-errors");
   if(!r.ok){
     /* Arranca vacía a propósito, así que este cartel es lo primero que se ve.
        Tiene que sonar a "empecemos" y no a "algo se rompió". */
-    eWrap.innerHTML = `<div class="notice"><b>Para calcular necesito dos cosas:</b><br>${r.errs.map(x=>"• "+x).join("<br>")}</div>`;
+    eWrap.innerHTML = `<div class="notice"><b>${r.errs.length===1?"Para calcular falta una cosa:":`Para calcular faltan ${r.errs.length} cosas:`}</b><br>${r.errs.map(x=>"• "+esc(x)).join("<br>")}</div>`;
     $("r-time").textContent="--:--:--";
     $("r-banda").hidden=true;
     $("r-sub").textContent="Completá los campos marcados";
@@ -1962,11 +2377,15 @@ function recompute(scrollToTop){
     ["r-dist","r-dplus","r-pace","r-effpace","r-kmeff","r-conf"].forEach(id=>$(id).textContent="—");
     $("r-splits").innerHTML="";
     $("r-compare").innerHTML="";
+    $("r-desglose").innerHTML="";
+    $("r-desglose-card").hidden=true;
     $("r-conf-sub").textContent="—";
     return;
   }
   eWrap.innerHTML="";
-  $("r-race-name").textContent=state.race.name||"Carrera";
+  /* El nombre de la carrera lo escribe el usuario y va a parar a la pantalla, al
+     CSV y a la hoja impresa. Se escapa. */
+  $("r-race-name").textContent=(state.race.name||"Carrera") + (state.race.date ? " · " + state.race.date : "");
   $("r-time").textContent=fmtTime(r.totalSec);
 
   /* ---- LA BANDA ----
@@ -1989,15 +2408,26 @@ function recompute(scrollToTop){
   const cta = $("rb-cta");
   if(state.refMode==="pace"){
     cta.hidden = false;
-    cta.innerHTML = `Estás estimando desde un <b>ritmo de ruta</b>, que es la referencia más floja que hay. ` +
-      `Con una carrera de trail que ya hayas corrido, la banda se angosta bastante.`;
-  } else if(nR < 3){
-    const conMas = bandaDe(nR+2, r.refPace.ratio||1).p80;
+    /* Antes esto prometía que la banda se angosta con una carrera de trail, y es
+       falso: con UNA sola referencia la banda mide lo mismo venga de donde venga.
+       Lo que mejora no es el ancho, es el centro. */
+    cta.innerHTML = `Estás estimando desde un <b>ritmo de ruta</b>, que es la referencia más floja que hay: ` +
+      `el ritmo de llano se convierte a trail con un +6 % genérico, igual para todos. ` +
+      `Cargar una carrera de trail tuya <b>no angosta la banda</b> (con una referencia siempre es ±${(b80*100).toFixed(1)} %), ` +
+      `pero corre el centro al lugar que te corresponde. Recién a partir de la segunda se angosta.`;
+  } else if(nR < 5){
+    /* Hasta cuatro referencias todavía queda banda por ganar, así que el cartel
+       dice cuánto y con cuántas. Antes, con 3 o 4, ya anunciaba "es la banda más
+       angosta que este método sabe dar", y era falso: con 5 baja de 10,5 a 8,5 %.
+       Y mandaba a una pestaña llamada "Tu nivel", que no existe: se llama
+       "Tu referencia". */
+    const faltan = 5 - nR;
+    const conMas = bandaDe(5, r.ratioUsado||1).p80;
     cta.hidden = false;
     cta.innerHTML = `Tenés <b>${nR} carrera${nR===1?"":"s"} de referencia</b>. ` +
-      `Con ${nR===1?"tres":"dos más"} la banda bajaría a <b>±${(conMas*100).toFixed(1)} %</b> ` +
+      `Con ${faltan===1?"una más":`${faltan} más`} la banda bajaría a <b>±${(conMas*100).toFixed(1)} %</b> ` +
       `(${fmtTime(r.totalSec*(1-conMas))} a ${fmtTime(r.totalSec*(1+conMas))}). ` +
-      `Agregalas en la pestaña <b>Tu nivel</b>: es lo que más mejora el pronóstico.`;
+      `Agregalas en la pestaña <b>Tu referencia</b>: es lo que más mejora el pronóstico.`;
   } else {
     cta.hidden = false;
     cta.innerHTML = `<b>${nR} carreras de referencia</b> cargadas. Es la banda más angosta que este método sabe dar; ` +
@@ -2009,7 +2439,19 @@ function recompute(scrollToTop){
   $("r-dplus").innerHTML=`${Math.round(r.raceDplus)}<small>m</small>`;
   $("r-pace").textContent=fmtPace(r.pace);
   $("r-effpace").textContent=fmtPace(r.effPace);
-  $("r-kmeff").innerHTML=`${r.kmEffRace.toFixed(1)}<small>km-ef</small>`;
+  $("r-kmeff").innerHTML=`${r.kmEffUsado.toFixed(1)}<small>km-ef</small>`;
+
+  /* ---- DE DÓNDE SALE ESTE TIEMPO ---- */
+  $("r-desglose-card").hidden=false;
+  $("r-desglose").innerHTML = r.desglose.map(x=>{
+    const esExtremo = x.tipo==="base" || x.tipo==="total";
+    const clase = x.tipo==="total" ? "dz-row dz-total" : x.tipo==="base" ? "dz-row dz-base" : "dz-row";
+    const tono = esExtremo ? "" : (x.seg>=1 ? " mas" : x.seg<=-1 ? " menos" : " cero");
+    return `<div class="${clase}">
+      <div class="dz-n">${esc(x.nombre)}${x.sub?`<span class="dz-s">${esc(x.sub)}</span>`:""}</div>
+      <div class="dz-v${tono}">${esExtremo ? fmtTime(x.seg) : fmtDelta(x.seg)}</div>
+    </div>`;
+  }).join("");
 
   // Confianza. Los segmentos ya NO la suben: reparten el tiempo, no lo calculan,
   // así que no aportan nada a la certeza sobre el total.
@@ -2022,31 +2464,64 @@ function recompute(scrollToTop){
   $("r-conf-sub").textContent=cs;
 
   // SPLITS
+  /* Cada renglón muestra ahora el tiempo DEL TRAMO además del acumulado. Antes
+     solo estaba el acumulado, así que para saber cuánto dura una subida había
+     que restar dos números de cabeza, que es justo lo que uno va a buscar
+     cuando arma el pacing. */
   const maxPace = Math.max(...r.splits.map(s=>s.tSecAdj/Math.max(s.dist,0.01)));
   $("r-splits").innerHTML = r.splits.map((s,i)=>{
     const paceSec = s.tSecAdj/Math.max(s.dist,0.01);
     const pct = Math.min(100, (paceSec/maxPace)*100);
+    const parada = s.pcSec>0 ? ` <span class="pill" style="margin-left:6px">+${Math.round(s.pcSec/60)} min en PC</span>` : "";
     return `
     <div class="bar-row">
-      <div class="bar-name" title="${s.name}">${i+1}. ${s.name} <span class="pill" style="margin-left:6px">${s.dist.toFixed(1)}km · ${Math.round(s.dplus)}m D+</span></div>
+      <div class="bar-name" title="${esc(s.name)}">${i+1}. ${esc(s.name)} <span class="pill" style="margin-left:6px">${s.dist.toFixed(1)}km · ${Math.round(s.dplus)}m D+</span>${parada}</div>
       <div class="bar-bg"><div class="bar-fill" style="width:${pct}%">${fmtPace(paceSec)}/km</div></div>
-      <div class="bar-val">${fmtTime(s.accTimeAdj)}</div>
+      <div class="bar-val">${fmtTime(s.tSecAdj + s.pcSec)}<span class="bar-acc">${fmtTime(s.accTimeAdj)}</span></div>
     </div>`;
-  }).join("");
+  }).join("")
+  /* Los cruces y los minutos de PC del panel de Condiciones no son de ningún
+     tramo, así que caían enteros arriba del último y lo dejaban con un tiempo
+     que no se correspondía con su distancia. Ahora se dicen aparte. */
+  + (r.extraSec>0 ? `
+    <div class="bar-row bar-extra">
+      <div class="bar-name">Cruces y paradas fuera de los tramos</div>
+      <div class="bar-bg"></div>
+      <div class="bar-val">+${fmtTime(r.extraSec)}<span class="bar-acc">${fmtTime(r.totalSec)}</span></div>
+    </div>` : "");
   $("r-split-sub").textContent = r.splits.length>1
-    ? "Tiempo proyectado en cada tramo. La barra muestra el ritmo min/km y a la derecha el tiempo acumulado desde la largada."
-    : "Resumen sin segmentación. Agregá segmentos para tener splits detallados.";
+    ? "A la derecha, arriba, cuánto se tarda en ese tramo; abajo y más chico, el reloj acumulado desde la largada. La barra compara el ritmo del tramo con el del tramo más lento: cuanto más larga, más lento."
+    : (r.hasSegs ? "Un solo tramo cargado. Agregá más en la pestaña Segmentos para ver el pacing por puesto de control."
+                 : "Sin tramos cargados. Agregalos en la pestaña Segmentos para ver el pacing por puesto de control.");
 
   // Compare
+  /* La comparación con el objetivo se lee contra LA BANDA, no contra un umbral
+     fijo de 15 minutos. El umbral fijo se contradecía con la propia pantalla:
+     con una banda de ±14 %, en una carrera de cuatro horas, "±15 minutos" caía
+     bien adentro de lo probable y aun así el cartel lo pintaba de advertencia.
+     La banda es lo que esta calculadora sabe; el objetivo se mide con eso. */
   const obj = state.race.opts.obj ? parseTime(state.race.obj) : 0;
   let cmpHtml="";
   if(obj>0){
     const diff = r.totalSec - obj;
     const sign = diff>=0?"+":"−";
-    cmpHtml += `<div class="notice ${Math.abs(diff)<900?"ok":"warn"}">
-      <b>Tu objetivo:</b> ${fmtTime(obj)}<br>
-      <b>Nuestra estimación:</b> ${fmtTime(r.totalSec)} (${sign}${fmtTime(Math.abs(diff))})<br>
-      ${diff>0?"Tu objetivo está <b>por debajo</b> de lo estimado — apuntás a un ritmo ambicioso. Confirmalo con sesiones específicas.":"Tu objetivo se ve <b>realista o conservador</b> según tu nivel actual. Hay margen."}
+    const lo80 = r.totalSec*(1-r.banda.p80), hi80 = r.totalSec*(1+r.banda.p80);
+    const lo50 = r.totalSec*(1-r.banda.p50), hi50 = r.totalSec*(1+r.banda.p50);
+    let veredicto, tono;
+    if(obj>=lo50 && obj<=hi50){
+      tono="ok"; veredicto="Cae en la <b>mitad más probable</b> de la banda. Es el escenario que este método considera más esperable.";
+    } else if(obj>=lo80 && obj<=hi80){
+      tono="ok"; veredicto = obj<r.totalSec
+        ? "Cae <b>dentro de la banda</b>, del lado rápido. Es alcanzable con un buen día."
+        : "Cae <b>dentro de la banda</b>, del lado tranquilo. Queda margen.";
+    } else if(obj<lo80){
+      tono="warn"; veredicto=`Queda <b>por fuera de la banda</b>, más rápido que el borde optimista (${fmtTime(lo80)}). Pasa 1 vez de cada 10, o menos. Para apuntar ahí conviene confirmarlo con sesiones específicas.`;
+    } else {
+      tono="ok"; veredicto=`Queda <b>por fuera de la banda</b>, más lento que el borde tranquilo (${fmtTime(hi80)}). Es un objetivo conservador.`;
+    }
+    cmpHtml += `<div class="notice ${tono}">
+      <b>Objetivo cargado:</b> ${fmtTime(obj)} · <b>estimación:</b> ${fmtTime(r.totalSec)} (${sign}${fmtTime(Math.abs(diff))})<br>
+      ${veredicto}
     </div>`;
   }
   /* Aviso de extrapolación. Existe porque el caso que más engaña no da ningún
@@ -2057,37 +2532,28 @@ function recompute(scrollToTop){
      ensancha, así la pantalla no se contradice sola. Y porque en las 208
      predicciones el ratio resultó un predictor flojo — el aviso se guarda para
      los saltos donde sí se lo vio pesar, en vez de gritar en cada cálculo. */
-  const ratio = r.refPace.ratio || 1;
+  /* El mismo ratio que usa la banda, no el de antes de mirar los tramos: si los
+     dos números salen de bases distintas, el aviso puede decir que estás
+     extrapolando ×1,9 mientras la banda se ensanchó por ×1,7 (o al revés), y la
+     pantalla se contradice sola. */
+  const ratio = r.ratioUsado || 1;
   if(ratio >= 1.8){
     const kmEfRef = r.refPace.kmEffRef;
     cmpHtml += `<div class="notice warn">
       <b>Ojo: estás extrapolando ×${ratio.toFixed(1)}.</b>
       Tu referencia son <b>${kmEfRef.toFixed(0)} km-esfuerzo</b> y esta carrera son
-      <b>${r.kmEffRace.toFixed(0)}</b>. Predecir un esfuerzo largo desde uno mucho más corto
+      <b>${r.kmEffUsado.toFixed(0)}</b>. Predecir un esfuerzo largo desde uno mucho más corto
       es la parte más floja de cualquier calculadora: el número de arriba es una orientación,
-      no un pronóstico. ${ratio>=2 ? "Con este salto, tomalo como un rango de ±10 % y no como un tiempo." : ""}
+      no un pronóstico. ${ratio>=2 ? `Con este salto, leelo como la banda de arriba (±${(r.banda.p80*100).toFixed(1)} %) y no como un tiempo.` : ""}
       <br>Si tenés una carrera de duración parecida a esta, cargala como referencia: cambia todo.
     </div>`;
   }
 
   /* Cada renglón se escribe SOLO si el dato existe. Con el toggle prendido y el
-     campo vacío salía "temp null°C" y "hum null%" en la lista de factores. */
-  const activeConds = [];
-  const c = state.cond;
-  if(c.opts.temp && c.temp!=null) activeConds.push(`temp ${c.temp}°C`);
-  if(c.opts.hum && c.hum!=null)   activeConds.push(`hum ${c.hum}%`);
-  if(c.opts.cielo)   activeConds.push({clear:"soleado",part:"parcial",cloud:"nublado",light:"llovizna",rain:"lluvia",storm:"tormenta",snow:"nieve"}[c.cielo]||c.cielo);
-  if(c.opts.viento)  activeConds.push({none:"sin viento",light:"viento leve",mod:"viento mod.",strong:"viento fuerte",extreme:"viento extremo"}[c.viento]||c.viento);
-  if(c.opts.sol)     activeConds.push(`sol ${["sombra","parcial","expuesto","pleno"][c.sol]||""}`);
-  /* Se muestra la etiqueta que el usuario eligió, no el número interno: el
-     desplegable dice "~25 % de noche" pero el valor que usa el motor es 0,15,
-     así que el resumen contestaba "noche 15%" y parecía que no le había hecho
-     caso. */
-  if(c.opts.noche && c.noche>0) activeConds.push(
-    ({"0.15":"~25 % de noche","0.35":"~50 % de noche","0.70":"mayormente de noche","1.00":"toda de noche"})[(+c.noche).toFixed(2)] || `noche ${Math.round(c.noche*100)}%`);
-  if(c.opts.mochila) activeConds.push(`mochila ×${c.mochila}`);
-  if(c.opts.exp)     activeConds.push(`exp ×${c.exp}`);
-  const condDetail = activeConds.length ? activeConds.join(" · ") : "sin ajustes climáticos/corredor";
+     campo vacío salía "temp null°C" y "hum null%" en la lista de factores.
+     La lista vive en detalleCondiciones(), que también usa el desglose. */
+  const activeConds = detalleCondiciones();
+  const condDetail = activeConds.length ? activeConds.join(" · ") : "sin ajustes de clima ni de corredor";
 
   /* AVISOS DE CONTROLES QUE ESTÁN PRENDIDOS Y NO HACEN NADA.
      La humedad y el sol solo pesan cuando además hay calor cargado (la humedad
@@ -2099,46 +2565,151 @@ function recompute(scrollToTop){
   const sinCalor = !(state.cond.opts.temp && state.cond.temp != null && state.cond.temp > 18);
   if(state.cond.opts.hum && sinCalor) mudos.push("La <b>humedad</b> está activada pero no cambia nada: solo pesa con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
   if(state.cond.opts.sol && sinCalor) mudos.push("La <b>exposición al sol</b> está activada pero no cambia nada: solo suma con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
+  /* El sol en "sombra" y la humedad por debajo de 60 % con calor cargado: el control
+     esta encendido, con un valor elegido, y el motor no le cobra nada. Sin esto el
+     usuario ve el interruptor prendido y no hay una sola palabra que se lo diga. */
+  if(state.cond.opts.sol && !sinCalor && +state.cond.sol === 0) mudos.push("La <b>exposición al sol</b> está en «sombra o bosque cerrado», que no suma nada. Es el valor neutro: cambialo solo si la carrera es en terreno pelado.");
+  if(state.cond.opts.hum && !sinCalor && state.cond.hum != null && state.cond.hum <= 60) mudos.push(`La <b>humedad</b> está en ${state.cond.hum} % y no cambia nada: recién pesa por encima del 60 %.`);
+  /* D+ en 0 con bajada declarada: el modelo lo lee como carrera de bajada neta y
+     aplica el factor de descenso de la tabla completo. Es lo que dice la tabla,
+     pero conviene que se sepa, porque con 100 m de bajada en 30 km ya descuenta.*/
+  if(+state.race.dplus === 0 && r.raceDneg > 0) mudos.push(`Cargaste <b>0 m de D+</b> y ${Math.round(r.raceDneg)} m de bajada: el modelo lo toma como una carrera de bajada neta y descuenta tiempo. Si la carrera sube algo, cargá el D+.`);
   if(state.cond.opts.temp && state.cond.temp == null) mudos.push("La <b>temperatura</b> está activada pero el campo está vacío.");
   if(state.cond.opts.hum && state.cond.hum == null) mudos.push("La <b>humedad</b> está activada pero el campo está vacío.");
+  /* El resto de los interruptores que se pueden dejar prendidos en su valor
+     neutro. El bloque prometía listar TODO control encendido que no cambiara
+     nada y solo miraba dos. */
+  if(state.cond.opts.temp && state.cond.temp!=null && state.cond.temp>=5 && state.cond.temp<=15)
+    mudos.push(`La <b>temperatura</b> está en ${state.cond.temp} °C, que es zona sin penalización (de 5 a 15 °C): no cambia nada.`);
+  if(state.cond.opts.cielo && (state.cond.cielo==="clear"||state.cond.cielo==="part"))
+    mudos.push("El <b>cielo</b> está activado en una opción neutra: no cambia nada.");
+  if(state.cond.opts.viento && state.cond.viento==="none")
+    mudos.push("El <b>viento</b> está activado en «sin viento»: no cambia nada.");
+  if(state.cond.opts.noche && !(state.cond.noche>0))
+    mudos.push("La <b>porción nocturna</b> está activada en «toda de día»: no cambia nada.");
+  if(state.cond.opts.mochila && +state.cond.mochila===1)
+    mudos.push("La <b>mochila</b> está activada en «mínima»: no cambia nada.");
+  if(state.cond.opts.exp && +state.cond.exp===1)
+    mudos.push("La <b>experiencia</b> está activada en «experimentado»: no cambia nada.");
+  if(state.cond.opts.cruces && !(state.cond.cruces>0))
+    mudos.push("Los <b>cruces de río</b> están activados en 0: no suman tiempo.");
+  if(state.cond.opts.desnudo && !(state.cond.desnudo>0))
+    mudos.push("El <b>tiempo extra en PCs</b> está activado en 0: no suma tiempo.");
+  if(state.race.opts.obj && !(parseTime(state.race.obj)>0))
+    mudos.push("El <b>tiempo objetivo</b> está activado pero vacío o mal escrito. Va completo: 05:00:00 para cinco horas.");
+  else if(state.race.opts.obj && parseTime(state.race.obj)>0 && parseTime(state.race.obj) < r.totalSec/4)
+    mudos.push(`El <b>tiempo objetivo</b> dice ${fmtTime(parseTime(state.race.obj))}, que es menos de la cuarta parte de lo estimado. Revisá el formato: «5:00» se lee como cinco minutos; para cinco horas va <b>5:00:00</b>.`);
+  /* Referencias que se descartan enteras: la pantalla dice "2 carreras" y en la
+     pestaña de al lado hay tres tarjetas. */
+  if(state.refMode==="race"){
+    const incompletas = state.refs.filter(x=>!(parseTime(x.time)>0 && (+x.dist||0)>0)).length;
+    if(incompletas>0) mudos.push(`${incompletas===1?"Hay <b>una carrera de referencia</b> sin completar":`Hay <b>${incompletas} carreras de referencia</b> sin completar`} (le${incompletas===1?"":"s"} falta el tiempo o la distancia): no se usa${incompletas===1?"":"n"} para nada y no cuenta${incompletas===1?"":"n"} para angostar la banda.`);
+    state.refs.forEach((x,i)=>{
+      if(!(parseTime(x.time)>0 && (+x.dist||0)>0)) return;
+      if(x.opts.dneg && (x.dneg==null || x.dneg==="")) mudos.push(`En la referencia ${i+1}, el <b>desnivel negativo</b> está activado y vacío: se asume que bajaba lo mismo que subía.`);
+      if(x.opts.alt && !(+x.alt>0)) mudos.push(`En la referencia ${i+1}, la <b>altitud media</b> está activada y vacía.`);
+    });
+  }
   if(state.race.opts.dneg && (state.race.dneg == null || state.race.dneg === "")) mudos.push("El <b>desnivel negativo</b> está activado pero está vacío: se asume que baja lo mismo que sube.");
   if(state.race.opts.alt && !(state.race.alt > 0)) mudos.push("La <b>altitud media</b> está activada pero está vacía.");
   /* Altitud cargada de un solo lado. Es un sesgo silencioso y SIEMPRE en la misma
      dirección: si declarás que la carrera nueva es en altura pero no declarás la
      altura de tus referencias, la calculadora te penaliza por el oxígeno sin
      descontarte el que ya estabas pagando. Medido: +1,4 % hacia lento. */
-  if(state.refMode==="race" && state.race.opts.alt && state.race.alt>1200){
+  /* La altitud puede entrar por arriba (campo de la carrera) o por los tramos. Los
+     dos avisos de altitud asimetrica miraban solo el campo de arriba, asi que
+     declarandola tramo por tramo se cobraba el oxigeno sin descontarselo a las
+     referencias y sin una palabra en pantalla. */
+  const altSegMax = state.segments.reduce((a,g)=>Math.max(a, (g.alt!=null?+g.alt:0)||0), 0);
+  const altEfectiva = Math.max((state.race.opts.alt && state.race.alt>0) ? +state.race.alt : 0, altSegMax);
+  if(state.refMode==="race" && altEfectiva>1200){
     const sinAlt = state.refs.filter(r=>{ const t=parseTime(r.time), d=+r.dist||0;
       return t>0 && d>0 && !(r.opts.alt && r.alt>0); }).length;
-    if(sinAlt>0) mudos.push(`Declaraste que esta carrera es en altura (${state.race.alt} m) pero ${sinAlt===1?"una de tus referencias no tiene":`${sinAlt} de tus referencias no tienen`} altitud cargada. La calculadora te cobra la altura de esta carrera sin descontarte la de ${sinAlt===1?"aquélla":"aquéllas"}, así que el tiempo sale <b>más lento de lo que corresponde</b>. Si esas carreras también fueron en altura, cargásela${sinAlt===1?"":"s"}.`);
+    if(sinAlt>0) mudos.push(`Declaraste que esta carrera es en altura (${Math.round(altEfectiva)} m) pero ${sinAlt===1?"una de tus referencias no tiene":`${sinAlt} de tus referencias no tienen`} altitud cargada. La calculadora te cobra la altura de esta carrera sin descontarte la de ${sinAlt===1?"aquélla":"aquéllas"}, así que el tiempo sale <b>más lento de lo que corresponde</b>. Si esas carreras también fueron en altura, cargásela${sinAlt===1?"":"s"}.`);
   }
   /* Y el caso inverso: referencias en altura y carrera nueva al nivel del mar. */
-  if(state.refMode==="race" && !(state.race.opts.alt && state.race.alt>0)){
+  if(state.refMode==="race" && !(altEfectiva>0)){
     const enAltura = state.refs.filter(r=>{ const t=parseTime(r.time), d=+r.dist||0;
       return t>0 && d>0 && r.opts.alt && r.alt>1200; }).length;
     if(enAltura>0) mudos.push(`${enAltura===1?"Una de tus referencias fue":`${enAltura} de tus referencias fueron`} en altura y esta carrera no tiene altitud cargada. Si también es en altura, cargala: si no, la calculadora asume que corrés al nivel del mar y te da un tiempo <b>optimista</b>.`);
   }
   if(state.segments.length && !state.segEnabled) mudos.push(`Tenés <b>${state.segments.length} segmento${state.segments.length===1?"":"s"}</b> cargado${state.segments.length===1?"":"s"} pero «usar segmentos» está apagado: no se están usando.`);
   const sumaSeg = state.segments.reduce((a,s)=>a+(+s.dist||0),0);
+  const sumaDplusSeg = state.segments.reduce((a,g)=>a+(+g.dplus||0),0);
+  /* Si todos los tramos con subida declaran su propio terreno, la mezcla sale
+     entera de ellos y el "tipo de recorrido" de la carrera deja de pesar. Es lo
+     correcto (el dato mas fino manda), pero un control que dejo de hacer algo
+     tiene que decirlo. */
+  /* El terreno multiplica el desnivel: en un tramo sin D+ no tiene nada que
+     multiplicar, asi que elegirlo no cambia nada. */
+  if(r.hasSegs){
+    const sinDplus = state.segments.filter(g=>(+g.dist||0)>0 && !(+g.dplus>0) && !!g.tec).length;
+    if(sinDplus) mudos.push(`${sinDplus===1?"Un tramo declara":`${sinDplus} tramos declaran`} <b>terreno</b> pero no ${sinDplus===1?"tiene":"tienen"} desnivel positivo cargado: el terreno se cobra sobre la subida, así que ahí no cambia nada.`);
+  }
+  if(r.hasSegs && state.race.opts.tipo){
+    const conDplus = state.segments.filter(g=>(+g.dist||0)>0 && (+g.dplus||0)>0);
+    const cubreTodo = conDplus.length>0 && conDplus.every(g=>!!g.tec)
+      && conDplus.reduce((acc,g)=>acc+(+g.dplus||0),0) >= r.raceDplus - 10;
+    if(cubreTodo) mudos.push("Todos los tramos con subida declaran su propio <b>terreno</b>, así que el «tipo de recorrido» de la carrera ya no cambia el pronóstico: lo que manda es lo que dice cada tramo.");
+  }
+  if(r.hasSegs && r.raceDplus>0 && sumaDplusSeg > r.raceDplus + 10)
+    mudos.push(`Los tramos suman <b>${Math.round(sumaDplusSeg)} m de D+</b> y la carrera tiene <b>${Math.round(r.raceDplus)}</b>. El desnivel que manda es el de la carrera, pero el terreno de esos tramos de más pesa igual en el promedio. Uno de los dos números está mal cargado.`);
   if(r.hasSegs && sumaSeg > state.race.dist + 0.1)
-    mudos.push(`Los segmentos suman <b>${sumaSeg.toFixed(1)} km</b> y la carrera son <b>${state.race.dist.toFixed(1)} km</b>. El total sigue siendo el de la carrera; los tramos solo lo reparten, así que los parciales van a quedar corridos.`);
+    mudos.push(`Los tramos suman <b>${sumaSeg.toFixed(1)} km</b> y la carrera son <b>${state.race.dist.toFixed(1)} km</b>. La distancia y el D+ que mandan siguen siendo los de la carrera, pero el terreno, la superficie y la altitud de esos tramos de más <b>sí entran en el promedio</b> y mueven el tiempo. Corregí la distancia de la carrera o la de los tramos antes de usar este número.`);
+
+  /* Tramos cargados con la distancia en blanco. Se descartan (el filtro pide
+     dist>0) y antes desaparecían sin decir nada, mientras la pestaña los seguía
+     contando en su globito. */
+  const segVacios = state.segments.filter(s=>!((+s.dist||0)>0)).length;
+  if(state.segEnabled && segVacios>0)
+    mudos.push(`${segVacios===1?"Hay <b>un tramo</b> sin distancia":`Hay <b>${segVacios} tramos</b> sin distancia`}: no se ${segVacios===1?"usa":"usan"} para nada. Cargale${segVacios===1?"":"s"} los kilómetros o borralo${segVacios===1?"":"s"}.`);
+
+  /* Los minutos parados se pueden cargar en dos lugares distintos y se suman los
+     dos. No es un error del motor (quien quiera puede usar los dos a propósito),
+     pero es la clase de cosa que se hace sin querer y después no se encuentra. */
+  const pcTramos = state.segments.reduce((a,s)=>a+(+s.pc||0),0);
+  if(r.hasSegs && pcTramos>0 && state.cond.opts.desnudo && state.cond.desnudo>0)
+    mudos.push(`Estás cargando paradas en dos lugares: <b>${pcTramos} min</b> en la columna PC de los tramos y <b>${state.cond.desnudo} min</b> en «Tiempo extra en PCs» de Condiciones. Se suman los dos (<b>${pcTramos+state.cond.desnudo} min</b> en total).`);
+
+  /* El D- de los tramos no se controlaba contra el de la carrera, aunque la
+     distancia y el D+ sí. Como en la tabla el campo vacío vale 0 (a diferencia
+     del D- de la carrera, donde vacío significa "no lo cargué"), es fácil dejar
+     la columna sin llenar y que el reparto crea que la carrera no baja nunca. */
+  if(r.hasSegs){
+    const dnegSeg = state.segments.reduce((a,s)=>a+(+s.dneg||0),0);
+    if(r.raceDneg > 50 && dnegSeg < r.raceDneg*0.5)
+      mudos.push(`Los tramos declaran <b>${Math.round(dnegSeg)} m</b> de bajada y la carrera tiene <b>${Math.round(r.raceDneg)} m</b>. Lo que falte se le carga al tramo «Resto del circuito», así que el reparto entre tramos va a quedar corrido. El total no se mueve por esto.`);
+  }
+
+  /* Una referencia con un tiempo imposible. El caso que lo dispara es escribir
+     «2:15» queriendo decir dos horas y cuarto: parseTime lo lee como 2 minutos y
+     15 segundos y la calculadora contesta un 42K en cinco minutos, con banda y
+     confianza, sin que nada suene raro. */
+  if(state.refMode==="race"){
+    state.refs.forEach((ref,i)=>{
+      const t=parseTime(ref.time), d=+ref.dist||0;
+      if(t<=0||d<=0) return;
+      const kmh = d/(t/3600);
+      if(kmh>22) mudos.push(`La referencia ${i+1} da <b>${kmh.toFixed(1)} km/h</b> de promedio, que no es un tiempo de trail. Revisá el formato: «2:15» se lee como 2 minutos y 15 segundos; para dos horas y cuarto va <b>2:15:00</b>.`);
+      else if(kmh<2) mudos.push(`La referencia ${i+1} da <b>${kmh.toFixed(1)} km/h</b> de promedio. Revisá el tiempo o la distancia.`);
+    });
+  }
   if(mudos.length) cmpHtml += `<div class="notice warn"><b>Ojo con esto:</b><ul style="margin:8px 0 0 18px;line-height:1.7">${mudos.map(m=>"<li>"+m+"</li>").join("")}</ul></div>`;
 
   cmpHtml += `
     <div class="hint">
       <b>Factores aplicados:</b>
       <ul style="margin:8px 0 0 18px;line-height:1.7">
-        <li>Tipo de recorrido: <b>${state.race.opts.tipo?state.race.tipo:"3 (por defecto)"}</b> (factor ${(state.race.opts.tipo?(T_RECORRIDO[state.race.tipo]||T_RECORRIDO[3]):T_RECORRIDO[3]).toFixed(2)})</li>
+        <li>Tipo de recorrido: <b>${state.race.opts.tipo?state.race.tipo:"3 (por defecto)"}</b> (factor ${(state.race.opts.tipo?(T_RECORRIDO[state.race.tipo]||T_RECORRIDO[3]):T_RECORRIDO[3]).toFixed(2)})${Math.abs(r.fTerrenoEfectivo - (state.race.opts.tipo?(T_RECORRIDO[state.race.tipo]||T_RECORRIDO[3]):T_RECORRIDO[3])) > 0.005 ? ` <span style="color:var(--txt-4)">· con lo que declaran los tramos, el terreno que se usó es ${r.fTerrenoEfectivo.toFixed(2)}</span>` : ""}</li>
         <li>Desnivel negativo: <b>${Math.round(r.raceDneg)} m</b>${(state.race.opts.dneg && state.race.dneg!=null && state.race.dneg!=="")?"":" <span style=\"color:var(--txt-4)\">(asumido = D+)</span>"}</li>
-        <li>Altitud media del circuito: <b>${(state.race.opts.alt && state.race.alt>0)?state.race.alt+" m":"—"}</b></li>
+        <li>Altitud media del circuito: <b>${(state.race.opts.alt && state.race.alt>0)?state.race.alt+" m":"—"}</b>${(!(state.race.opts.alt && state.race.alt>0) && altSegMax>0)?` <span style="color:var(--txt-4)">· la ponen los tramos, hasta ${Math.round(altSegMax)} m</span>`:""}</li>
         <li>Multiplicador condiciones del día: <b>×${r.condMult.toFixed(3)}</b> <span style="color:var(--txt-4)">(${condDetail})</span></li>
-        <li>Tiempo extra por cruces + PCs: <b>+${fmtTime(r.extraSec)}</b></li>
+        <li>Tiempo parado (cruces y puestos de control): <b>+${fmtTime(r.extraSec + r.pcFijoSec)}</b>${r.pcFijoSec>0?` <span style="color:var(--txt-4)">(${fmtTime(r.pcFijoSec)} de la columna PC de los tramos)</span>`:""}</li>
         <li>Exponente de Riegel: <b>${EXP_RIEGEL}</b> · k fatiga: <b>${K_FATIGA}</b></li>
       </ul>
     </div>`;
   $("r-compare").innerHTML=cmpHtml;
 
-  if(scrollToTop) window.scrollTo({top:0, behavior:"smooth"});
 }
 
 // Auto-recompute con debounce cuando cualquier input cambia
@@ -2156,16 +2727,32 @@ document.addEventListener("click", e=>{
 function exportCSV(){
   const r=compute();
   if(!r.ok){ alert("Completá los datos antes de exportar."); return; }
-  const rows=[["Tramo","Distancia (km)","D+ (m)","D- (m)","Ritmo (min/km)","Tiempo tramo","Tiempo acumulado"]];
+  const rows=[];
+  rows.push([state.race.name||"Carrera", state.race.date||"", "", "", "", "", ""]);
+  rows.push([]);
+  rows.push(["Tramo","Distancia (km)","D+ (m)","D- (m)","Ritmo (min/km)","Tiempo tramo","Tiempo acumulado"]);
   r.splits.forEach((s,i)=>{
     rows.push([`${i+1}. ${s.name}`, s.dist.toFixed(2), Math.round(s.dplus), Math.round(s.dneg||0),
       fmtPace(s.tSecAdj/Math.max(s.dist,0.01)),
       fmtTime(s.tSecAdj + s.pcSec),
       fmtTime(s.accTimeAdj)]);
   });
+  /* Los cruces y los minutos de PC globales se sumaban al TOTAL pero no
+     aparecían en ninguna fila, así que la planilla no cerraba: la suma de los
+     tramos daba menos que el total y no había cómo saber por qué. */
+  if(r.extraSec>0) rows.push(["Cruces y paradas fuera de los tramos","","","","",fmtTime(r.extraSec),fmtTime(r.totalSec)]);
   rows.push([]);
-  rows.push(["TOTAL", r.raceDist.toFixed(2), Math.round(r.raceDplus), "", fmtPace(r.pace), "", fmtTime(r.totalSec)]);
-  const csv=rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  rows.push(["TOTAL", r.raceDist.toFixed(2), Math.round(r.raceDplus), Math.round(r.raceDneg), fmtPace(r.pace), "", fmtTime(r.totalSec)]);
+  /* La banda es el producto de esta calculadora. Un CSV con un tiempo al segundo
+     y sin la banda es justo la falsa precisión que la banda vino a corregir. */
+  rows.push([]);
+  rows.push(["8 de cada 10 veces, entre", fmtTime(r.totalSec*(1-r.banda.p80)), "y", fmtTime(r.totalSec*(1+r.banda.p80)), `+-${(r.banda.p80*100).toFixed(1)} %`,"",""]);
+  rows.push(["La mitad de las veces, entre", fmtTime(r.totalSec*(1-r.banda.p50)), "y", fmtTime(r.totalSec*(1+r.banda.p50)), `+-${(r.banda.p50*100).toFixed(1)} %`,"",""]);
+  rows.push(["Confianza", Math.round(100*r.refPace.confidence)+" %", `${r.refPace.sources} referencia${r.refPace.sources!==1?"s":""}`,"","","",""]);
+  /* `sep=,` es una linea que Excel entiende y las demas planillas ignoran. Sin
+     ella, Excel en espaniol espera punto y coma y abre todo el archivo apilado
+     en una sola columna. */
+  const csv="sep=,\r\n"+rows.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
@@ -2177,17 +2764,25 @@ $("btn-export-csv").addEventListener("click", exportCSV);
 $("btn-print").addEventListener("click", ()=>window.print());
 
 const LS_KEY="ea-trail-calc-v1";
+/* El HTML original se guarda una sola vez. Con dos clics seguidos, el segundo
+   leía el "✓ Guardado" que había puesto el primero y lo dejaba así para siempre. */
+let btnSaveHTML=null, btnSaveTimer=null;
 $("btn-save").addEventListener("click",()=>{
   try{
     localStorage.setItem(LS_KEY, JSON.stringify(state));
-    const b=$("btn-save"); const old=b.innerHTML;
+    const b=$("btn-save");
+    if(btnSaveHTML===null) btnSaveHTML=b.innerHTML;
     b.innerHTML="<span>✓ Guardado</span>";
-    setTimeout(()=>b.innerHTML=old, 1400);
+    clearTimeout(btnSaveTimer);
+    btnSaveTimer=setTimeout(()=>{ b.innerHTML=btnSaveHTML; }, 1400);
   }catch(e){ alert("No se pudo guardar."); }
 });
 $("btn-reset").addEventListener("click",()=>{
   if(!confirm("¿Restaurar valores iniciales? Se perderán tus datos.")) return;
-  localStorage.removeItem(LS_KEY);
+  /* En modo incógnito y con el almacenamiento bloqueado, removeItem tira una
+     excepción y el botón quedaba mudo: ni borraba ni recargaba. Recargar hay
+     que recargar igual. */
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
   location.reload();
 });
 
@@ -2196,20 +2791,46 @@ function loadSaved(){
     const raw=localStorage.getItem(LS_KEY);
     if(!raw) return false;
     const s=JSON.parse(raw);
-    // Merge defensivo para no romper si el localStorage viene de una versión anterior
+    /* Merge defensivo para no romper si el localStorage viene de una versión
+       anterior. Y no alcanza con comprobar que sea un array: cada referencia y
+       cada tramo se rellena contra su forma vacía. Si a una referencia le falta
+       `opts` (porque la guardó una versión que no lo tenía), renderRefs se caía
+       leyendo `r.opts.tipo`, applyStateToUI nunca terminaba y los interruptores
+       quedaban todos muertos, sin un solo mensaje. */
     if(s.refMode) state.refMode=s.refMode;
-    if(Array.isArray(s.refs)) state.refs=s.refs;
+    if(Array.isArray(s.refs)) state.refs=s.refs.map(r=>{
+      const base=emptyRef();
+      if(r && typeof r==="object"){
+        Object.keys(base).forEach(k=>{ if(k!=="opts" && r[k]!==undefined) base[k]=r[k]; });
+        if(r.opts && typeof r.opts==="object") base.opts=Object.assign(base.opts, r.opts);
+      }
+      return base;
+    });
     if(s.pace) Object.assign(state.pace, s.pace);
     if(s.race){
       Object.assign(state.race, s.race);
       if(s.race.opts) state.race.opts=Object.assign({}, state.race.opts, s.race.opts);
+      /* Guardado por una versión anterior, donde el D+ vacío era 0. Se respeta el
+         número si lo hay y se pide de nuevo si no. */
+      if(state.race.dplus===undefined) state.race.dplus=null;
     }
     if(typeof s.segEnabled==="boolean") state.segEnabled=s.segEnabled;
-    if(Array.isArray(s.segments)) state.segments=s.segments;
+    if(Array.isArray(s.segments)) state.segments=s.segments.map(g=>{
+      const base=emptySeg();
+      if(g && typeof g==="object") Object.keys(base).forEach(k=>{ if(g[k]!==undefined) base[k]=g[k]; });
+      return base;
+    });
     if(s.cond){
       // Copiamos solo las claves conocidas para ignorar campos retirados (clima viejo, etc.)
       const keys=["temp","hum","cielo","viento","sol","noche","mochila","exp","cruces","desnudo"];
       keys.forEach(k=>{ if(s.cond[k]!=null) state.cond[k]=s.cond[k]; });
+      /* La porcion nocturna valia 0.15 / 0.35 / 0.70 y ahora vale lo que dice la
+         etiqueta (0.25 / 0.50 / 0.75). Un guardado viejo traia un numero que ya no
+         existe entre las opciones, el desplegable no lo encontraba y se caia en
+         "toda de dia": el pronostico cambiaba solo, en silencio. */
+      const NOCHE_VIEJA = {"0.15":0.25, "0.35":0.50, "0.70":0.75};
+      const nv = NOCHE_VIEJA[(+state.cond.noche).toFixed(2)];
+      if(nv != null) state.cond.noche = nv;
       if(s.cond.opts){
         keys.forEach(k=>{ if(typeof s.cond.opts[k]==="boolean") state.cond.opts[k]=s.cond.opts[k]; });
       }
@@ -2234,8 +2855,18 @@ function applyStateToUI(){
 
   // race
   $("r_name").value=val(state.race.name); $("r_date").value=state.race.date||"";
-  $("r_dist").value=val(state.race.dist); $("r_dplus").value=val(state.race.dplus);
-  $("r_tipo").value=state.race.tipo; $("r_dneg").value=val(state.race.dneg);
+  $("r_dist").value=val(state.race.dist);
+  /* El D+ es el unico campo obligatorio donde el 0 es un dato de verdad (una
+     carrera de llano). Con val() el 0 se escribia como campo vacio, asi que un
+     guardado viejo (donde el vacio valia 0) volvia con el campo en blanco Y
+     calculando igual: el usuario veia un obligatorio sin llenar y un resultado
+     al lado. Vacio es null y se ve vacio; 0 es cero y se ve. */
+  $("r_dplus").value = state.race.dplus==null ? "" : state.race.dplus;
+  /* El D- sí puede ser 0 de verdad (una carrera que solo sube), así que acá el
+     0 se escribe. Lo que no se escribe es el null, que significa "no lo",
+     cargué". Con la regla general se guardaba un 0 y volvía en blanco. */
+  $("r_tipo").value=state.race.tipo;
+  $("r_dneg").value = (state.race.dneg==null||state.race.dneg==="") ? "" : state.race.dneg;
   $("r_alt").value=val(state.race.alt); $("r_obj").value=val(state.race.obj);
   $$("[data-optional]").forEach(f=>{
     const opt=f.dataset.optional;
@@ -2244,6 +2875,7 @@ function applyStateToUI(){
     if(opt.startsWith("r_")) on = !!state.race.opts[opt.slice(2)];
     else if(opt.startsWith("c_")) on = !!state.cond.opts[opt.slice(2)];
     tog.classList.toggle("on", on);
+    tog.setAttribute("aria-checked", on ? "true" : "false");
     f.classList.toggle("disabled", !on);
   });
   // seg toggle
@@ -2251,14 +2883,39 @@ function applyStateToUI(){
   segTog.classList.toggle("on", state.segEnabled);
 
   // condiciones
+  /* Los desplegables numéricos se buscan por VALOR, no por texto. El estado
+     guarda 1 y la opción se llama "1.00": asignar `select.value = 1` no encuentra
+     ninguna opción y el desplegable queda EN BLANCO. Pasaba cada vez que se
+     abría la calculadora con «Peso de mochila» y con «Experiencia en trail», que
+     son justo los dos que traen decimales. */
+  /* Devuelven el valor que quedó realmente elegido. Si lo guardado traía una
+     opción que ya no existe (una versión vieja del desplegable), el estado se
+     realinea con lo que se ve, en vez de que la pantalla diga una cosa y el
+     motor calcule otra. */
+  const setSel = (id, val) => {
+    const el = $(id);
+    const ops = el && el.options ? Array.from(el.options) : [];
+    if(!ops.length){ if(el) el.value = val; return +val; }
+    const v = +val;
+    const o = ops.find(o => +o.value === v);
+    el.value = o ? o.value : ops[0].value;
+    return +el.value;
+  };
   $("c_temp").value=state.cond.temp==null?"":state.cond.temp;
   $("c_hum").value=state.cond.hum==null?"":state.cond.hum;
-  $("c_cielo").value=state.cond.cielo;
-  $("c_viento").value=state.cond.viento;
-  $("c_sol").value=state.cond.sol;
-  $("c_noche").value=state.cond.noche;
-  $("c_mochila").value=state.cond.mochila;
-  $("c_exp").value=state.cond.exp;
+  const setSelTxt = (id, val) => {
+    const el = $(id);
+    const ops = el && el.options ? Array.from(el.options) : [];
+    if(!ops.length){ if(el) el.value = val; return val; }
+    el.value = ops.some(o=>o.value===val) ? val : ops[0].value;
+    return el.value;
+  };
+  state.cond.cielo  = setSelTxt("c_cielo", state.cond.cielo);
+  state.cond.viento = setSelTxt("c_viento", state.cond.viento);
+  state.cond.sol     = setSel("c_sol", state.cond.sol);
+  state.cond.noche   = setSel("c_noche", state.cond.noche);
+  state.cond.mochila = setSel("c_mochila", state.cond.mochila);
+  state.cond.exp     = setSel("c_exp", state.cond.exp);
   $("c_cruces").value=state.cond.cruces||"";
   $("c_desnudo").value=state.cond.desnudo||"";
 
@@ -2285,7 +2942,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"4.2", fecha:"08-08-2026" };
+  var VERSION = { n:"5.0", fecha:"10-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();
@@ -2345,6 +3002,22 @@ init();
     var a = document.querySelector('.tt.abierto');
     if (a) a.classList.remove('abierto');
   }
+  /* En el celular el globito cuelga hacia abajo del campo, así que si el campo
+     está en la mitad baja de la pantalla el texto se abre fuera de la vista y
+     parece que tocar el "?" no hiciera nada. Si quedó abajo del todo, se
+     acerca. Embebida no se puede scrollear desde acá (el scroll lo tiene la
+     página de afuera), así que en ese caso no se intenta. */
+  function traerALaVista(tt) {
+    if (window.innerWidth > 720) return;
+    if (window.parent !== window) return;
+    var cuerpo = tt.querySelector('.tt-body');
+    if (!cuerpo) return;
+    setTimeout(function () {
+      var r = cuerpo.getBoundingClientRect();
+      var sobra = r.bottom - (window.innerHeight - 12);
+      if (sobra > 0) window.scrollBy({ top: sobra, behavior: 'smooth' });
+    }, 60);
+  }
   document.addEventListener('click', function (e) {
     var info = e.target.closest ? e.target.closest('.tt .info') : null;
     if (!info) { cerrar(); return; }
@@ -2354,11 +3027,23 @@ init();
     e.stopPropagation();
     var yaEstaba = tt.classList.contains('abierto');
     cerrar();
-    if (!yaEstaba) tt.classList.add('abierto');
+    if (!yaEstaba) { tt.classList.add('abierto'); traerALaVista(tt); }
   }, true);
   /* Y que se pueda llegar con el teclado, que además es lo que hace que
-     :focus-within sirva de algo. */
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrar(); });
+     :focus-within sirva de algo. Enter y espacio abren y cierran igual que el
+     dedo; Escape cierra siempre. */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { cerrar(); return; }
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    var info = e.target && e.target.closest ? e.target.closest('.tt .info') : null;
+    if (!info) return;
+    var tt = info.closest('.tt');
+    if (!tt) return;
+    e.preventDefault();
+    var yaEstaba = tt.classList.contains('abierto');
+    cerrar();
+    if (!yaEstaba) { tt.classList.add('abierto'); traerALaVista(tt); }
+  });
 })();
 </script>
 </body>

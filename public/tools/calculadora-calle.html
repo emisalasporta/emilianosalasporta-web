@@ -532,6 +532,17 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
   opacity:1;visibility:visible;
   transition:opacity var(--trans), visibility 0s linear 0s;
 }
+/* Abierto TIENE que recibir el toque. Con pointer-events:none heredado, tocar el
+   texto del globito accionaba el interruptor tapado debajo y movia el pronostico.
+   Ahora el toque cae en el globito y lo unico que hace es cerrarlo. */
+.tt.abierto .tt-body{pointer-events:auto}
+/* Y el "?" era un blanco de 15 x 15 px. El dibujo queda igual; lo que crece es el
+   area que responde al dedo, con un ::before invisible. */
+.tt .info{position:relative}
+.tt .info::before{
+  content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:50%;
+}
 
 /* En pantalla angosta el globito deja de colgar centrado del "?" (pegado al
    borde derecho, así que se salía) y ocupa el ancho del campo. `.tt` pasa a
@@ -1028,7 +1039,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
         <div class="field" data-optional="c_temp">
           <div class="field-head">
             <span class="field-label">Temperatura prevista
-              <span class="tt"><span class="info">?</span><span class="tt-body">Óptimo para 10K/21K: <b>10–13 °C</b>. Para maratón: <b>5–10 °C</b>. Penaliza &gt;15 °C (~0.4 %/°C en 10K, ~0.6 %/°C en 42K). Calor extremo (&gt;28 °C) añade penalización acelerada por hipertermia. Frío &lt;5 °C también penaliza levemente (~0.2 %/°C).</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">El óptimo <b>depende de cuánto dura la carrera</b>: cerca de 12 °C en un 5K y de 6 °C en un maratón, porque cuanto más largo el esfuerzo, más pesa el calor acumulado. Se cobra <b>desde ese óptimo</b>, entre 0,3 %/°C en un 5K y 0,6 %/°C en un maratón, y por encima de 28 °C se acelera. El frío recién penaliza siete grados por debajo del óptimo. Ojo con esto: 15 °C no cuesta lo mismo en un 5K que en un maratón, y en el maratón ya cuesta.</span></span>
             </span>
             <span class="toggle" data-toggle="c_temp"></span>
           </div>
@@ -1046,14 +1057,14 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
         <div class="field" data-optional="c_cielo">
           <div class="field-head">
             <span class="field-label">Cielo / precipitación
-              <span class="tt"><span class="info">?</span><span class="tt-body">Nublado fresco es lo ideal (−1 %). Lluvia leve +1–2 % (zapatilla empapada, resbalones leves). Lluvia intensa +3–4 %. Nieve +5 %. Tormenta eléctrica: pausa recomendada.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">Nublado fresco es lo mejor que hay para correr y descuenta un 1 %. Llovizna +1,5 %, lluvia persistente +3 %, nieve o hielo +5 %, tormenta +7 %. Con tormenta eléctrica lo razonable es parar, no ajustar el pronóstico.</span></span>
             </span>
             <span class="toggle" data-toggle="c_cielo"></span>
           </div>
           <select id="c_cielo">
             <option value="clear">Soleado a pleno</option>
-            <option value="part">Parcialmente nublado</option>
-            <option value="cloud" selected>Nublado</option>
+            <option value="part" selected>Parcialmente nublado</option>
+            <option value="cloud">Nublado (−1 %)</option>
             <option value="light">Llovizna / lluvia leve</option>
             <option value="rain">Lluvia persistente</option>
             <option value="storm">Tormenta</option>
@@ -1063,16 +1074,16 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
         <div class="field" data-optional="c_viento">
           <div class="field-head">
             <span class="field-label">Viento dominante
-              <span class="tt"><span class="info">?</span><span class="tt-body">En ruta abierta el viento pesa más que en trail con árboles. Viento frontal sostenido de 20–30 km/h: +2.5 %; 30–45 km/h: +5 %. En circuitos ida-vuelta el viento favorable sólo compensa ~70 % por la relación cuadrática de resistencia.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">En ruta abierta el viento pesa más que en trail con árboles. Lo que aplica cada opción está escrito al lado de su nombre: de +0,5 % con viento leve a +8,5 % con viento extremo. En circuitos de ida y vuelta el viento a favor no compensa al de frente: la resistencia crece con el cuadrado de la velocidad, así que a favor sólo descuenta un 1 %.</span></span>
             </span>
             <span class="toggle" data-toggle="c_viento"></span>
           </div>
           <select id="c_viento">
-            <option value="none">Sin viento / brisa (&lt;10 km/h)</option>
-            <option value="light">Leve variable (10–20 km/h)</option>
-            <option value="mod" selected>Moderado (20–35 km/h)</option>
-            <option value="strong">Fuerte (35–55 km/h)</option>
-            <option value="extreme">Extremo (&gt;55 km/h)</option>
+            <option value="none" selected>Sin viento / brisa (&lt;10 km/h)</option>
+            <option value="light">Leve variable (10–20 km/h) +0,5 %</option>
+            <option value="mod">Moderado (20–35 km/h) +2 %</option>
+            <option value="strong">Fuerte (35–55 km/h) +4,5 %</option>
+            <option value="extreme">Extremo (&gt;55 km/h) +8,5 %</option>
             <option value="favor">A favor constante (−1 %)</option>
           </select>
         </div>
@@ -1084,10 +1095,10 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
             <span class="toggle" data-toggle="c_sol"></span>
           </div>
           <select id="c_sol">
-            <option value="0">Sombra / edificios cubren</option>
-            <option value="1" selected>Parcial</option>
-            <option value="2">Expuesto en su mayoría</option>
-            <option value="3">Totalmente expuesto (sin sombra)</option>
+            <option value="0" selected>Sombra / edificios cubren</option>
+            <option value="1">Parcial +1 %</option>
+            <option value="2">Expuesto en su mayoría +2,5 %</option>
+            <option value="3">Totalmente expuesto +4 %</option>
           </select>
         </div>
       </div>
@@ -1097,7 +1108,7 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
         <div class="field" data-optional="c_exp">
           <div class="field-head">
             <span class="field-label">Experiencia en la distancia
-              <span class="tt"><span class="info">?</span><span class="tt-body">El pacing y la gestión energética se aprenden. Primer 42K suele costar +5–8 % sobre lo que predice un 21K (famoso "muro"). Primer 21K: +2–3 %. Debut en 10K: +1–2 %. Corredor veterano: sin ajuste.</span></span>
+              <span class="tt"><span class="info">?</span><span class="tt-body">El pacing y la gestión energética se aprenden. Primer 42K suele costar +5–8 % sobre lo que predice un 21K (el famoso muro). Acá se aplica: debut +6 % en 42K, +3 % en 21K, +1,5 % en 10K; poca experiencia +2,5 % en 42K, +1,5 % en 21K. Experimentado no cambia nada y veterano descuenta medio punto.</span></span>
             </span>
             <span class="toggle" data-toggle="c_exp"></span>
           </div>
@@ -1161,7 +1172,9 @@ input[type=date]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opaci
 
     <div class="kpi-grid">
       <div class="kpi"><div class="k-l">Distancia</div><div class="k-v" id="r-dist">—<small>km</small></div></div>
-      <div class="kpi"><div class="k-l">Ritmo promedio</div><div class="k-v" id="r-pace">—</div><div class="k-s">min/km</div></div>
+      <div class="kpi"><div class="k-l">Ritmo al que correr
+        <span class="tt"><span class="info">?</span><span class="tt-body">El ritmo que hay que sostener corriendo, sin contar el tiempo parado. Es el número que se carga en el reloj. Si abajo dice otro, la diferencia son los minutos que declaraste parado.</span></span>
+      </div><div class="k-v" id="r-pace">—</div><div class="k-s" id="r-pace-sub">min/km</div></div>
       <div class="kpi"><div class="k-l">Velocidad media</div><div class="k-v" id="r-speed">—<small>km/h</small></div></div>
       <div class="kpi"><div class="k-l">VDOT estimado</div><div class="k-v" id="r-vdot">—</div><div class="k-s">Daniels</div></div>
       <div class="kpi"><div class="k-l">VAM equivalente</div><div class="k-v" id="r-vam">—<small>km/h</small></div></div>
@@ -1287,6 +1300,11 @@ function minettiCost(grade){
 const COST_FLAT = 3.6; // J/(kg·m) en llano
 function slopeFactor(grade){ return minettiCost(grade) / COST_FLAT; }
 
+/* OJO: esta tabla y pctVAM() NO las usa el motor. El % de VAM que se muestra en
+   pantalla sale de dividir la velocidad media estimada por la VAM equivalente, que
+   es otra cuenta. Se dejan porque el panel de referencia muestra sus valores como
+   orientacion al cargar una VAM, pero no son la fuente de verdad de ningun numero
+   del Resultado. Si algun dia hay que elegir, la que manda es la division. */
 // Tabla %VAM por distancia (Billat 1999 + Daniels). Interpolación log-lineal.
 const VAM_PCT_TABLE = [
   [1.5, 110], [3, 100], [5, 95], [10, 90], [15, 87],
@@ -1451,6 +1469,10 @@ function fmtPace(secPerKm){
   return Math.floor(tot/60)+":"+String(tot%60).padStart(2,"0");
 }
 function fmtPaceShort(secPerKm){ return fmtPace(secPerKm); }
+/* Los nombres los escribe el usuario y van a parar a innerHTML, al CSV y al papel.
+   Una comilla rompia la fila y un <b> se interpretaba. */
+function esc(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 function speedFromPace(secPerKm){ return 3600/secPerKm; }
 function paceFromSpeed(kmh){ return 3600/kmh; }
 
@@ -1480,10 +1502,28 @@ const state = {
   cond:{
     opts:{temp:false, hum:false, cielo:false, viento:false, sol:false,
           exp:false, grupo:false, strategy:false, stops:false},
-    temp:null, hum:null, cielo:"cloud", viento:"mod", sol:1,
+    /* Cielo, viento y sol arrancan en su valor NEUTRO (x1,00). Antes partian de
+       "nublado" (-1 %), "moderado" (+2 %) y "parcial" (+1 %), asi que prender el
+       interruptor ya movia el pronostico sin que eligieras nada: en un maraton,
+       -1:51 y +3:41. Es el mismo arreglo que se le hizo a trail el 10-08. */
+    temp:null, hum:null, cielo:"part", viento:"none", sol:0,
     exp:"experimentado", grupo:"solo", strategy:"even", stops:0,
   },
 };
+
+/* Embebida en la web, el scroll lo tiene la pagina de afuera: un window.scrollTo
+   adentro del marco no hace nada, asi que tocar una pestania dejaba al usuario
+   mirando el medio del panel anterior. Se le pide al padre que suba, que es lo
+   que ya hace la calculadora de trail. Suelta, sube ella misma. */
+function subirALaVista(){
+  try{
+    if(window.parent && window.parent !== window){
+      window.parent.postMessage({tipo:"subir-herramienta"}, "*");
+    } else {
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+  }catch(e){}
+}
 
 function emptyRef(){
   return {
@@ -1505,6 +1545,7 @@ $$(".tab").forEach(t=>t.addEventListener("click",()=>{
   const id=t.dataset.tab;
   $$(".panel").forEach(p=>p.classList.toggle("active", p.dataset.panel===id));
   if(id==="out") recompute(true);
+  subirALaVista();
 }));
 
 // ============================================================
@@ -1535,8 +1576,8 @@ function renderRefs(){
         ${state.refs.length>1?`<button class="btn btn-ghost btn-sm" data-del="${i}">Eliminar</button>`:""}
       </div>
       <div class="grid grid-2">
-        <div class="field"><div class="field-head"><span class="field-label">Nombre</span></div><input type="text" data-k="name" data-i="${i}" value="${(r.name||"").replace(/"/g,'&quot;')}" placeholder="Carrera previa"></div>
-        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${r.time||""}" placeholder="00:45:00"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Nombre</span></div><input type="text" data-k="name" data-i="${i}" value="${esc(r.name)}" placeholder="Carrera previa"></div>
+        <div class="field"><div class="field-head"><span class="field-label">Tiempo oficial</span></div><input type="text" data-k="time" data-i="${i}" value="${esc(r.time)}" placeholder="00:45:00"></div>
         <div class="field">
           <div class="field-head"><span class="field-label">Distancia</span></div>
           <input type="number" data-k="dist" data-i="${i}" step="0.1" min="0.5" value="${r.dist||""}" placeholder="10"><span class="unit">km</span>
@@ -1633,12 +1674,21 @@ $$(".dist-pills button").forEach(b=>b.addEventListener("click",()=>{
 }));
 
 // Toggles genéricos — [data-toggle]
+/* Los interruptores son <span>, asi que sin esto no reciben foco y la calculadora
+   entera queda inusable con teclado. Se les pone tabindex, rol de interruptor y
+   se los hace responder a Enter y a la barra espaciadora igual que a un clic. */
 function bindTogglesOnce(root){
   root.querySelectorAll("[data-toggle]:not([data-bound])").forEach(t=>{
     t.dataset.bound="1";
-    t.addEventListener("click",()=>{
+    if(!t.hasAttribute("tabindex")) t.setAttribute("tabindex","0");
+    if(!t.hasAttribute("role")) t.setAttribute("role","switch");
+    t.setAttribute("aria-checked", t.classList.contains("on") ? "true" : "false");
+    const rotulo = t.closest(".field-head") && t.closest(".field-head").querySelector(".field-label");
+    if(rotulo && !t.hasAttribute("aria-label")) t.setAttribute("aria-label", rotulo.textContent.replace(/\s*\?\s*$/,"").trim());
+    const accionar=()=>{
       const key=t.dataset.toggle;
       t.classList.toggle("on");
+      t.setAttribute("aria-checked", t.classList.contains("on") ? "true" : "false");
       const field=t.closest("[data-optional]");
       if(field) field.classList.toggle("disabled", !t.classList.contains("on"));
       if(key.startsWith("r_")){
@@ -1648,7 +1698,19 @@ function bindTogglesOnce(root){
       } else if(key==="seg_enabled"){
         state.segEnabled=t.classList.contains("on");
       }
+      scheduleRecompute();
+    };
+    t.addEventListener("click",accionar);
+    t.addEventListener("keydown",e=>{
+      if(e.key===" "||e.key==="Enter"||e.key==="Spacebar"){ e.preventDefault(); accionar(); }
     });
+  });
+  // Y los globitos, que tambien son <span> sin foco.
+  root.querySelectorAll(".tt .info:not([data-bound])").forEach(i=>{
+    i.dataset.bound="1";
+    i.setAttribute("tabindex","0");
+    i.setAttribute("role","button");
+    i.setAttribute("aria-label","Ver la explicación");
   });
 }
 
@@ -1677,7 +1739,7 @@ function renderSegments(){
   state.segments.forEach((s,i)=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td data-label="Tramo"><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${s.name.replace(/"/g,'&quot;')}"></td>
+      <td data-label="Tramo"><input type="text" class="seg-name" data-k="name" data-i="${i}" value="${esc(s.name)}"></td>
       <td data-label="Dist (km)"><input type="number" step="0.1" min="0" data-k="dist" data-i="${i}" value="${s.dist||""}"></td>
       <td data-label="D+ (m)"><input type="number" step="5" min="0" data-k="dplus" data-i="${i}" value="${s.dplus||""}"></td>
       <td data-label="D− (m)"><input type="number" step="5" min="0" data-k="dneg" data-i="${i}" value="${s.dneg||""}"></td>
@@ -1823,6 +1885,7 @@ function referenceVdot(targetDistKm){
     if(!(vam > 0)) return null;
     return {
       vdot: vdotFromVam(vam),
+      distRef: 0,        // la VAM no es una distancia: no hay extrapolacion que medir
       confidence: 0.55,  // VAM es un punto aislado → confianza media
       source: "VAM",
       detail: `VAM ${vam.toFixed(2)} km/h → VDOT ${vdotFromVam(vam).toFixed(1)}`,
@@ -1835,7 +1898,7 @@ function referenceVdot(targetDistKm){
     const vdot = vdotFromPerf(d, t);
     if(!vdot) return null;
     return {
-      vdot, confidence: 0.60,
+      vdot, distRef: d, confidence: 0.60,
       source: "Ritmo test",
       detail: `${d.toFixed(1)} km en ${fmtTime(t)} → VDOT ${vdot.toFixed(1)}`,
       sources:1,
@@ -1843,7 +1906,7 @@ function referenceVdot(targetDistKm){
   }
   // Modo carrera previa: promediar VDOTs de refs, peso por cercanía a distancia objetivo.
   if(state.refs.length === 0) return null;
-  let sumW = 0, sumVdot = 0, validN = 0;
+  let sumW = 0, sumVdot = 0, validN = 0, sumDist = 0;
   const detailArr = [];
   for(const r of state.refs){
     const flat = refToFlatSeaLevel(r);
@@ -1856,13 +1919,14 @@ function referenceVdot(targetDistKm){
       const logRatio = Math.abs(Math.log(flat.dist) - Math.log(targetDistKm));
       w = Math.exp(-logRatio * 1.2); // más cerca en log → más peso
     }
-    sumW += w; sumVdot += vdot*w; validN++;
+    sumW += w; sumVdot += vdot*w; sumDist += flat.dist*w; validN++;
     detailArr.push(`${r.name||"Ref"} (${flat.dist.toFixed(1)}K): VDOT ${vdot.toFixed(1)}`);
   }
   if(sumW === 0) return null;
   const vdotAvg = sumVdot / sumW;
   return {
     vdot: vdotAvg,
+    distRef: sumDist / sumW,
     confidence: Math.min(0.95, 0.55 + 0.15*validN),
     source: "Carreras previas",
     detail: detailArr.join(" · "),
@@ -1934,10 +1998,15 @@ function experienceFactor(cond, distKm){
 function drafting(cond, avgKmh){
   if(!cond.opts.grupo) return 1;
   // A 10 km/h, aerodinámica ~ 5% del costo. A 18 km/h, ~14%.
+  /* El ahorro se topea en 4 %. Antes, con aeroShare hasta 0,18 y un peloton grande
+     (0,60), el descuento llegaba al 10,8 % del tiempo: casi diez minutos regalados
+     en un maraton, cuando las dos explicaciones de la pantalla prometen 2 y 2,5 %.
+     Lo que esta medido en carrera a pie es del orden del 2 al 4 % en un peloton
+     cerrado, no del 10. El tope es criterio y esta declarado en pantalla. */
   const aeroShare = Math.max(0, Math.min(0.18, (avgKmh - 6) * 0.011));
   const savings = {solo:0, small:0.15, medium:0.40, large:0.60};
   const sav = savings[cond.grupo] || 0;
-  return 1 - aeroShare * sav;
+  return 1 - Math.min(0.04, aeroShare * sav);
 }
 
 // ============================================================
@@ -1967,7 +2036,14 @@ function compute(){
   // Toggle apagado O campo vacío = "no lo cargué". El D- por defecto es el D+.
   const cargado = v => v != null && v !== "";
   const raceDplus = (race.opts.dplus && cargado(race.dplus)) ? +race.dplus : 0;
-  const raceDneg  = (race.opts.dneg  && cargado(race.dneg))  ? +race.dneg  : raceDplus;
+  /* El D- solo cuenta si ademas se declaro el D+. Sin esa condicion, prender el
+     interruptor de bajada con el de subida apagado describia una carrera que solo
+     baja, y el motor regalaba 13:44 en un maraton. Nadie carga una carrera asi a
+     proposito: es el resultado de prender un interruptor y no el otro. */
+  const dplusDeclarado = race.opts.dplus && cargado(race.dplus);
+  const raceDneg  = dplusDeclarado
+    ? ((race.opts.dneg && cargado(race.dneg)) ? +race.dneg : raceDplus)
+    : 0;
 
   const hasSegs = state.segEnabled && state.segments.some(s=>(+s.dist||0) > 0);
 
@@ -1996,6 +2072,27 @@ function compute(){
     const segs = state.segments.filter(s => (+s.dist||0)>0);
     const totSegDist = segs.reduce((a,s)=>a+(+s.dist||0),0);
 
+    /* LA AUTORIDAD SOBRE EL DESNIVEL ES DE LA CARRERA (2026-08-19).
+       Antes, el D+ y el D- declarados arriba solo entraban por el tramo "Resto del
+       circuito", asi que unos tramos que cubrian toda la distancia los hacian
+       desaparecer: con 42 km y tramos que no declaraban desnivel, poner 0 o 2000 m
+       de D+ daba EXACTAMENTE el mismo tiempo (03:03:44), mientras que sin tramos
+       esos 2000 m costaban 21 minutos. El dato se cargaba, la pantalla decia que
+       se aplicaba, y no se aplicaba. Lo destapo el banco de invariantes.
+
+       Ahora el desnivel que la carrera declara y los tramos no reparten se
+       distribuye entre TODOS los tramos en proporcion a su distancia. Es la unica
+       reparticion que no inventa nada: la carrera dice cuanto sube y el usuario no
+       dijo donde. De paso mata un absurdo que ya existia: si los tramos cubrian 41
+       de 42 km, los 2000 m que faltaban caian enteros en ese kilometro y daban una
+       pendiente del 200 %. Con tramos que reproducen la carrera, falta = 0 y no
+       cambia nada. */
+    const declaradoDp = segs.reduce((a,s)=>a+(+s.dplus||0),0);
+    const declaradoDn = segs.reduce((a,s)=>a+(+s.dneg ||0),0);
+    const faltaDp = Math.max(0, raceDplus - declaradoDp);
+    const faltaDn = Math.max(0, raceDneg  - declaradoDn);
+    const distParaRepartir = Math.max(totSegDist, race.dist);
+
     // Pace llano de referencia desde VDOT (pace objetivo para la distancia "media"
     // de la carrera — usamos distancia total para respetar el exponente de Riegel
     // implícito en Daniels).
@@ -2004,8 +2101,9 @@ function compute(){
     let acumKm = 0, acumTime = 0, stopTot = 0;
     for(const s of segs){
       const distM = s.dist * 1000;
-      const dp = +s.dplus || 0;
-      const dn = +s.dneg  || 0;
+      const cuota = distParaRepartir>0 ? (s.dist/distParaRepartir) : 0;
+      const dp = (+s.dplus || 0) + faltaDp*cuota;
+      const dn = (+s.dneg  || 0) + faltaDn*cuota;
       // Gradiente neto: si D+ > D-, subida neta; si es al revés, bajada.
       // Para factor de pendiente usamos un modelo bi-partido dentro del tramo
       // (repartimos según D+/D- + componente llano si sobra).
@@ -2043,8 +2141,10 @@ function compute(){
     }
     // Si queda distancia por cubrir, la agregamos con factores globales.
     const leftDist = race.dist - totSegDist;
-    const leftDplus = Math.max(0, raceDplus - segs.reduce((a,s)=>a+(+s.dplus||0),0));
-    const leftDneg  = Math.max(0, raceDneg  - segs.reduce((a,s)=>a+(+s.dneg ||0),0));
+    // El Resto se lleva SU cuota del desnivel que falta, la misma regla que los demas.
+    const cuotaResto = distParaRepartir>0 ? (Math.max(0,leftDist)/distParaRepartir) : 0;
+    const leftDplus = faltaDp*cuotaResto;
+    const leftDneg  = faltaDn*cuotaResto;
     if(leftDist > 0.1){
       const paceFlatRace = baseSeaFlat / race.dist;
       const fSlope = globalSlopeFactor(leftDist, leftDplus, leftDneg);
@@ -2086,10 +2186,19 @@ function compute(){
     runAcc += sp.tSecAdj + sp.stopSec;
     sp.accTimeAdj = runAcc;
   });
-  if(splits.length && extraSec>0){
-    splits[splits.length-1].accTimeAdj += extraSec;
-  }
+  /* Los minutos de parada del panel de Condiciones NO se le suman al ultimo tramo.
+     Se hacia para que el acumulado cerrara con el total, y el efecto era peor: el
+     ultimo tramo mostraba un reloj que ya incluia diez minutos que todavia no
+     habian pasado (la suma de los tramos daba 03:06:44 y el acumulado decia
+     03:16:44). Ahora el acumulado del ultimo tramo es el reloj de verdad al
+     terminarlo, y el cierre lo aporta la fila de extras de abajo de la lista. */
 
+  /* Dos ritmos distintos, y hay que decir cual es cual. El de correr (sin las
+     paradas) es el que se carga en el reloj; el de reloj (con todo adentro) es el
+     que va a marcar el cronometro. Antes se mostraba uno solo, el de reloj, con el
+     rotulo "Ritmo promedio": el que lo copiaba al reloj salia a correr mas lento
+     de lo que hacia falta. */
+  const paceCorrer = (baseTimeSec * condMult) / Math.max(race.dist, 0.01);
   const pace = totalSec / Math.max(race.dist, 0.01);
   const avgKmh = race.dist / (totalSec/3600);
 
@@ -2114,7 +2223,7 @@ function compute(){
 
   return {
     ok:true,
-    totalSec, pace, avgKmh, vdot, vamKmh, pctVam: pct,
+    totalSec, pace, paceCorrer, avgKmh, vdot, vamKmh, pctVam: pct, paradasSec,
     splits, refInfo: ref, condMult, extraSec, hasSegs,
     raceDist: race.dist, raceDplus, raceDneg,
     baseSeaFlat, fSupGlob, fAltGlob,
@@ -2144,9 +2253,16 @@ function recompute(scrollToTop){
   eWrap.innerHTML="";
   $("r-race-name").textContent = state.race.name || "Carrera";
   $("r-time").textContent = fmtTime(r.totalSec);
-  $("r-sub").textContent = `Ritmo promedio ${fmtPace(r.pace)} /km · ${r.avgKmh.toFixed(2)} km/h · VDOT ${r.vdot.toFixed(1)}`;
+  $("r-sub").textContent = `Ritmo al que correr ${fmtPace(r.paceCorrer)} /km · ${r.avgKmh.toFixed(2)} km/h de promedio · VDOT ${r.vdot.toFixed(1)}`;
   $("r-dist").innerHTML = `${r.raceDist.toFixed(r.raceDist<10?2:1)}<small>km</small>`;
-  $("r-pace").textContent = fmtPace(r.pace);
+  /* El ritmo al que hay que CORRER, sin las paradas adentro. El de reloj (con
+     todo) va abajo, y solo cuando hay paradas cargadas: si no, serian dos numeros
+     iguales uno arriba del otro. */
+  $("r-pace").textContent = fmtPace(r.paceCorrer);
+  const paradas = (r.paradasSec||0) + (r.extraSec||0);
+  $("r-pace-sub").textContent = paradas > 0
+    ? `min/km · de reloj ${fmtPace(r.pace)}`
+    : "min/km";
   $("r-speed").innerHTML = `${r.avgKmh.toFixed(2)}<small>km/h</small>`;
   $("r-vdot").textContent = r.vdot.toFixed(1);
   $("r-vam").innerHTML = `${r.vamKmh.toFixed(1)}<small>km/h</small>`;
@@ -2156,10 +2272,20 @@ function recompute(scrollToTop){
   /* `r.hasSegs` y no "hay filas cargadas": un tramo con la distancia en blanco,
      o la tabla entera con el toggle apagado, no aportan nada al cálculo y sin
      embargo subían la confianza y ponían "· con tramos" en pantalla. */
+  /* La confianza dice cuanto se parece la referencia a esta carrera, y nada mas.
+     Antes llegaba a 100 %, que es una promesa que ninguna calculadora puede hacer,
+     y ademas SUBIA por tener tramos cargados y por tener tres interruptores
+     prendidos, aunque estuvieran vacios: cargar datos que no mejoran la prediccion
+     no puede mejorar la certeza sobre ella. Ahora el techo es 90 % y lo unico que
+     la mueve para abajo es cuanto hay que extrapolar desde la referencia. */
   const baseConf = r.refInfo.confidence;
   let conf = baseConf;
-  if(r.hasSegs) conf = Math.min(1, conf + 0.05);
-  if(Object.values(state.cond.opts).filter(v=>v).length >= 3) conf = Math.min(1, conf + 0.03);
+  const distRef = r.refInfo.distRef || 0;
+  if(distRef > 0 && r.raceDist > 0){
+    const ratio = Math.max(distRef, r.raceDist) / Math.min(distRef, r.raceDist);
+    conf *= Math.max(0.30, 1/(1 + 0.6*(ratio-1)));
+  }
+  conf = Math.max(0.10, Math.min(0.90, conf));
   $("r-conf").textContent = Math.round(conf*100) + "%";
   let cs = `${r.refInfo.source}`;
   if(r.refInfo.sources > 1) cs += ` (${r.refInfo.sources} refs)`;
@@ -2171,20 +2297,31 @@ function recompute(scrollToTop){
   const minPace = Math.min(...r.splits.map(s=>s.tSecAdj/Math.max(s.dist,0.01)));
   $("r-splits").innerHTML = r.splits.map((s,i)=>{
     const paceSec = s.tSecAdj/Math.max(s.dist,0.01);
-    // Normalizar ancho barra entre minPace y maxPace (invertir: pace más rápido → barra más corta)
-    const span = Math.max(0.01, maxPace - minPace);
-    const normalized = 100 - ((maxPace - paceSec)/span)*60; // 40 a 100
-    const pct = Math.max(38, Math.min(100, normalized));
+    /* La barra compara el ritmo del tramo contra el del tramo mas lento, y NO se
+       reescala al rango. Antes se normalizaba entre el mas rapido y el mas lento,
+       asi que dos tramos que difieren dos centesimas de segundo por kilometro se
+       dibujaban uno 2,5 veces mas largo que el otro: la barra inventaba una
+       diferencia que no existe. Ahora, si todos corren parecido, todas las barras
+       se ven parecidas, que es la verdad. */
+    const pct = Math.max(38, Math.min(100, (paceSec/maxPace)*100));
     const detail = [];
     if(s.dplus) detail.push(`${Math.round(s.dplus)}m D+`);
     if(s.dneg) detail.push(`${Math.round(s.dneg)}m D−`);
     return `
     <div class="bar-row">
-      <div class="bar-name" title="${s.name}">${i+1}. ${s.name} <span class="pill" style="margin-left:6px">${s.dist.toFixed(2)}km${detail.length?" · "+detail.join(" · "):""}</span></div>
+      <div class="bar-name" title="${esc(s.name)}">${i+1}. ${esc(s.name)} <span class="pill" style="margin-left:6px">${s.dist.toFixed(2)}km${detail.length?" · "+detail.join(" · "):""}</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${pct}%">${fmtPace(paceSec)}/km</div></div>
       <div class="bar-val">${fmtTime(s.accTimeAdj)}</div>
     </div>`;
-  }).join("");
+  }).join("")
+  /* Las paradas del panel de Condiciones no son de ningun tramo: se dicen aparte,
+     asi la columna de la derecha cierra con el tiempo estimado. */
+  + (r.extraSec>0 ? `
+    <div class="bar-row">
+      <div class="bar-name">Paradas fuera de los tramos <span class="pill" style="margin-left:6px">+${fmtTime(r.extraSec)}</span></div>
+      <div class="bar-bg"></div>
+      <div class="bar-val">${fmtTime(r.totalSec)}</div>
+    </div>` : "");
   $("r-split-sub").textContent = r.splits.length > 1
     ? "Tiempo proyectado en cada tramo. Barra: ritmo min/km. Derecha: tiempo acumulado desde la largada."
     : "Resumen global (sin tramos cargados). Activá tramos en la pestaña Perfil para ver splits detallados.";
@@ -2282,11 +2419,59 @@ function renderCompare(r){
   const sinCalor = !(c.opts.temp && c.temp != null && c.temp > 18);
   if(c.opts.hum && sinCalor) mudos.push("La <b>humedad</b> está activada pero no cambia nada: solo pesa con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
   if(c.opts.sol && sinCalor) mudos.push("La <b>exposición al sol</b> está activada pero no cambia nada: solo suma con calor. Cargá la temperatura (por encima de 18 °C) para que cuente.");
+  if(c.opts.sol && !sinCalor && +c.sol === 0) mudos.push("La <b>exposición al sol</b> está en «sombra», que es el valor neutro y no suma nada.");
+  if(c.opts.hum && !sinCalor && c.hum != null && c.hum <= 60) mudos.push(`La <b>humedad</b> está en ${c.hum} % y no cambia nada: recién pesa por encima del 60 %.`);
+  if(c.opts.cielo && c.cielo === "part") mudos.push("El <b>cielo</b> está en «parcialmente nublado», que es el valor neutro y no cambia nada.");
+  if(c.opts.viento && c.viento === "none") mudos.push("El <b>viento</b> está en «sin viento», que es el valor neutro y no cambia nada.");
+  if(c.opts.exp && c.exp === "experimentado") mudos.push("La <b>experiencia</b> está en «experimentado», que es el valor neutro y no cambia nada.");
+  if(c.opts.grupo && c.grupo === "solo") mudos.push("El <b>pelotón</b> está en «solo», que es el valor neutro y no cambia nada.");
+  if(c.opts.strategy) mudos.push("La <b>estrategia de pacing</b> cambia cómo se reparte el tiempo entre la primera y la segunda mitad, no el tiempo total.");
+  if(state.race.opts.dneg && !(state.race.opts.dplus && state.race.dplus != null)) mudos.push("Cargaste el <b>desnivel negativo</b> sin el positivo: sin saber cuánto sube, la bajada no se usa. Cargá los dos o ninguno.");
   if(c.opts.temp && c.temp == null) mudos.push("La <b>temperatura</b> está activada pero el campo está vacío.");
   if(c.opts.hum && c.hum == null) mudos.push("La <b>humedad</b> está activada pero el campo está vacío.");
   if(state.race.opts.dplus && state.race.dplus == null) mudos.push("El <b>desnivel positivo</b> está activado pero está vacío: se calcula como carrera llana.");
   if(state.race.opts.dneg && state.race.dneg == null) mudos.push("El <b>desnivel negativo</b> está activado pero está vacío: se asume que baja lo mismo que sube.");
   if(state.race.opts.alt && !(state.race.alt > 0)) mudos.push("La <b>altitud media</b> está activada pero está vacía.");
+  /* Un tiempo mal tipeado no da error: "1:30" para una media se lee como un minuto
+     y medio y devuelve un VDOT de cinco cifras con cara de dato. No se adivina lo
+     que quiso escribir; se le dice que ese numero es imposible. */
+  if(state.refMode === "race"){
+    state.refs.forEach((rf,i)=>{
+      const t = parseTime(rf.time), d = +rf.dist||0;
+      if(t>0 && d>0){
+        const kmh = d/(t/3600);
+        if(kmh > 25 || kmh < 3) mudos.push(`La referencia ${i+1} da <b>${kmh.toFixed(0)} km/h</b>, que no es un ritmo humano. Revisá el tiempo: «1:30» se lee como un minuto y medio, una media se escribe <b>1:30:00</b>.`);
+      }
+    });
+  }
+  if(state.refMode === "pace"){
+    const t = parseTime(state.pace.time), d = +state.pace.dist||0;
+    if(t>0 && d>0){
+      const kmh = d/(t/3600);
+      if(kmh > 25 || kmh < 3) mudos.push(`El ritmo de test da <b>${kmh.toFixed(0)} km/h</b>, que no es un ritmo humano. Revisá el tiempo: «20:00» son veinte minutos, «0:20:00» también.`);
+    }
+  }
+  if(state.race.opts.obj && state.race.obj && parseTime(state.race.obj) > 0){
+    const kmhObj = state.race.dist/(parseTime(state.race.obj)/3600);
+    if(kmhObj > 25 || kmhObj < 2) mudos.push(`El <b>tiempo objetivo</b> da ${kmhObj.toFixed(0)} km/h, que no es un ritmo humano. Fijate cómo lo escribiste.`);
+  }
+  /* Referencias a medio llenar: se descartan en silencio y la pantalla sigue
+     mostrando la tarjeta, asi que parecen estar contando. */
+  if(state.refMode === "race"){
+    const incompletas = state.refs.filter(rf => !(parseTime(rf.time)>0 && (+rf.dist||0)>0)).length;
+    if(incompletas) mudos.push(`${incompletas===1?"Una carrera de referencia está":`${incompletas} carreras de referencia están`} sin completar (les falta la distancia o el tiempo): no ${incompletas===1?"entra":"entran"} en la cuenta.`);
+  }
+  /* Altitud declarada de un solo lado: sesgo silencioso y siempre hacia lento. */
+  if(state.refMode === "race" && state.race.opts.alt && state.race.alt > 1200){
+    const sinAlt = state.refs.filter(rf => parseTime(rf.time)>0 && (+rf.dist||0)>0 && !(rf.opts.alt && rf.alt>0)).length;
+    if(sinAlt) mudos.push(`Declaraste que esta carrera es en altura (${state.race.alt} m) pero ${sinAlt===1?"una de tus referencias no tiene":`${sinAlt} de tus referencias no tienen`} altitud cargada. Se te cobra la altura de esta carrera sin descontarte la de ${sinAlt===1?"aquélla":"aquéllas"}, así que el tiempo sale <b>más lento de lo que corresponde</b>.`);
+  }
+  /* Las paradas se cargan en dos lugares Y CON DISTINTA UNIDAD. */
+  {
+    const pcTramos = state.segments.reduce((a,g)=>a+(+g.stop||0),0);
+    if(pcTramos>0 && c.opts.stops && (+c.stops||0)>0)
+      mudos.push(`Tenés paradas cargadas en dos lugares: <b>${pcTramos} min</b> en la tabla de tramos y <b>${(+c.stops||0)} s</b> en Condiciones. Se suman las dos. Ojo con la unidad: la tabla va en minutos y el campo de Condiciones en segundos.`);
+  }
   if(state.segments.length && !state.segEnabled) mudos.push(`Tenés <b>${state.segments.length} tramo${state.segments.length===1?"":"s"}</b> cargado${state.segments.length===1?"":"s"} pero «usar tramos» está apagado: no se están usando.`);
   const sumaSeg = state.segments.reduce((a,s)=>a+(+s.dist||0),0);
   if(r.hasSegs && sumaSeg > state.race.dist + 0.05)
@@ -2309,7 +2494,7 @@ function renderCompare(r){
     <div class="hint">
       <b>Factores aplicados:</b>
       <ul style="margin:8px 0 0 18px;line-height:1.7">
-        <li>Calibración: <b>${r.refInfo.source}</b> — ${r.refInfo.detail}</li>
+        <li>Calibración: <b>${esc(r.refInfo.source)}</b> · ${esc(r.refInfo.detail)}</li>
         <li>VDOT calibrado: <b>${r.vdot.toFixed(1)}</b> · VAM equiv.: <b>${r.vamKmh.toFixed(1)} km/h</b></li>
         <li>Tiempo base llano+nivel del mar: <b>${fmtTime(r.baseSeaFlat)}</b> (${fmtPace(r.baseSeaFlat/r.raceDist)}/km)</li>
         <li>D+/D−: <b>${r.raceDplus ? Math.round(r.raceDplus)+" m" : "—"}</b> / <b>${r.raceDneg ? Math.round(r.raceDneg)+" m" : "—"}</b>${(r.raceDplus && !(state.race.opts.dneg && state.race.dneg!=null)) ? ' <span style="color:var(--txt-4)">(D− asumido = D+)</span>' : ""}</li>
@@ -2338,16 +2523,26 @@ document.addEventListener("click", e=>{
 function exportCSV(){
   const r=compute();
   if(!r.ok){ alert("Completá los datos antes de exportar."); return; }
-  const rows=[["Tramo","Distancia (km)","D+ (m)","D− (m)","Ritmo (min/km)","Tiempo tramo","Tiempo acumulado"]];
+  /* `sep=,` en la primera linea: sin eso, Excel en espaniol (que espera punto y
+     coma) abre todo apilado en una sola columna. */
+  const rows=[["sep=,"],[]];
+  rows.push([state.race.name||"Carrera", state.race.date||""]);
+  rows.push([]);
+  rows.push(["Tramo","Distancia (km)","D+ (m)","D− (m)","Ritmo (min/km)","Tiempo tramo","Tiempo acumulado"]);
   r.splits.forEach((s,i)=>{
     rows.push([`${i+1}. ${s.name}`, s.dist.toFixed(2), Math.round(s.dplus||0), Math.round(s.dneg||0),
       fmtPace(s.tSecAdj/Math.max(s.dist,0.01)),
       fmtTime(s.tSecAdj + s.stopSec),
       fmtTime(s.accTimeAdj)]);
   });
+  /* Los minutos parados que no son de ningun tramo van en su propia fila: sin
+     esto, las filas sumaban menos que el TOTAL y la planilla no cerraba. */
+  if(r.extraSec>0) rows.push(["Paradas fuera de los tramos","","","","", fmtTime(r.extraSec), fmtTime(r.totalSec)]);
   rows.push([]);
   rows.push(["TOTAL", r.raceDist.toFixed(2), Math.round(r.raceDplus||0), Math.round(r.raceDneg||0), fmtPace(r.pace), "", fmtTime(r.totalSec)]);
   rows.push([]);
+  rows.push(["Ritmo al que correr (min/km)", fmtPace(r.paceCorrer)]);
+  rows.push(["Ritmo de reloj (min/km)", fmtPace(r.pace)]);
   rows.push(["VDOT", r.vdot.toFixed(1)]);
   rows.push(["VAM (km/h)", r.vamKmh.toFixed(2)]);
   rows.push(["% VAM objetivo", r.pctVam.toFixed(1)]);
@@ -2363,17 +2558,24 @@ $("btn-export-csv").addEventListener("click", exportCSV);
 $("btn-print").addEventListener("click", ()=>window.print());
 
 const LS_KEY="ea-ruta-calc-v1";
+/* El HTML original del boton se guarda UNA vez. Con dos clics seguidos, el
+   segundo leia el "✓ Guardado" del primero y lo dejaba asi para siempre. */
+let guardarHtml = null, guardarTimer = null;
 $("btn-save").addEventListener("click",()=>{
+  const b=$("btn-save");
+  if(guardarHtml === null) guardarHtml = b.innerHTML;
   try{
     localStorage.setItem(LS_KEY, JSON.stringify(state));
-    const b=$("btn-save"); const old=b.innerHTML;
     b.innerHTML="<span>✓ Guardado</span>";
-    setTimeout(()=>b.innerHTML=old, 1400);
-  }catch(e){ alert("No se pudo guardar."); }
+    clearTimeout(guardarTimer);
+    guardarTimer = setTimeout(()=>{ b.innerHTML = guardarHtml; }, 1400);
+  }catch(e){ alert("No se pudo guardar: el navegador tiene el almacenamiento bloqueado."); }
 });
 $("btn-reset").addEventListener("click",()=>{
   if(!confirm("¿Restaurar valores iniciales? Se perderán tus datos.")) return;
-  localStorage.removeItem(LS_KEY);
+  /* Si el navegador tiene el almacenamiento bloqueado, removeItem tira y el boton
+     quedaba mudo: no borraba y tampoco recargaba. */
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
   location.reload();
 });
 
@@ -2433,6 +2635,7 @@ function applyStateToUI(){
     if(opt.startsWith("r_")) on = !!state.race.opts[opt.slice(2)];
     else if(opt.startsWith("c_")) on = !!state.cond.opts[opt.slice(2)];
     tog.classList.toggle("on", on);
+    tog.setAttribute("aria-checked", on ? "true" : "false");
     f.classList.toggle("disabled", !on);
   });
   const segTog = document.querySelector('[data-toggle="seg_enabled"]');
@@ -2471,7 +2674,7 @@ init();
    pisa con la versión de verdad. Al tocar la calculadora, subí estos dos
    valores. */
 (function(){
-  var VERSION = { n:"2.2", fecha:"08-08-2026" };
+  var VERSION = { n:"3.0", fecha:"19-08-2026" };
   var el = document.getElementById("foot-stamp");
   if(el) el.textContent = "v" + VERSION.n + " · " + VERSION.fecha;
 })();

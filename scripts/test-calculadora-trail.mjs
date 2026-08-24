@@ -63,7 +63,7 @@ vm.createContext(ctx);
 
 const API = `;globalThis.__api = { state, compute, kmEff, referenceEffortPace, climateMultiplier,
   globalSlopeFactor, slopeFactor, lookupStep, parseTime, fmtTime, fmtPace,
-  T_ALTITUD, T_PENDIENTE, T_RECORRIDO, T_TECNICIDAD, EXP_RIEGEL, K_FATIGA };`;
+  T_ALTITUD, T_PENDIENTE, T_RECORRIDO, EXP_RIEGEL, K_FATIGA };`;
 
 try {
   vm.runInContext(motor + API, ctx);
@@ -126,6 +126,23 @@ function segsSZ() {
   seg({ name: "Weisshorn-Barneuza", dist: 6.4, dplus: 134,  dneg: 253, alt: 2349 });
   seg({ name: "Barneuza-Zinal",     dist: 4.9, dplus: 24,   dneg: 567, alt: 2021 });
 }
+/* Los mismos tramos pero SIN altitud propia y cuadrados al metro: describen
+   exactamente la misma carrera que los campos de arriba, sin agregar un solo
+   dato nuevo. Es el escenario del control de auto-consistencia estricta, y por
+   eso tiene que cuadrar: los parciales oficiales suman 2149 m de D+ contra los
+   2148 de la ficha de la carrera, y ese metro de más son dos segundos de
+   diferencia, que es señal de que el motor está haciendo lo que corresponde
+   (unos tramos que describen una carrera más grande dan un tiempo más grande),
+   pero arruina un test que quiere medir otra cosa. El último tramo absorbe la
+   diferencia. */
+function segsSZsinExtras() {
+  seg({ name: "Sierre-Ponchette",   dist: 7.0, dplus: 1314, dneg: 3 });
+  seg({ name: "Ponchette-Chandolin",dist: 4.8, dplus: 192,  dneg: 86 });
+  seg({ name: "Chandolin-Tignousa", dist: 3.6, dplus: 258,  dneg: 59 });
+  seg({ name: "Tignousa-Weisshorn", dist: 4.5, dplus: 227,  dneg: 76 });
+  seg({ name: "Weisshorn-Barneuza", dist: 6.4, dplus: 134,  dneg: 253 });
+  seg({ name: "Barneuza-Zinal",     dist: 4.9, dplus: 23,   dneg: 568 });
+}
 const REF_FER = { time: "03:53:31", dist: 31.2, dplus: 2148, dneg: 1045, tipo: 3, alt: 1925, opts: { tipo: true, alt: true, dneg: true } };
 
 console.log("\n=== A · AUTO-CONSISTENCIA (referencia = la propia carrera objetivo) ===");
@@ -134,10 +151,67 @@ console.log("\n=== A · AUTO-CONSISTENCIA (referencia = la propia carrera objeti
   const a = T(calc());
   chk("sin segmentos devuelve el tiempo de la referencia", Math.abs(a - 14011) < 60, `dio ${hms(a)} vs 3:53:31`);
 
-  base(); ref(REF_FER); api.state.segEnabled = true; segsSZ();
+  /* EL INVARIANTE, ESCRITO BIEN (2026-08-10). Antes acá decía "con y sin
+     segmentos coinciden" con una tolerancia de 2 segundos, y eso fijaba una
+     decisión que se cambió a propósito: los tramos que declaran terreno,
+     superficie o altura propia SÍ mueven el total ahora. Lo que tiene que
+     seguir siendo exacto es lo otro: unos tramos que no declaran nada nuevo no
+     pueden mover nada, porque no aportan información que la carrera entera no
+     tuviera ya. Ése es el control que destapa el doble conteo. */
+  base(); ref(REF_FER); api.state.segEnabled = true; segsSZsinExtras();
   const b = T(calc());
-  chk("con segmentos devuelve lo mismo", Math.abs(b - 14011) < 60, `dio ${hms(b)} vs 3:53:31`);
-  chk("con y sin segmentos coinciden", Math.abs(a - b) < 2, `${hms(a)} vs ${hms(b)}`);
+  chk("con tramos que no declaran nada, el total no se mueve ni un segundo",
+      Math.abs(a - b) < 2, `${hms(a)} vs ${hms(b)}`);
+
+  base(); ref(REF_FER); api.state.segEnabled = true; segsSZ();
+  const c = T(calc());
+  chk("con los tramos reales (que traen su altitud) sigue dando la referencia",
+      Math.abs(c - 14011) < 60, `dio ${hms(c)} vs 3:53:31`);
+}
+{
+  /* LO QUE PIDIÓ EMILIANO, Y LO QUE HAY QUE PROTEGER DE ACÁ EN ADELANTE.
+     Las tres columnas declarativas de la tabla de tramos tienen que cambiar el
+     tiempo estimado. Hasta la v4.2 movían el reparto y NO el total: la columna
+     estaba en pantalla sin hacer nada, con la superficie prometiendo un +25 %
+     por nieve que nunca llegaba al número grande. */
+  const conTodos = (campo, valor) => {
+    base(); ref(REF_FER); api.state.segEnabled = true; segsSZsinExtras();
+    api.state.segments.forEach(s => { s[campo] = valor; });
+    return T(calc());
+  };
+  base(); ref(REF_FER); api.state.segEnabled = true; segsSZsinExtras();
+  const neutro = T(calc());
+
+  chk("el TERRENO de los tramos mueve el total (1 más rápido que 5)",
+      conTodos("tec", "1") < neutro - 60 && conTodos("tec", "5") > neutro + 60,
+      `1: ${hms(conTodos("tec","1"))} · vacío: ${hms(neutro)} · 5: ${hms(conTodos("tec","5"))}`);
+  chk("terreno 3 en todos los tramos es lo mismo que no declarar nada (la carrera es tipo 3)",
+      Math.abs(conTodos("tec", "3") - neutro) < 2, `${hms(conTodos("tec","3"))} vs ${hms(neutro)}`);
+  chk("la SUPERFICIE de los tramos mueve el total, y en la proporción de la tabla",
+      Math.abs(conTodos("sup", "nieve") / neutro - 1.25) < 0.005,
+      `nieve da ×${(conTodos("sup","nieve")/neutro).toFixed(4)}, la tabla dice ×1.25`);
+  chk("tierra compacta es el neutro de la superficie",
+      Math.abs(conTodos("sup", "tierra") - neutro) < 2, `${hms(conTodos("sup","tierra"))} vs ${hms(neutro)}`);
+  chk("la ALTITUD por tramo mueve el total",
+      conTodos("alt", 3000) > neutro + 60, `3000 m da ${hms(conTodos("alt",3000))} vs ${hms(neutro)}`);
+  chk("la altitud por tramo igual a la del circuito no cambia nada",
+      Math.abs(conTodos("alt", 1925) - neutro) < 2, `${hms(conTodos("alt",1925))} vs ${hms(neutro)}`);
+
+  // Y el desglose que se muestra en pantalla tiene que cerrar con el total.
+  base(); ref(REF_FER); api.state.segEnabled = true; segsSZ();
+  api.state.segments[0].tec = "5"; api.state.segments[1].sup = "barro";
+  api.state.segments[2].pc = 12;
+  api.state.cond.opts.viento = true; api.state.cond.viento = "strong";
+  api.state.cond.opts.cruces = true; api.state.cond.cruces = 4;
+  const rd = calc();
+  const sumaDz = rd.desglose.filter(x => x.tipo !== "total").reduce((acc, x) => acc + x.seg, 0);
+  const totalDz = rd.desglose.find(x => x.tipo === "total").seg;
+  chk("los renglones de «De dónde sale este tiempo» suman el total",
+      Math.abs(sumaDz - rd.totalSec) < 2 && Math.abs(totalDz - rd.totalSec) < 2,
+      `renglones ${hms(sumaDz)} · último ${hms(totalDz)} · total ${hms(rd.totalSec)}`);
+  chk("el KPI de ritmo-esfuerzo cierra con el tiempo y los km-esfuerzo de la pantalla",
+      Math.abs(rd.effPace * rd.kmEffUsado - rd.totalSec) < 2,
+      `${(rd.effPace*rd.kmEffUsado).toFixed(0)} s vs ${rd.totalSec.toFixed(0)} s`);
 }
 { // otra carrera cualquiera, para que no sea casualidad
   base({ dist: 42.2, dplus: 800, dneg: 800, alt: 300, opts:{tipo:true,dneg:true,alt:true,obj:false} });
@@ -241,8 +315,8 @@ console.log("\n=== E · COHERENCIA DE LO QUE MUESTRA EN PANTALLA ===");
   chk("la suma de los tramos da el total", Math.abs(sumaTramos + r.extraSec - r.totalSec) < 2,
       `tramos ${hms(sumaTramos + r.extraSec)} vs total ${hms(r.totalSec)}`);
   const ultimo = r.splits[r.splits.length - 1];
-  chk("el acumulado del último tramo es el total", Math.abs(ultimo.accTimeAdj - r.totalSec) < 2,
-      `${hms(ultimo.accTimeAdj)} vs ${hms(r.totalSec)}`);
+  chk("el acumulado del último tramo más los extras es el total", Math.abs(ultimo.accTimeAdj + r.extraSec - r.totalSec) < 2,
+      `${hms(ultimo.accTimeAdj)} + ${hms(r.extraSec)} vs ${hms(r.totalSec)}`);
   const sumaKm = r.splits.reduce((a, s) => a + s.dist, 0);
   chk("los km de los tramos suman la distancia de la carrera", Math.abs(sumaKm - 31.2) < 0.15,
       `${sumaKm.toFixed(2)} vs 31.2`);

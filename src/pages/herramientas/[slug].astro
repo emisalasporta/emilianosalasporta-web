@@ -125,6 +125,18 @@ const descripcionHtml = tool.description
       if (e.source !== frame.contentWindow) return;
 
       const data = e.data;
+
+      /* La herramienta pide subir. Adentro de un marco de alto completo, el
+         scroll lo tiene la página, no el iframe: la calculadora hacía
+         window.scrollTo(0) y no pasaba nada, así que tocar la pestaña
+         «Resultado» dejaba el resultado mil píxeles arriba de la pantalla y
+         parecía que el botón no funcionaba. */
+      if (data && data.tipo === 'subir-herramienta') {
+        const y = frame.getBoundingClientRect().top + window.scrollY - 12;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        return;
+      }
+
       if (!data || data.tipo !== 'alto-herramienta') return;
 
       const alto = Number(data.alto);

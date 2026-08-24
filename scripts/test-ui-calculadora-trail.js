@@ -39,6 +39,8 @@ window.__test = async function () {
   function ev(el, tipo) { el.dispatchEvent(new Event(tipo, { bubbles: true })); }
   function setNum(id, v) { const e = $id(id); e.value = v; ev(e, "input"); }
   function setSel(id, v) { const e = $id(id); e.value = v; ev(e, "change"); ev(e, "input"); }
+  // Igual que setSel pero sobre un elemento suelto (las celdas de la tabla de tramos).
+  function setSelEl(e, v) { e.value = v; ev(e, "change"); ev(e, "input"); }
   function tog(key) { document.querySelector(`[data-toggle="${key}"]`).click(); }
   function togOn(key) { return document.querySelector(`[data-toggle="${key}"]`).classList.contains("on"); }
   function campoApagado(key) {
@@ -82,12 +84,16 @@ window.__test = async function () {
     state.refs = [{ name: "", dist: 0, dplus: 0, tipo: 3, time: "", opts: { tipo: true, alt: false, dneg: false }, alt: 0, dneg: 0 }];
     state.refMode = "race";
     state.pace = { dist: 0, time: "" };
-    state.race = { name: "", date: "", dist: 0, dplus: 0, opts: { tipo: true, dneg: false, alt: false, obj: false }, tipo: 3, dneg: 0, alt: 0, obj: "" };
+    /* Los mismos valores con los que arranca la calculadora de verdad. El D+ y
+       el D- van en null y no en 0: null es "no lo cargue" (el D+ se pide y el D-
+       se asume igual al D+) y 0 es una carrera de llano, que es un dato valido.
+       Con 0, este fixture probaba una calculadora que no existe. */
+    state.race = { name: "", date: "", dist: 0, dplus: null, opts: { tipo: true, dneg: false, alt: false, obj: false }, tipo: 3, dneg: null, alt: 0, obj: "" };
     state.segEnabled = true;
     state.segments = [];
     state.cond = {
       opts: { temp: false, hum: false, cielo: false, viento: false, sol: false, noche: false, mochila: false, exp: false, cruces: false, desnudo: false },
-      temp: null, hum: null, cielo: "cloud", viento: "mod", sol: 1, noche: 0, mochila: 1.00, exp: 1.00, cruces: 0, desnudo: 0,
+      temp: null, hum: null, cielo: "part", viento: "none", sol: 1, noche: 0, mochila: 1.00, exp: 1.00, cruces: 0, desnudo: 0,
     };
     applyStateToUI();
     recompute(false);
@@ -118,7 +124,19 @@ window.__test = async function () {
       ok(`referencia: ${k} arranca vacío`, refInput(0, k).value === "", refInput(0, k).value));
     ok("el resultado no inventa un tiempo", pantallaTexto() === "--:--:--", pantallaTexto());
     ok("la banda está oculta sin datos", $id("r-banda").hidden === true);
-    ok("el cartel invita en vez de alarmar", /necesito dos cosas/i.test($id("out-errors").textContent));
+    ok("el cartel invita en vez de alarmar", /para calcular falta/i.test($id("out-errors").textContent), $id("out-errors").textContent.slice(0, 60));
+    /* Vacía faltan tres: distancia, D+ y la referencia. El cartel tiene que decir
+       el número de verdad, no un "dos" escrito a mano como decía antes. */
+    ok("y dice cuántas cosas faltan de verdad", /faltan 3 cosas/i.test($id("out-errors").textContent), $id("out-errors").textContent.slice(0, 70));
+    ok("y pide el D+, que antes se calculaba como cero", /desnivel positivo/i.test($id("out-errors").textContent), $id("out-errors").textContent.slice(0, 90));
+    /* Los dos desplegables con decimales arrancaban EN BLANCO en cada carga:
+       el estado guarda 1 y la opción se llama "1.00", así que `select.value = 1`
+       no encontraba ninguna opción. */
+    ["c_mochila", "c_exp", "c_sol", "c_noche", "c_cielo", "c_viento"].forEach(id =>
+      ok(`${id} arranca con una opción elegida (no en blanco)`, $id(id).selectedIndex >= 0, `selectedIndex=${$id(id).selectedIndex}`));
+    ok("el selector de modo marca cuál está activo",
+      getComputedStyle(document.querySelector("#ref-mode-switch .mode-opt.active")).borderColor !==
+      getComputedStyle(document.querySelector("#ref-mode-switch .mode-opt:not(.active)")).borderColor);
   }
 
   /* ==========================================================================
@@ -268,9 +286,9 @@ window.__test = async function () {
     ok("sol CON calor → más lento", e.t1 > e.t0, `${e.t0} → ${e.t1}`);
   }
   {
-    await base(); tog("c_noche"); setSel("c_noche", "0.15"); await sleep(DEB);
+    await base(); tog("c_noche"); setSel("c_noche", "0.25"); await sleep(DEB);
     ok("el resumen repite la etiqueta elegida y no el número interno",
-      /~25 % de noche/.test($id("r-compare").textContent) && !/noche 15%/.test($id("r-compare").textContent),
+      /un cuarto de noche/.test($id("r-compare").textContent) && !/noche 25%/.test($id("r-compare").textContent),
       ($id("r-compare").textContent.match(/noche[^·<]{0,20}|~\d+ % de noche/) || [""])[0]);
   }
 
@@ -442,7 +460,10 @@ window.__test = async function () {
     });
     await sleep(DEB);
     const total = pantallaSeg();
-    const filasRes = [...$id("r-splits").querySelectorAll(".bar-val")];
+    /* El acumulado vive en `.bar-acc`: desde la v5.0 cada renglon muestra dos
+       tiempos (arriba el del tramo, abajo el acumulado desde la largada) y leer
+       el `.bar-val` entero devuelve los dos pegados. */
+    const filasRes = [...$id("r-splits").querySelectorAll(".bar-acc")];
     const ult = filasRes[filasRes.length - 1].textContent.trim().split(":").map(Number);
     const acumUlt = ult[0] * 3600 + ult[1] * 60 + ult[2];
     ok("el último tramo acumulado = el tiempo grande de arriba", Math.abs(acumUlt - total) <= 1, `tramos=${acumUlt} total=${total}`);
@@ -454,7 +475,7 @@ window.__test = async function () {
     tog("c_viento"); setSel("c_viento", "extreme");
     await sleep(DEB);
     const total2 = pantallaSeg();
-    const fr2 = [...$id("r-splits").querySelectorAll(".bar-val")];
+    const fr2 = [...$id("r-splits").querySelectorAll(".bar-acc")];
     const u2 = fr2[fr2.length - 1].textContent.trim().split(":").map(Number);
     const acum2 = u2[0] * 3600 + u2[1] * 60 + u2[2];
     ok("con paradas en PC + condiciones, los tramos SIGUEN sumando el total",
@@ -616,10 +637,17 @@ window.__test = async function () {
     await sleep(DEB);
     ok("y también CON segmentos cargados (el bug del +7,4 %)",
       Math.abs(pantallaSeg() - 14400) / 14400 < 0.01, `${pantallaTexto()} vs 04:00:00`);
-    ok("prender y apagar «usar segmentos» no cambia el total", (() => {
-      const a = pantallaSeg(); tog("seg_enabled");
-      return new Promise(r => setTimeout(() => r(Math.abs(pantallaSeg() - a) <= 2), DEB));
-    })());
+    /* Este test estaba escrito como una promesa suelta que se resolvía DESPUÉS,
+       cuando el resto del banco ya había cambiado la pantalla: medía otra cosa y
+       encima dejaba el toggle apagado para las pruebas que venían atrás. Ahora se
+       espera de verdad y se deja todo como estaba. */
+    const antesTog = pantallaSeg();
+    tog("seg_enabled"); await sleep(DEB);
+    const conTogApagado = pantallaSeg();
+    tog("seg_enabled"); await sleep(DEB);
+    ok("apagar «usar segmentos» con tramos que no declaran nada no cambia el total",
+      Math.abs(conTogApagado - antesTog) <= 2, `${antesTog} → ${conTogApagado}`);
+    ok("y volver a prenderlo tampoco", Math.abs(pantallaSeg() - antesTog) <= 2, `${pantallaSeg()} vs ${antesTog}`);
   }
   {
     // Un metro de altitud no puede mover minutos.
@@ -697,6 +725,73 @@ window.__test = async function () {
     tog("seg_enabled"); await sleep(DEB);
     ok("avisa si tenés segmentos cargados pero apagados",
       /segmento/i.test(avisos()) && /apagado/i.test(avisos()), avisos().slice(0, 90));
+  }
+
+  /* ==========================================================================
+     L · LOS TRAMOS TIENEN QUE MOVER EL TIEMPO (v5.0)
+     --------------------------------------------------------------------------
+     Lo que reportó Emiliano: la columna Tecnicidad no modificaba ningún valor.
+     Era cierto, y también valían cero Superficie y Alt media: el total salía por
+     la vía global y los tramos lo repartían con pesos normalizados, así que
+     cualquier factor puesto por igual en todos los tramos se cancelaba solo.
+     Esta sección existe para que eso no vuelva a pasar sin que nadie se entere.
+     ========================================================================== */
+  sec("L · los tramos mueven el tiempo, y el desglose cierra");
+  {
+    async function conTramos(cambios) {
+      await base();
+      $id("btn-add-seg").click(); $id("btn-add-seg").click(); await sleep(60);
+      const filas = document.querySelectorAll("#seg-body tr");
+      [[15.6, 1500, 100], [15.6, 648, 1000]].forEach((v, i) => {
+        ["dist", "dplus", "dneg"].forEach((k, j) => {
+          const e = filas[i].querySelector(`[data-k="${k}"]`); e.value = v[j]; ev(e, "input");
+        });
+      });
+      if (cambios) filas.forEach(tr => cambios(tr));
+      await sleep(DEB);
+      return pantallaSeg();
+    }
+    const neutro = await conTramos(null);
+    const facil  = await conTramos(tr => setSelEl(tr.querySelector('[data-k="tec"]'), "1"));
+    const duro   = await conTramos(tr => setSelEl(tr.querySelector('[data-k="tec"]'), "5"));
+    const nieve  = await conTramos(tr => setSelEl(tr.querySelector('[data-k="sup"]'), "nieve"));
+    const alto   = await conTramos(tr => { const e = tr.querySelector('[data-k="alt"]'); e.value = 3000; ev(e, "input"); });
+
+    ok("TERRENO 1 en todos los tramos da un tiempo MENOR", facil < neutro - 60, `${facil} vs ${neutro}`);
+    ok("TERRENO 5 en todos los tramos da un tiempo MAYOR", duro > neutro + 60, `${duro} vs ${neutro}`);
+    ok("SUPERFICIE nieve mueve el total un 25 %", Math.abs(nieve / neutro - 1.25) < 0.01, `×${(nieve/neutro).toFixed(3)}`);
+    ok("ALT MEDIA por tramo mueve el total", alto > neutro + 60, `${alto} vs ${neutro}`);
+
+    // Y el bloque que lo explica en pantalla.
+    await conTramos(tr => setSelEl(tr.querySelector('[data-k="sup"]'), "barro"));
+    ok("el bloque «De dónde sale este tiempo» se muestra", $id("r-desglose-card").hidden === false);
+    const renglones = [...document.querySelectorAll("#r-desglose .dz-row")];
+    ok("el desglose tiene el punto de partida, lo que aporta cada dato y el total", renglones.length >= 3, `${renglones.length} renglones`);
+    ok("el desglose nombra la superficie de los tramos",
+      /superficie/i.test($id("r-desglose").textContent), $id("r-desglose").textContent.slice(0, 120));
+    const ultimo = renglones[renglones.length - 1];
+    ok("el último renglón del desglose es el tiempo estimado que se ve arriba",
+      ultimo.querySelector(".dz-v").textContent.trim() === pantallaTexto(),
+      `${ultimo.querySelector(".dz-v").textContent.trim()} vs ${pantallaTexto()}`);
+
+    // El D+ vacío ya no se calcula como cero.
+    await base();
+    setNum("r_dplus", "");
+    await sleep(DEB);
+    ok("el D+ vacío no calcula: lo pide", pantallaTexto() === "--:--:--" && /desnivel positivo/i.test($id("out-errors").textContent),
+      pantallaTexto() + " | " + $id("out-errors").textContent.slice(0, 70));
+    setNum("r_dplus", 0); await sleep(DEB);
+    ok("pero un D+ de 0 sí calcula (carrera de llano)", pantallaSeg() > 0, pantallaTexto());
+
+    // Prender viento o cielo sin elegir nada no puede cambiar el tiempo.
+    await base();
+    const antes = pantallaSeg();
+    tog("c_viento"); await sleep(DEB);
+    ok("prender «viento» sin elegir nada no cambia el tiempo", pantallaSeg() === antes, `${pantallaSeg()} vs ${antes}`);
+    tog("c_cielo"); await sleep(DEB);
+    ok("prender «cielo» sin elegir nada tampoco", pantallaSeg() === antes, `${pantallaSeg()} vs ${antes}`);
+    ok("y los dos aparecen en «Ojo con esto» como que no hacen nada",
+      /viento/i.test(avisos()) && /cielo/i.test(avisos()), avisos().slice(0, 120));
   }
 
   /* ==========================================================================
